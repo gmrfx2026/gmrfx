@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { chatDbErrorMessage } from "@/lib/chatDbErrorMessage";
+import { getPrivateDmAccess } from "@/lib/chatDmAccess";
 import { prisma } from "@/lib/prisma";
 
 function orderedPair(a: string, b: string): [string, string] {
@@ -22,6 +23,11 @@ export async function GET(req: Request) {
   const [userAId, userBId] = orderedPair(session.user.id, peerId);
 
   try {
+    const dmAccess = await getPrivateDmAccess(session.user.id, peerId);
+    if (!dmAccess.allowed) {
+      return NextResponse.json({ messages: [], dmAccess });
+    }
+
     const conv = await prisma.chatConversation.findUnique({
       where: { userAId_userBId: { userAId, userBId } },
       include: {
@@ -50,12 +56,19 @@ export async function GET(req: Request) {
         createdAt: m.createdAt.toISOString(),
       }));
 
-    return NextResponse.json({ messages });
+    return NextResponse.json({ messages, dmAccess });
   } catch (e) {
     console.error("chat/thread", e);
+    let dmAccess;
+    try {
+      dmAccess = await getPrivateDmAccess(session.user.id, peerId);
+    } catch {
+      dmAccess = { allowed: false, state: "need_request" as const };
+    }
     return NextResponse.json(
       {
         messages: [],
+        dmAccess,
         error: chatDbErrorMessage(e),
       },
       { status: 200 }

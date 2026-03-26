@@ -55,6 +55,13 @@ enum NotificationType {
   FOLLOW_ACCEPTED
   NEW_STATUS
   NEW_ARTICLE
+  CHAT_DM_REQUEST
+}
+
+enum ChatDmRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
 }
 
 model User {
@@ -117,6 +124,26 @@ model User {
   memberFollowsIncoming MemberFollow[] @relation("MemberFollowsIncoming")
 
   notifications Notification[]
+
+  dmRequestsSent     ChatDmRequest[] @relation("DmRequestFrom")
+  dmRequestsReceived ChatDmRequest[] @relation("DmRequestTo")
+}
+
+/// Permintaan buka chat privat (seperti DM request Instagram) jika belum saling follow.
+model ChatDmRequest {
+  id            String              @id @default(cuid())
+  requesterId   String
+  targetId      String
+  status        ChatDmRequestStatus @default(PENDING)
+  introMessage  String?
+  createdAt     DateTime            @default(now())
+  respondedAt   DateTime?
+
+  requester User @relation("DmRequestFrom", fields: [requesterId], references: [id], onDelete: Cascade)
+  target    User @relation("DmRequestTo", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, targetId])
+  @@index([targetId, status])
 }
 
 /// Relasi follow antar member (Instagram-style): follower → following.

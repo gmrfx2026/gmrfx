@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { chatDbErrorMessage } from "@/lib/chatDbErrorMessage";
+import { getPrivateDmAccess } from "@/lib/chatDmAccess";
 import { isUserProfileComplete } from "@/lib/profileComplete";
 import { prisma } from "@/lib/prisma";
 import { clientKeyFromRequest, rateLimit } from "@/lib/simpleRateLimit";
@@ -67,6 +68,17 @@ export async function POST(req: Request) {
         { error: "Member tidak ditemukan atau belum melengkapi profil." },
         { status: 404 }
       );
+    }
+
+    const dmAccess = await getPrivateDmAccess(session.user.id, peerId);
+    if (!dmAccess.allowed) {
+      const msg =
+        dmAccess.state === "need_request" || dmAccess.state === "declined_out"
+          ? "Anda belum diizinkan mengobrol dengan member ini. Kirim permintaan chat terlebih dahulu."
+          : dmAccess.state === "pending_out"
+            ? "Menunggu lawan menyetujui permintaan chat Anda."
+            : "Terima atau tolak permintaan chat dari lawan bicara ini terlebih dahulu.";
+      return NextResponse.json({ error: msg, dmAccess }, { status: 403 });
     }
 
     const [userAId, userBId] = orderedPair(session.user.id, peerId);

@@ -20,6 +20,14 @@ type Msg = {
   createdAt: string;
 };
 
+type DmAccess = {
+  allowed: boolean;
+  state: "allowed" | "need_request" | "pending_out" | "pending_in" | "declined_out";
+  requesterId?: string;
+  requesterName?: string | null;
+  introMessage?: string | null;
+};
+
 export function ProfilChatBox({
   peers,
   selfId,
@@ -36,7 +44,11 @@ export function ProfilChatBox({
   const [peerId, setPeerId] = useState(initialPeerId ?? peers[0]?.id ?? "");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [body, setBody] = useState("");
+  const [introRequest, setIntroRequest] = useState("");
+  const [dmAccess, setDmAccess] = useState<DmAccess | null>(null);
   const [loading, setLoading] = useState(false);
+  const [requestingDm, setRequestingDm] = useState(false);
+  const [respondingDm, setRespondingDm] = useState(false);
   const [beepEnabled, setBeepEnabled] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
   const lastMessageIdsRef = useRef<Set<string>>(new Set());
@@ -72,6 +84,8 @@ export function ProfilChatBox({
     lastMessageIdsRef.current = new Set();
     threadInitializedRef.current = false;
     threadLoadErrorShownRef.current = false;
+    setDmAccess(null);
+    setIntroRequest("");
   }, [mode, peerId]);
 
   const loadPrivate = useCallback(
@@ -81,8 +95,12 @@ export function ProfilChatBox({
       });
       const data = (await res.json().catch(() => ({}))) as {
         messages?: Msg[];
+        dmAccess?: DmAccess;
         error?: unknown;
       };
+      if (data.dmAccess) {
+        setDmAccess(data.dmAccess);
+      }
       const err = typeof data.error === "string" ? data.error : "";
       if (err && !threadLoadErrorShownRef.current) {
         threadLoadErrorShownRef.current = true;
@@ -147,6 +165,11 @@ export function ProfilChatBox({
       return;
     }
 
+    if (mode === "private" && dmAccess && !dmAccess.allowed) {
+      show("Chat privat belum dibuka untuk percakapan ini.", "err");
+      return;
+    }
+
     async function readSendError(res: Response): Promise<string> {
       const raw = await res.text();
       const trimmed = raw.trim();
@@ -205,6 +228,52 @@ export function ProfilChatBox({
       void loadPublic();
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function sendDmRequest(e: React.FormEvent) {
+    e.preventDefault();
+    if (!peerId) return;
+    setRequestingDm(true);
+    try {
+      const res = await fetch("/api/chat/dm-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ peerId, introMessage: introRequest.trim() || undefined }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string; state?: string };
+      if (!res.ok) {
+        show(data.error ?? "Gagal mengirim permintaan.", "err");
+        return;
+      }
+      show("Permintaan chat terkirim.");
+      setIntroRequest("");
+      void loadPrivate(peerId);
+    } finally {
+      setRequestingDm(false);
+    }
+  }
+
+  async function respondDm(accept: boolean) {
+    if (!peerId) return;
+    setRespondingDm(true);
+    try {
+      const res = await fetch("/api/chat/dm-request/respond", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ requesterId: peerId, accept }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        show(data.error ?? "Gagal memproses.", "err");
+        return;
+      }
+      show(accept ? "Permintaan disetujui. Anda bisa mengobrol sekarang." : "Permintaan ditolak.");
+      void loadPrivate(peerId);
+    } finally {
+      setRespondingDm(false);
     }
   }
 
@@ -297,6 +366,73 @@ export function ProfilChatBox({
             </select>
           </div>
         )}
+        {mode === "private" &&
+          peerId &&
+          dmAccess &&
+          !dmAccess.allowed &&
+          (dmAccess.state === "need_request" || dmAccess.state === "declined_out") && (
+            <div className="rounded-lg border border-broker-border bg-broker-surface/40 p-4 text-sm text-broker-muted">
+              <p className="font-medium text-white">
+                {dmAccess.state === "declined_out"
+                  ? "Permintaan chat sebelumnya ditolak. Anda bisa mengirim permintaan baru."
+                  : "Anda belum mengikuti member ini dan belum ada izin chat. Kirim permintaan — lawan bicara harus menyetujui terlebih dahulu."}
+              </p>
+              <form onSubmit={sendDmRequest} className="mt-3 space-y-2">
+                <label className="block text-xs text-broker-muted">Pesan pengantar (opsional)</label>
+                <textarea
+                  className={`${input} min-h-[72px] resize-y`}
+                  value={introRequest}
+                  onChange={(e) => setIntroRequest(e.target.value)}
+                  placeholder="Halo, saya ingin berdiskusi tentang…"
+                  maxLength={2000}
+                />
+                <button
+                  type="submit"
+                  disabled={requestingDm}
+                  className="rounded-lg bg-broker-accent px-4 py-2 text-sm font-semibold text-broker-bg disabled:opacity-50"
+                >
+                  {requestingDm ? "Mengirim…" : "Kirim permintaan chat"}
+                </button>
+              </form>
+            </div>
+          )}
+
+        {mode === "private" && peerId && dmAccess?.state === "pending_out" && (
+          <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-100/90">
+            Menunggu lawan menyetujui permintaan chat Anda. Anda belum bisa mengirim pesan sampai disetujui.
+          </p>
+        )}
+
+        {mode === "private" && peerId && dmAccess?.state === "pending_in" && (
+          <div className="rounded-lg border border-broker-accent/40 bg-broker-surface/60 p-4 text-sm">
+            <p className="font-medium text-white">
+              {(dmAccess.requesterName ?? peers.find((p) => p.id === peerId)?.name ?? "Member ini")}{" "}
+              ingin mengobrol dengan Anda.
+            </p>
+            {dmAccess.introMessage ? (
+              <p className="mt-2 whitespace-pre-wrap text-broker-muted">{dmAccess.introMessage}</p>
+            ) : null}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={respondingDm}
+                onClick={() => void respondDm(true)}
+                className="rounded-lg bg-broker-accent px-4 py-2 text-sm font-semibold text-broker-bg disabled:opacity-50"
+              >
+                Setujui
+              </button>
+              <button
+                type="button"
+                disabled={respondingDm}
+                onClick={() => void respondDm(false)}
+                className="rounded-lg border border-broker-border bg-broker-bg px-4 py-2 text-sm font-semibold text-broker-muted hover:text-white disabled:opacity-50"
+              >
+                Tolak
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-broker-border p-3 text-sm">
           {messages.map((m) => (
             <div
@@ -320,21 +456,27 @@ export function ProfilChatBox({
           ))}
           <div ref={endRef} />
         </div>
-        <form onSubmit={send} className="flex gap-2">
-          <input
-            className={input}
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder={mode === "public" ? "Pesan untuk chat umum…" : "Pesan…"}
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="shrink-0 rounded-lg bg-broker-accent px-4 py-2 text-sm font-semibold text-broker-bg disabled:opacity-50"
-          >
-            Kirim
-          </button>
-        </form>
+        {mode === "private" && !peerId ? (
+          <p className="text-xs text-broker-muted">Pilih member untuk chat privat.</p>
+        ) : mode === "private" && !dmAccess ? (
+          <p className="text-xs text-broker-muted">Memuat status chat…</p>
+        ) : mode === "private" && dmAccess && !dmAccess.allowed ? null : (
+          <form onSubmit={send} className="flex gap-2">
+            <input
+              className={input}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder={mode === "public" ? "Pesan untuk chat umum…" : "Pesan…"}
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="shrink-0 rounded-lg bg-broker-accent px-4 py-2 text-sm font-semibold text-broker-bg disabled:opacity-50"
+            >
+              Kirim
+            </button>
+          </form>
+        )}
       </div>
     </section>
   );
