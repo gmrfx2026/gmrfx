@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { SmallUserAvatar } from "@/components/SmallUserAvatar";
+import { DeleteStatusButton } from "@/components/member/DeleteStatusButton";
+import { DeleteStatusCommentButton } from "@/components/member/DeleteStatusCommentButton";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ArticleStatus, CommentTarget } from "@prisma/client";
@@ -301,30 +303,39 @@ export default async function MemberBySlugPage({
                   </h3>
                   {list.length > 0 ? (
                     <ul className="mt-3 space-y-3">
-                      {list.map((c) => (
-                        <li
-                          key={c.id}
-                          className="flex gap-2.5 rounded-xl border border-broker-border/60 bg-broker-bg/80 py-2.5 pl-2 pr-3 text-sm"
-                        >
-                          <SmallUserAvatar
-                            name={c.user.name}
-                            image={c.user.image}
-                            size="sm"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium leading-tight text-broker-accent">
-                              {c.user.name ?? "Member"}
-                            </p>
-                            <p className="mt-0.5 text-broker-muted">{c.content}</p>
-                            <p className="mt-1 text-[11px] text-broker-muted/60">
-                              {new Intl.DateTimeFormat("id-ID", {
-                                dateStyle: "short",
-                                timeStyle: "short",
-                              }).format(new Date(c.createdAt))}
-                            </p>
-                          </div>
-                        </li>
-                      ))}
+                      {list.map((c) => {
+                        const canDeleteComment =
+                          viewerId != null && (viewerId === c.userId || viewerId === member.id);
+                        return (
+                          <li
+                            key={c.id}
+                            className="flex gap-2.5 rounded-xl border border-broker-border/60 bg-broker-bg/80 py-2.5 pl-2 pr-3 text-sm"
+                          >
+                            <SmallUserAvatar
+                              name={c.user.name}
+                              image={c.user.image}
+                              size="sm"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <p className="font-medium leading-tight text-broker-accent">
+                                  {c.user.name ?? "Member"}
+                                </p>
+                                {canDeleteComment && (
+                                  <DeleteStatusCommentButton commentId={c.id} />
+                                )}
+                              </div>
+                              <p className="mt-0.5 text-broker-muted">{c.content}</p>
+                              <p className="mt-1 text-[11px] text-broker-muted/60">
+                                {new Intl.DateTimeFormat("id-ID", {
+                                  dateStyle: "short",
+                                  timeStyle: "short",
+                                }).format(new Date(c.createdAt))}
+                              </p>
+                            </div>
+                          </li>
+                        );
+                      })}
                     </ul>
                   ) : (
                     <p className="mt-2 text-sm text-broker-muted">Belum ada komentar.</p>
