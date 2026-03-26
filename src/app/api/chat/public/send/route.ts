@@ -3,9 +3,16 @@ import { auth } from "@/auth";
 import { chatDbErrorMessage } from "@/lib/chatDbErrorMessage";
 import { isUserProfileComplete } from "@/lib/profileComplete";
 import { prisma } from "@/lib/prisma";
-import { sanitizePlainText } from "@/lib/sanitizePlainText";
 import { clientKeyFromRequest, rateLimit } from "@/lib/simpleRateLimit";
 import { z } from "zod";
+
+/** Inline — jangan impor modul lain yang bisa menarik isomorphic-dompurify/jsdom (ERR_REQUIRE_ESM di Vercel). */
+function sanitizeChatBody(text: string, maxLen: number): string {
+  return text.replace(/[<>]/g, "").trim().slice(0, maxLen);
+}
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const schema = z.object({
   body: z.string().trim().min(1).max(4000),
@@ -53,7 +60,7 @@ export async function POST(req: Request) {
     }
 
     const senderId = session.user.id;
-    const text = sanitizePlainText(parsed.data.body, 4000);
+    const text = sanitizeChatBody(parsed.data.body, 4000);
     if (!text) {
       return NextResponse.json({ error: "Data tidak valid" }, { status: 400 });
     }

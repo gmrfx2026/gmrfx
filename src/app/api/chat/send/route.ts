@@ -3,8 +3,15 @@ import { auth } from "@/auth";
 import { chatDbErrorMessage } from "@/lib/chatDbErrorMessage";
 import { isUserProfileComplete } from "@/lib/profileComplete";
 import { prisma } from "@/lib/prisma";
-import { sanitizePlainText } from "@/lib/sanitizePlainText";
 import { clientKeyFromRequest, rateLimit } from "@/lib/simpleRateLimit";
+
+/** Inline — hindari bundel isomorphic-dompurify/jsdom di function chat (Vercel ERR_REQUIRE_ESM). */
+function sanitizeChatBody(text: string, maxLen: number): string {
+  return text.replace(/[<>]/g, "").trim().slice(0, maxLen);
+}
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function orderedPair(a: string, b: string): [string, string] {
   return a < b ? [a, b] : [b, a];
@@ -43,7 +50,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Body tidak valid" }, { status: 400 });
     }
     const peerId = String((body as { peerId?: unknown })?.peerId ?? "");
-    const text = sanitizePlainText(String((body as { body?: unknown })?.body ?? ""), 4000);
+    const text = sanitizeChatBody(String((body as { body?: unknown })?.body ?? ""), 4000);
     if (!peerId || !text) {
       return NextResponse.json({ error: "Data tidak valid" }, { status: 400 });
     }
