@@ -15,6 +15,8 @@ import {
 } from "@/lib/walletTransferFilters";
 import { ProfilStatusBlock } from "@/components/ProfilStatusBlock";
 import { ProfilChatBox } from "@/components/ProfilChatBox";
+import { ProfilFollowSettings } from "@/components/ProfilFollowSettings";
+import { ProfilNotificationsPanel } from "@/components/ProfilNotificationsPanel";
 import { ProfilSecurityForms } from "@/components/ProfilSecurityForms";
 import { ProfilAvatarUpload } from "@/components/ProfilAvatarUpload";
 import { ProfilArticlesSection } from "@/components/ProfilArticlesSection";
@@ -306,8 +308,21 @@ export default async function ProfilPage({
       )}
 
       {showSecurity && (
-        <section className="border-t border-broker-border pt-10">
+        <section className="border-t border-broker-border pt-10 space-y-8">
+          <ProfilFollowSettings initialMode={user.followApprovalMode} />
           <ProfilSecurityForms />
+        </section>
+      )}
+
+      {showNotifications && (
+        <section className="border-t border-broker-border pt-10">
+          <h1 className="text-2xl font-bold text-white">Notifikasi</h1>
+          <p className="mt-1 text-sm text-broker-muted">
+            Permintaan mengikuti, pemberitahuan aktivitas dari akun yang Anda ikuti, dan lainnya.
+          </p>
+          <div className="mt-6">
+            <ProfilNotificationsPanel />
+          </div>
         </section>
       )}
 

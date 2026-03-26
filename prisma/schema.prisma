@@ -38,6 +38,25 @@ enum CommentTarget {
   STATUS
 }
 
+/// Izin mengikuti: langsung aktif vs perlu disetujui dulu (mirip akun privat).
+enum FollowApprovalMode {
+  AUTO
+  APPROVAL_REQUIRED
+}
+
+enum MemberFollowStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum NotificationType {
+  FOLLOW_REQUEST
+  FOLLOW_ACCEPTED
+  NEW_STATUS
+  NEW_ARTICLE
+}
+
 model User {
   id              String       @id @default(cuid())
   name            String?
@@ -93,14 +112,18 @@ model User {
   memberFollowsOutgoing MemberFollow[] @relation("MemberFollowsOutgoing")
   /** Siapa yang mengikuti akun ini (followers). */
   memberFollowsIncoming MemberFollow[] @relation("MemberFollowsIncoming")
+
+  notifications Notification[]
 }
 
 /// Relasi follow antar member (Instagram-style): follower → following.
 model MemberFollow {
-  id          String   @id @default(cuid())
+  id          String             @id @default(cuid())
   followerId  String
   followingId String
-  createdAt   DateTime @default(now())
+  status      MemberFollowStatus @default(ACCEPTED)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 
   follower  User @relation("MemberFollowsOutgoing", fields: [followerId], references: [id], onDelete: Cascade)
   following User @relation("MemberFollowsIncoming", fields: [followingId], references: [id], onDelete: Cascade)
@@ -108,6 +131,26 @@ model MemberFollow {
   @@unique([followerId, followingId])
   @@index([followingId])
   @@index([followerId])
+  @@index([followingId, status])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  actorId   String?
+  type      NotificationType
+  title     String
+  body      String?
+  linkUrl   String?
+  readAt    DateTime?
+  statusId  String?
+  articleId String?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
 }
 
 model StatusEntry {

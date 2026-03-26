@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 export const MEMBER_MENU_TAB_KEYS = [
   "home",
   "artikel",
+  "notifications",
   "wallet",
   "chat",
   "security",
@@ -19,9 +20,10 @@ export type MemberMenuResolvedItem = {
 const DEFAULTS: Record<MemberMenuTabKey, { label: string; sortOrder: number }> = {
   home: { label: "Home", sortOrder: 0 },
   artikel: { label: "Artikel", sortOrder: 1 },
-  wallet: { label: "Wallet & Transfer", sortOrder: 2 },
-  chat: { label: "Chat", sortOrder: 3 },
-  security: { label: "Keamanan", sortOrder: 4 },
+  notifications: { label: "Notifikasi", sortOrder: 2 },
+  wallet: { label: "Wallet & Transfer", sortOrder: 3 },
+  chat: { label: "Chat", sortOrder: 4 },
+  security: { label: "Keamanan", sortOrder: 5 },
 };
 
 function isTabKey(s: string): s is MemberMenuTabKey {

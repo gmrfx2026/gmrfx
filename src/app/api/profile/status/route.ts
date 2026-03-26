@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { notifyFollowersNewStatus } from "@/lib/memberNotifications";
 import { sanitizePlainText } from "@/lib/sanitizePlainText";
 
 export async function PATCH(req: Request) {
@@ -24,6 +25,14 @@ export async function PATCH(req: Request) {
   await prisma.user.update({
     where: { id: session.user.id },
     data: { profileStatus: content },
+  });
+
+  void notifyFollowersNewStatus({
+    authorId: session.user.id,
+    statusId: status.id,
+    contentPreview: content,
+  }).catch(() => {
+    /* ignore */
   });
 
   return NextResponse.json({ ok: true, statusId: status.id });

@@ -55,6 +55,7 @@ export default async function MemberBySlugPage({
       kabupaten: true,
       image: true,
       memberSlug: true,
+      followApprovalMode: true,
     },
   });
 
@@ -72,6 +73,7 @@ export default async function MemberBySlugPage({
         kabupaten: true,
         image: true,
         memberSlug: true,
+        followApprovalMode: true,
       },
     });
   }
@@ -126,8 +128,12 @@ export default async function MemberBySlugPage({
             select: { stars: true },
           })
         : Promise.resolve(null),
-      prisma.memberFollow.count({ where: { followingId: member.id } }),
-      prisma.memberFollow.count({ where: { followerId: member.id } }),
+      prisma.memberFollow.count({
+        where: { followingId: member.id, status: "ACCEPTED" },
+      }),
+      prisma.memberFollow.count({
+        where: { followerId: member.id, status: "ACCEPTED" },
+      }),
       viewerId && viewerId !== member.id
         ? prisma.memberFollow.findUnique({
             where: {
@@ -136,7 +142,7 @@ export default async function MemberBySlugPage({
                 followingId: member.id,
               },
             },
-            select: { id: true },
+            select: { id: true, status: true },
           })
         : Promise.resolve(null),
     ]);
@@ -230,6 +236,15 @@ export default async function MemberBySlugPage({
   const myStars = myRating?.stars ?? null;
   const hasStatuses = statusTotal > 0;
   const canRate = viewerId != null && viewerId !== member.id && hasStatuses;
+
+  const followState =
+    viewerId && viewerId !== member.id
+      ? viewerFollows?.status === "ACCEPTED"
+        ? "following"
+        : viewerFollows?.status === "PENDING"
+          ? "pending"
+          : "none"
+      : "none";
 
   const profilePath = `/${member.memberSlug}`;
   const profileHrefCurrent = buildMemberProfileHref(profilePath, searchParams, {});
@@ -338,7 +353,8 @@ export default async function MemberBySlugPage({
           {!isSelf && viewerId && (
             <MemberFollowButton
               memberId={member.id}
-              initialFollowing={viewerFollows != null}
+              followState={followState}
+              targetRequiresApproval={member.followApprovalMode === "APPROVAL_REQUIRED"}
             />
           )}
           {!isSelf && !viewerId && <MemberFollowLoginLink loginCallbackUrl={profileHrefCurrent} />}

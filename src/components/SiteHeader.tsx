@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { HeaderAuth } from "./HeaderAuth";
 import { MobileSiteNav } from "./MobileSiteNav";
+import { NotificationBell } from "./NotificationBell";
 
 const nav = [
   { href: "/", label: "Home" },
@@ -74,6 +75,7 @@ export async function SiteHeader() {
         </nav>
         <div className="flex items-center gap-2">
           <MobileSiteNav links={mobileLinks} />
+          {session && <NotificationBell />}
           <HeaderAuth session={session} />
         </div>
       </div>
