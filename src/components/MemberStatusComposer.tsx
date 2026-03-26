@@ -43,16 +43,12 @@ export function MemberStatusComposer() {
 
   return (
     <form onSubmit={onSubmit} className="rounded-2xl border border-broker-border/80 bg-broker-surface/40 p-4 shadow-inner">
-      <p className="text-sm font-medium text-white">Buat status</p>
-      <p className="mt-1 text-xs text-broker-muted">
-        Status Anda terlihat di halaman profil publik ini; member lain bisa berkomentar.
-      </p>
       <label className="sr-only" htmlFor="member-status-composer">
         Tulis status
       </label>
       <textarea
         id="member-status-composer"
-        className={`${input} mt-3 min-h-[88px] resize-y`}
+        className={`${input} min-h-[88px] resize-y`}
         rows={3}
         maxLength={500}
         value={text}

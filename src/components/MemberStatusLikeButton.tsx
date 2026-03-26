@@ -41,22 +41,20 @@ export function MemberStatusLikeButton({
   }
 
   return (
-    <div className="mt-3 flex items-center gap-3 border-t border-broker-border/40 pt-3">
-      <button
-        type="button"
-        disabled={busy}
-        onClick={() => void toggle()}
-        className={[
-          "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition",
-          liked
-            ? "bg-broker-accent/20 text-broker-accent ring-1 ring-broker-accent/40"
-            : "border border-broker-border/80 text-broker-muted hover:border-broker-accent/50 hover:text-white",
-        ].join(" ")}
-      >
-        <span aria-hidden>{liked ? "♥" : "♡"}</span>
-        <span>{liked ? "Disukai" : "Suka"}</span>
-        {count > 0 && <span className="text-xs opacity-90">({count})</span>}
-      </button>
-    </div>
+    <button
+      type="button"
+      disabled={busy}
+      onClick={() => void toggle()}
+      className={[
+        "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition",
+        liked
+          ? "bg-broker-accent/20 text-broker-accent ring-1 ring-broker-accent/40"
+          : "border border-broker-border/80 text-broker-muted hover:border-broker-accent/50 hover:text-white",
+      ].join(" ")}
+    >
+      <span aria-hidden>{liked ? "♥" : "♡"}</span>
+      <span>{liked ? "Disukai" : "Suka"}</span>
+      {count > 0 && <span className="text-xs opacity-90">({count})</span>}
+    </button>
   );
 }

@@ -4,9 +4,8 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ArticleStatus, CommentTarget } from "@prisma/client";
-import { MemberStatusCommentForm } from "@/components/MemberStatusCommentForm";
+import { MemberStatusActions } from "@/components/MemberStatusActions";
 import { MemberStatusComposer } from "@/components/MemberStatusComposer";
-import { MemberStatusLikeButton } from "@/components/MemberStatusLikeButton";
 import { MemberRatingWidget } from "@/components/member/MemberRatingWidget";
 import { unstable_noStore as noStore } from "next/cache";
 
@@ -277,7 +276,7 @@ export default async function MemberBySlugPage({
                 <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-white">{s.content}</p>
 
                 {viewerId ? (
-                  <MemberStatusLikeButton
+                  <MemberStatusActions
                     statusId={s.id}
                     initialCount={likeCountById.get(s.id) ?? 0}
                     initialLiked={likedByViewer.has(s.id)}
@@ -320,8 +319,6 @@ export default async function MemberBySlugPage({
                     <p className="mt-2 text-sm text-broker-muted">Belum ada komentar.</p>
                   )}
                 </div>
-
-                {session?.user?.id && <MemberStatusCommentForm statusId={s.id} />}
               </article>
             );
           })}
