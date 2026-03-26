@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverComponentsExternalPackages: ["dompurify", "jsdom"],
+    serverComponentsExternalPackages: ["sanitize-html", "htmlparser2"],
   },
   async redirects() {
     return [

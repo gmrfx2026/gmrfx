@@ -1,114 +1,113 @@
-import createDOMPurify from "dompurify";
-import { JSDOM } from "jsdom";
+import sanitizeHtml from "sanitize-html";
 import { isAllowedArticleImageSrc } from "./articleImagePolicy";
 
-/**
- * DOMPurify di server: pakai jsdom 24 (CJS) — jangan pakai isomorphic-dompurify
- * yang menarik jsdom 28 + html-encoding-sniffer 6 + @exodus/bytes (ERR_REQUIRE_ESM di Vercel).
- */
-const dompurifyWindow = new JSDOM("<!DOCTYPE html>").window;
-const DOMPurify = createDOMPurify(dompurifyWindow as unknown as Window & typeof globalThis);
+const ALLOWED_TAGS = [
+  "p",
+  "br",
+  "strong",
+  "b",
+  "em",
+  "i",
+  "u",
+  "s",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "ul",
+  "ol",
+  "li",
+  "a",
+  "blockquote",
+  "cite",
+  "footer",
+  "code",
+  "pre",
+  "span",
+  "img",
+  "hr",
+  "table",
+  "thead",
+  "tbody",
+  "tfoot",
+  "tr",
+  "th",
+  "td",
+  "caption",
+];
 
-let articlePurifyHooksInstalled = false;
-
-function ensureArticlePurifyHooks() {
-  if (articlePurifyHooksInstalled) return;
-  articlePurifyHooksInstalled = true;
-
-  DOMPurify.addHook("uponSanitizeAttribute", (node, data) => {
-    const tag = String(node.nodeName).toUpperCase();
-
-    if (data.attrName === "src" && tag === "IMG") {
-      const v = String(data.attrValue ?? "").trim();
-      if (!isAllowedArticleImageSrc(v)) {
-        data.keepAttr = false;
-      }
-      return;
-    }
-
-    if (data.attrName === "style") {
-      data.keepAttr = false;
-      return;
-    }
-
-    if ((data.attrName === "colspan" || data.attrName === "rowspan") && (tag === "TD" || tag === "TH")) {
-      const n = Number.parseInt(String(data.attrValue ?? ""), 10);
-      if (!Number.isFinite(n) || n < 1 || n > 50) {
-        data.keepAttr = false;
-      }
-      return;
-    }
-
-    if (data.attrName === "scope" && tag === "TH") {
-      const v = String(data.attrValue ?? "").toLowerCase();
-      if (!["col", "row", "colgroup", "rowgroup"].includes(v)) {
-        data.keepAttr = false;
-      }
-    }
-  });
-
-  DOMPurify.addHook("afterSanitizeElements", (node) => {
-    if (String(node.nodeName).toUpperCase() !== "IMG") return;
-    const el = node as Element;
-    if (typeof el.getAttribute === "function" && !el.getAttribute("src")) {
-      el.remove();
-    }
-  });
+function hrefAllowed(href: string): boolean {
+  return /^(?:(?:https?|mailto):|\/|#)/i.test(String(href ?? "").trim());
 }
 
-/** Konten artikel: izinkan formatting umum, tanpa script/iframes berbahaya */
+function clampTableSpan(attribs: Record<string, string>): Record<string, string> {
+  const next = { ...attribs };
+  for (const key of ["colspan", "rowspan"] as const) {
+    const raw = next[key];
+    if (raw === undefined) continue;
+    const n = Number.parseInt(String(raw), 10);
+    if (!Number.isFinite(n) || n < 1 || n > 50) {
+      delete next[key];
+    }
+  }
+  return next;
+}
+
+/** Konten artikel: izinkan formatting umum, tanpa script/iframes berbahaya.
+ *  Pakai `sanitize-html` (htmlparser2) — tanpa jsdom/DOMPurify agar tidak ada ERR_REQUIRE_ESM di Vercel.
+ */
 export function sanitizeArticleHtml(dirty: string): string {
-  ensureArticlePurifyHooks();
-  return DOMPurify.sanitize(dirty, {
-    USE_PROFILES: { html: true },
-    ALLOWED_TAGS: [
-      "p",
-      "br",
-      "strong",
-      "b",
-      "em",
-      "i",
-      "u",
-      "s",
-      "h1",
-      "h2",
-      "h3",
-      "h4",
-      "ul",
-      "ol",
-      "li",
-      "a",
-      "blockquote",
-      "cite",
-      "footer",
-      "code",
-      "pre",
-      "span",
-      "img",
-      "hr",
-      "table",
-      "thead",
-      "tbody",
-      "tfoot",
-      "tr",
-      "th",
-      "td",
-      "caption",
-    ],
-    ALLOWED_ATTR: [
-      "href",
-      "title",
-      "class",
-      "target",
-      "rel",
-      "src",
-      "alt",
-      "loading",
-      "colspan",
-      "rowspan",
-      "scope",
-    ],
-    ALLOW_DATA_ATTR: false,
-    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|\/|#)/i,
+  return sanitizeHtml(dirty, {
+    allowedTags: ALLOWED_TAGS,
+    allowedAttributes: {
+      "*": ["class"],
+      a: ["href", "title", "target", "rel"],
+      img: ["src", "alt", "loading"],
+      td: ["colspan", "rowspan"],
+      th: ["colspan", "rowspan", "scope"],
+    },
+    allowedSchemes: ["http", "https", "mailto"],
+    transformTags: {
+      img: (tagName, attribs) => {
+        const src = attribs.src;
+        if (src && !isAllowedArticleImageSrc(String(src))) {
+          const next = { ...attribs };
+          delete next.src;
+          return { tagName, attribs: next };
+        }
+        return { tagName, attribs };
+      },
+      a: (tagName, attribs) => {
+        const href = attribs.href;
+        if (href && !hrefAllowed(String(href))) {
+          const next = { ...attribs };
+          delete next.href;
+          return { tagName, attribs: next };
+        }
+        return { tagName, attribs };
+      },
+      td: (tagName, attribs) => ({ tagName, attribs: clampTableSpan(attribs) }),
+      th: (tagName, attribs) => {
+        let a = clampTableSpan(attribs);
+        if (a.scope) {
+          const v = String(a.scope).toLowerCase();
+          if (!["col", "row", "colgroup", "rowgroup"].includes(v)) {
+            const next = { ...a };
+            delete next.scope;
+            a = next;
+          }
+        }
+        return { tagName, attribs: a };
+      },
+    },
+    exclusiveFilter: (frame) => {
+      if (frame.tag === "img") {
+        const src = frame.attribs?.src;
+        if (!src || !isAllowedArticleImageSrc(String(src))) {
+          return true;
+        }
+      }
+      return false;
+    },
   });
 }
