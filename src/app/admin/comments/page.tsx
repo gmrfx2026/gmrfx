@@ -12,7 +12,13 @@ export default async function AdminCommentsPage() {
     include: {
       user: { select: { name: true, email: true } },
       article: { select: { title: true, slug: true } },
-      status: { select: { id: true, userId: true } },
+      status: {
+        select: {
+          id: true,
+          userId: true,
+          user: { select: { memberSlug: true } },
+        },
+      },
     },
   });
 
@@ -52,7 +58,11 @@ export default async function AdminCommentsPage() {
                               {" "}
                               ·{" "}
                               <Link
-                                href={`/member/${c.status.userId}`}
+                                href={
+                                  c.status.user?.memberSlug
+                                    ? `/${c.status.user.memberSlug}`
+                                    : `/member/${c.status.userId}`
+                                }
                                 className="text-blue-600 hover:underline"
                               >
                                 profil

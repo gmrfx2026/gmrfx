@@ -36,13 +36,25 @@ export function ProfilStatusBlock({
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-white">Status profil</h2>
-      <p className="mt-1 text-xs text-broker-muted">
-        Bagikan tautan publik agar member lain bisa berkomentar:{" "}
-        <Link href={`/${ownerSlug}`} className="break-all text-broker-accent hover:underline">
-          /{ownerSlug}
-        </Link>
+      <h2 className="text-lg font-semibold text-white">Status &amp; halaman publik</h2>
+      <p className="mt-1 text-sm text-broker-muted">
+        Halaman publik Anda seperti linimasa: banyak status, komentar, dan suka. Buka di tab baru untuk melihat
+        tampilan pengunjung.
       </p>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <Link
+          href={`/${ownerSlug}`}
+          className="inline-flex rounded-lg bg-broker-accent px-4 py-2 text-sm font-semibold text-broker-bg hover:opacity-90"
+        >
+          Lihat halaman publik saya
+        </Link>
+        <span className="text-xs text-broker-muted">
+          URL:{" "}
+          <Link href={`/${ownerSlug}`} className="break-all text-broker-accent hover:underline">
+            /{ownerSlug}
+          </Link>
+        </span>
+      </div>
       <form onSubmit={saveStatus} className="mt-3 space-y-2">
         <textarea
           className={input}
