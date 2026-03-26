@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { TrashIcon } from "@/components/icons/TrashIcon";
 import { useToast } from "@/components/ToastProvider";
 
 export function DeleteStatusButton({ statusId }: { statusId: string }) {
@@ -31,9 +32,15 @@ export function DeleteStatusButton({ statusId }: { statusId: string }) {
       type="button"
       disabled={busy}
       onClick={() => void onDelete()}
-      className="shrink-0 text-xs font-medium text-red-400/90 hover:text-red-300 hover:underline disabled:opacity-50"
+      title={busy ? "Menghapus…" : "Hapus status"}
+      aria-label={busy ? "Menghapus status" : "Hapus status"}
+      className="shrink-0 rounded-md p-1.5 text-red-400/90 transition hover:bg-red-500/15 hover:text-red-300 disabled:opacity-50"
     >
-      {busy ? "Menghapus…" : "Hapus"}
+      {busy ? (
+        <span className="inline-block h-4 w-4 animate-pulse rounded border border-current opacity-70" />
+      ) : (
+        <TrashIcon className="h-4 w-4" />
+      )}
     </button>
   );
 }

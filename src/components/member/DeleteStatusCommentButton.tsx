@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { TrashIcon } from "@/components/icons/TrashIcon";
 import { useToast } from "@/components/ToastProvider";
 
 export function DeleteStatusCommentButton({ commentId }: { commentId: string }) {
@@ -33,9 +34,15 @@ export function DeleteStatusCommentButton({ commentId }: { commentId: string }) 
       type="button"
       disabled={busy}
       onClick={() => void onDelete()}
-      className="shrink-0 text-[11px] font-medium text-red-400/80 hover:text-red-300 hover:underline disabled:opacity-50"
+      title={busy ? "Menghapus…" : "Hapus komentar"}
+      aria-label={busy ? "Menghapus komentar" : "Hapus komentar"}
+      className="shrink-0 rounded-md p-1 text-red-400/85 transition hover:bg-red-500/15 hover:text-red-300 disabled:opacity-50"
     >
-      {busy ? "…" : "Hapus"}
+      {busy ? (
+        <span className="inline-block h-3.5 w-3.5 animate-pulse rounded border border-current opacity-70" />
+      ) : (
+        <TrashIcon className="h-3.5 w-3.5" />
+      )}
     </button>
   );
 }
