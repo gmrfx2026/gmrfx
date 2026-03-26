@@ -69,6 +69,7 @@ export default async function ProfilPage({
   const showWalletTransfer = tab === "wallet";
   const showChat = tab === "chat";
   const showSecurity = tab === "security";
+  const showNotifications = tab === "notifications";
   const showArticles = tab === "home" || tab === "artikel";
 
   const onlineWindowMinutes = 5;

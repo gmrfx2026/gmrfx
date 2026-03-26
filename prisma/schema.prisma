@@ -82,6 +82,9 @@ model User {
   profileStatus String?
   memberSlug    String? @unique
 
+  /// Pengikut baru langsung aktif, atau menunggu persetujuan Anda.
+  followApprovalMode FollowApprovalMode @default(AUTO)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
