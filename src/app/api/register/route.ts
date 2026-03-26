@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { generateUniqueWalletAddress } from "@/lib/wallet";
 import { toMemberSlug } from "@/lib/memberSlug";
@@ -62,7 +63,22 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error(e);
+    console.error("register", e);
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2002") {
+        const fields = e.meta?.target as string[] | undefined;
+        if (fields?.includes("email")) {
+          return NextResponse.json({ error: "Email sudah terdaftar" }, { status: 409 });
+        }
+        if (fields?.includes("walletAddress") || fields?.includes("memberSlug")) {
+          return NextResponse.json({ error: "Coba lagi sebentar (konflik data sementara)" }, { status: 409 });
+        }
+        return NextResponse.json({ error: "Data bentrok dengan pengguna lain" }, { status: 409 });
+      }
+    }
+    if (e instanceof Prisma.PrismaClientInitializationError) {
+      return NextResponse.json({ error: "Koneksi database gagal. Coba lagi nanti." }, { status: 503 });
+    }
     return NextResponse.json({ error: "Gagal mendaftar" }, { status: 500 });
   }
 }

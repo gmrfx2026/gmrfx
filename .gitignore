@@ -101,3 +101,6 @@ tmp_cookies.txt
 
 # dataconnect generated files
 .dataconnect
+
+.vercel
+.env*.local
