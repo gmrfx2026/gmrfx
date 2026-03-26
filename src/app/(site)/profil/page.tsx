@@ -284,7 +284,8 @@ export default async function ProfilPage({
             {user.image?.startsWith("/") ? (
               <Image src={user.image} alt="" fill className="object-cover" unoptimized />
             ) : user.image ? (
-              <Image src={user.image} alt="" fill className="object-cover" />
+              // eslint-disable-next-line @next/next/no-img-element -- URL eksternal di luar remotePatterns next/image
+              <img src={user.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-2xl text-broker-muted">
                 {(user.name ?? user.email).slice(0, 1).toUpperCase()}

@@ -14,9 +14,16 @@ export function ProfilAvatarUpload() {
     const fd = new FormData();
     fd.append("file", file);
     const res = await fetch("/api/profile/avatar", { method: "POST", body: fd });
-    const data = await res.json().catch(() => ({}));
+    const raw = await res.text();
+    let data: { error?: string } = {};
+    try {
+      data = raw ? (JSON.parse(raw) as { error?: string }) : {};
+    } catch {
+      setMsg(`Upload gagal (HTTP ${res.status}).`);
+      return;
+    }
     if (!res.ok) {
-      setMsg(data.error ?? "Upload gagal");
+      setMsg(typeof data.error === "string" ? data.error : `Upload gagal (HTTP ${res.status}).`);
       return;
     }
     setMsg("Foto diperbarui.");
@@ -29,7 +36,17 @@ export function ProfilAvatarUpload() {
         Ganti foto
         <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onChange} />
       </label>
-      {msg && <p className="mt-1 text-xs text-broker-muted">{msg}</p>}
+      {msg && (
+        <p
+          className={
+            msg === "Foto diperbarui."
+              ? "mt-1 text-xs text-broker-accent"
+              : "mt-1 text-xs text-red-400"
+          }
+        >
+          {msg}
+        </p>
+      )}
     </div>
   );
 }

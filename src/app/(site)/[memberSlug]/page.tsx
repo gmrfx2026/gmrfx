@@ -128,7 +128,8 @@ export default async function MemberBySlugPage({ params }: { params: { memberSlu
             {member.image?.startsWith("/") ? (
               <Image src={member.image} alt="" fill className="object-cover" unoptimized />
             ) : member.image ? (
-              <Image src={member.image} alt="" fill className="object-cover" />
+              // eslint-disable-next-line @next/next/no-img-element -- URL eksternal di luar remotePatterns next/image
+              <img src={member.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-2xl text-broker-muted">
                 {(member.name ?? "M").slice(0, 1).toUpperCase()}
