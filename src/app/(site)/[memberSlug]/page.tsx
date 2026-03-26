@@ -360,8 +360,6 @@ export default async function MemberBySlugPage({
           </p>
         )}
 
-        {timelinePaginationNav && <div className="mb-4">{timelinePaginationNav}</div>}
-
         <div className="mt-6 space-y-5">
           {statuses.map((s) => {
             const block = commentByStatusId.get(s.id);
@@ -417,8 +415,47 @@ export default async function MemberBySlugPage({
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-broker-accent/90">
                     Komentar
                   </h3>
+                  {list.length > 0 ? (
+                    <ul className="mt-3 space-y-3">
+                      {list.map((c) => {
+                        const canDeleteComment =
+                          viewerId != null && (viewerId === c.userId || viewerId === member.id);
+                        return (
+                          <li
+                            key={c.id}
+                            className="flex gap-2.5 rounded-xl border border-broker-border/60 bg-broker-bg/80 py-2.5 pl-2 pr-3 text-sm"
+                          >
+                            <SmallUserAvatar
+                              name={c.user.name}
+                              image={c.user.image}
+                              size="sm"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <p className="font-medium leading-tight text-broker-accent">
+                                  {c.user.name ?? "Member"}
+                                </p>
+                                {canDeleteComment && (
+                                  <DeleteStatusCommentButton commentId={c.id} />
+                                )}
+                              </div>
+                              <p className="mt-0.5 text-broker-muted">{c.content}</p>
+                              <p className="mt-1 text-[11px] text-broker-muted/60">
+                                {new Intl.DateTimeFormat("id-ID", {
+                                  dateStyle: "short",
+                                  timeStyle: "short",
+                                }).format(new Date(c.createdAt))}
+                              </p>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-sm text-broker-muted">Belum ada komentar.</p>
+                  )}
                   {block && block.total > 0 && (
-                    <div className="mt-2 rounded-lg border border-broker-border/50 bg-broker-bg/30 px-3 py-2.5">
+                    <div className="mt-4 rounded-lg border border-broker-border/50 bg-broker-bg/30 px-3 py-2.5">
                       <p className="text-xs text-broker-muted">
                         Menampilkan {from}–{to} dari {block.total} komentar
                         {block.totalPages > 1
@@ -461,45 +498,6 @@ export default async function MemberBySlugPage({
                         </nav>
                       )}
                     </div>
-                  )}
-                  {list.length > 0 ? (
-                    <ul className="mt-3 space-y-3">
-                      {list.map((c) => {
-                        const canDeleteComment =
-                          viewerId != null && (viewerId === c.userId || viewerId === member.id);
-                        return (
-                          <li
-                            key={c.id}
-                            className="flex gap-2.5 rounded-xl border border-broker-border/60 bg-broker-bg/80 py-2.5 pl-2 pr-3 text-sm"
-                          >
-                            <SmallUserAvatar
-                              name={c.user.name}
-                              image={c.user.image}
-                              size="sm"
-                            />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <p className="font-medium leading-tight text-broker-accent">
-                                  {c.user.name ?? "Member"}
-                                </p>
-                                {canDeleteComment && (
-                                  <DeleteStatusCommentButton commentId={c.id} />
-                                )}
-                              </div>
-                              <p className="mt-0.5 text-broker-muted">{c.content}</p>
-                              <p className="mt-1 text-[11px] text-broker-muted/60">
-                                {new Intl.DateTimeFormat("id-ID", {
-                                  dateStyle: "short",
-                                  timeStyle: "short",
-                                }).format(new Date(c.createdAt))}
-                              </p>
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : (
-                    <p className="mt-2 text-sm text-broker-muted">Belum ada komentar.</p>
                   )}
                 </div>
               </article>
