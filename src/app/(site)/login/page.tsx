@@ -30,7 +30,9 @@ export default async function LoginPage({
       ) : (
         <>
           <p className="mt-2 text-sm text-broker-muted">
-            Email & password atau Google (jika dikonfigurasi).
+            {googleOn
+              ? "Masuk dengan email & password atau lanjut dengan Google."
+              : "Masuk dengan email & password."}
           </p>
           <LoginForm callbackUrl={searchParams.callbackUrl} googleEnabled={googleOn} />
         </>
