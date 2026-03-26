@@ -286,6 +286,33 @@ export default async function ProfilPage({
               <span className="font-mono text-broker-gold">{user.walletAddress ?? "—"}</span>
             </p>
           </div>
+
+          {tab === "home" && (
+            <div className="mt-4 rounded-xl border border-broker-accent/30 bg-broker-accent/10 p-4">
+              <p className="text-sm font-semibold text-white">Notifikasi & izin mengikuti</p>
+              <p className="mt-1 text-sm text-broker-muted">
+                Fitur ini aktif setelah migrasi database terbaru. Cek di sini:
+              </p>
+              <ul className="mt-3 list-inside list-disc space-y-2 text-sm text-broker-muted">
+                <li>
+                  <strong className="font-medium text-white">Lonceng</strong> di pojok kanan atas (sebelum nama
+                  akun) — jumlah notifikasi belum dibaca.
+                </li>
+                <li>
+                  <Link href="/profil?tab=notifications" className="font-medium text-broker-accent hover:underline">
+                    Menu Notifikasi
+                  </Link>{" "}
+                  — permintaan mengikuti & riwayat pemberitahuan.
+                </li>
+                <li>
+                  <Link href="/profil?tab=security" className="font-medium text-broker-accent hover:underline">
+                    Keamanan → Privasi mengikuti
+                  </Link>{" "}
+                  — pilih langsung disetujui atau perlu persetujuan Anda (seperti akun privat).
+                </li>
+              </ul>
+            </div>
+          )}
         </div>
       </div>
 
