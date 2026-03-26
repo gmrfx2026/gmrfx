@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { CommentTarget } from "@prisma/client";
 import Image from "next/image";
+import Link from "next/link";
 import { toMemberSlug } from "@/lib/memberSlug";
 import { ProfilWalletTransfer } from "@/components/ProfilWalletTransfer";
 import { ProfilWalletHistory, type WalletHistoryRow } from "@/components/ProfilWalletHistory";
@@ -61,6 +62,8 @@ export default async function ProfilPage({
   if (!user) redirect("/login");
 
   const showStatus = tab === "home" || tab === "status" || tab === "artikel";
+  /** Blok status di dashboard: tidak ditampilkan di Home (linimasa ada di halaman publik). */
+  const showProfilStatusSection = showStatus && tab !== "home";
   const showWalletTransfer = tab === "wallet";
   const showChat = tab === "chat";
   const showSecurity = tab === "security";
@@ -96,14 +99,16 @@ export default async function ProfilPage({
   }
   const onlinePeerIdSet = new Set(onlinePeerIds);
 
-  const latestStatus = await prisma.statusEntry.findFirst({
-    where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
-    select: { id: true, content: true },
-  });
+  const latestStatus = showProfilStatusSection
+    ? await prisma.statusEntry.findFirst({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, content: true },
+      })
+    : null;
 
   const [statusComments, peers, walletHistoryBundle, articleBundle] = await Promise.all([
-    showStatus && latestStatus
+    showProfilStatusSection && latestStatus
       ? prisma.comment.findMany({
           where: { targetType: CommentTarget.STATUS, statusId: latestStatus.id, hidden: false },
           orderBy: { createdAt: "desc" },
@@ -249,7 +254,12 @@ export default async function ProfilPage({
             )}
           </div>
           <ProfilAvatarUpload />
-          <p className="mt-3 text-center text-sm font-medium text-white">{user.name}</p>
+          <Link
+            href={`/${ownerSlug}`}
+            className="mt-3 block text-center text-sm font-medium text-white hover:text-broker-accent hover:underline"
+          >
+            {user.name ?? user.email}
+          </Link>
           <p className="text-center text-xs text-broker-muted">{user.email}</p>
         </div>
 
@@ -301,7 +311,7 @@ export default async function ProfilPage({
         </section>
       )}
 
-      {showStatus && (
+      {showProfilStatusSection && (
         <section className="border-t border-broker-border pt-10">
           <ProfilStatusBlock
             initialStatus={latestStatus?.content ?? user.profileStatus ?? ""}
