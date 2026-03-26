@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { chatDbErrorMessage } from "@/lib/chatDbErrorMessage";
 import { prisma } from "@/lib/prisma";
 
 function orderedPair(a: string, b: string): [string, string] {
@@ -20,34 +21,44 @@ export async function GET(req: Request) {
 
   const [userAId, userBId] = orderedPair(session.user.id, peerId);
 
-  const conv = await prisma.chatConversation.findUnique({
-    where: { userAId_userBId: { userAId, userBId } },
-    include: {
-      messages: { orderBy: { createdAt: "desc" }, take: 50 },
-    },
-  });
-
-  // Tandai pesan yang belum terbaca sebagai sudah terbaca.
-  if (conv) {
-    await prisma.chatMessage.updateMany({
-      where: {
-        conversationId: conv.id,
-        senderId: { not: session.user.id },
-        readAt: null,
+  try {
+    const conv = await prisma.chatConversation.findUnique({
+      where: { userAId_userBId: { userAId, userBId } },
+      include: {
+        messages: { orderBy: { createdAt: "desc" }, take: 50 },
       },
-      data: { readAt: new Date() },
     });
+
+    if (conv) {
+      await prisma.chatMessage.updateMany({
+        where: {
+          conversationId: conv.id,
+          senderId: { not: session.user.id },
+          readAt: null,
+        },
+        data: { readAt: new Date() },
+      });
+    }
+
+    const messages = (conv?.messages ?? [])
+      .slice()
+      .reverse()
+      .map((m) => ({
+        id: m.id,
+        body: m.body,
+        senderId: m.senderId,
+        createdAt: m.createdAt.toISOString(),
+      }));
+
+    return NextResponse.json({ messages });
+  } catch (e) {
+    console.error("chat/thread", e);
+    return NextResponse.json(
+      {
+        messages: [],
+        error: chatDbErrorMessage(e),
+      },
+      { status: 200 }
+    );
   }
-
-  const messages = (conv?.messages ?? [])
-    .slice()
-    .reverse()
-    .map((m) => ({
-      id: m.id,
-      body: m.body,
-      senderId: m.senderId,
-      createdAt: m.createdAt.toISOString(),
-    }));
-
-  return NextResponse.json({ messages });
 }

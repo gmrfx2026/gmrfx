@@ -41,6 +41,7 @@ export function ProfilChatBox({
   const endRef = useRef<HTMLDivElement | null>(null);
   const lastMessageIdsRef = useRef<Set<string>>(new Set());
   const threadInitializedRef = useRef(false);
+  const threadLoadErrorShownRef = useRef(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const beepEnabledRef = useRef(false);
 
@@ -70,6 +71,7 @@ export function ProfilChatBox({
   useEffect(() => {
     lastMessageIdsRef.current = new Set();
     threadInitializedRef.current = false;
+    threadLoadErrorShownRef.current = false;
   }, [mode, peerId]);
 
   const loadPrivate = useCallback(
@@ -77,17 +79,33 @@ export function ProfilChatBox({
       const res = await fetch(`/api/chat/thread?peerId=${encodeURIComponent(currentPeerId)}`, {
         credentials: "same-origin",
       });
-      const data = await res.json().catch(() => ({}));
+      const data = (await res.json().catch(() => ({}))) as {
+        messages?: Msg[];
+        error?: unknown;
+      };
+      const err = typeof data.error === "string" ? data.error : "";
+      if (err && !threadLoadErrorShownRef.current) {
+        threadLoadErrorShownRef.current = true;
+        show(err, "err");
+      }
       applyMessages((data.messages ?? []) as Msg[]);
     },
-    [applyMessages],
+    [applyMessages, show],
   );
 
   const loadPublic = useCallback(async () => {
     const res = await fetch("/api/chat/public/thread", { credentials: "same-origin" });
-    const data = await res.json().catch(() => ({}));
+    const data = (await res.json().catch(() => ({}))) as {
+      messages?: Msg[];
+      error?: unknown;
+    };
+    const err = typeof data.error === "string" ? data.error : "";
+    if (err && !threadLoadErrorShownRef.current) {
+      threadLoadErrorShownRef.current = true;
+      show(err, "err");
+    }
     applyMessages((data.messages ?? []) as Msg[]);
-  }, [applyMessages]);
+  }, [applyMessages, show]);
 
   useEffect(() => {
     let cancelled = false;
@@ -129,6 +147,30 @@ export function ProfilChatBox({
       return;
     }
 
+    async function readSendError(res: Response): Promise<string> {
+      const raw = await res.text();
+      const trimmed = raw.trim();
+      if (!trimmed) {
+        return res.status >= 500
+          ? "Error server tanpa detail (500). Buka Vercel → Deployment → Functions / Logs; pastikan DATABASE_URL & AUTH_SECRET ada untuk lingkungan Production, lalu redeploy."
+          : `Gagal mengirim (HTTP ${res.status})`;
+      }
+      try {
+        const j = JSON.parse(trimmed) as { error?: unknown };
+        if (typeof j.error === "string") return j.error;
+        if (j.error != null && typeof j.error === "object") {
+          const m = (j.error as { message?: unknown }).message;
+          if (typeof m === "string") return m;
+        }
+      } catch {
+        /* bukan JSON */
+      }
+      if (trimmed.startsWith("<!DOCTYPE") || trimmed.toLowerCase().startsWith("<html")) {
+        return "Server mengembalikan HTML (bukan JSON). Cek Vercel Logs — sering karena error platform atau env.";
+      }
+      return trimmed.slice(0, 240) || `Gagal mengirim (HTTP ${res.status})`;
+    }
+
     setLoading(true);
     try {
       if (mode === "private") {
@@ -138,9 +180,8 @@ export function ProfilChatBox({
           credentials: "same-origin",
           body: JSON.stringify({ peerId, body: text }),
         });
-        const j = await res.json().catch(() => ({}));
         if (!res.ok) {
-          show(typeof j.error === "string" ? j.error : `Gagal mengirim (${res.status})`, "err");
+          show(await readSendError(res), "err");
           return;
         }
         setBody("");
@@ -155,9 +196,8 @@ export function ProfilChatBox({
         credentials: "same-origin",
         body: JSON.stringify({ body: text }),
       });
-      const j = await resPub.json().catch(() => ({}));
       if (!resPub.ok) {
-        show(typeof j.error === "string" ? j.error : `Gagal mengirim (${resPub.status})`, "err");
+        show(await readSendError(resPub), "err");
         return;
       }
       setBody("");
