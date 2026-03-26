@@ -1,12 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Kurangi risiko ERR_REQUIRE_ESM (CommonJS vs ESM) untuk paket yang dipakai sanitasi HTML di server.
   experimental: {
-    serverComponentsExternalPackages: [
-      "isomorphic-dompurify",
-      "jsdom",
-      "html-encoding-sniffer",
-    ],
+    serverComponentsExternalPackages: ["dompurify", "jsdom"],
   },
   async redirects() {
     return [

@@ -1,5 +1,13 @@
-import DOMPurify from "isomorphic-dompurify";
+import createDOMPurify from "dompurify";
+import { JSDOM } from "jsdom";
 import { isAllowedArticleImageSrc } from "./articleImagePolicy";
+
+/**
+ * DOMPurify di server: pakai jsdom 24 (CJS) — jangan pakai isomorphic-dompurify
+ * yang menarik jsdom 28 + html-encoding-sniffer 6 + @exodus/bytes (ERR_REQUIRE_ESM di Vercel).
+ */
+const dompurifyWindow = new JSDOM("<!DOCTYPE html>").window;
+const DOMPurify = createDOMPurify(dompurifyWindow as unknown as Window & typeof globalThis);
 
 let articlePurifyHooksInstalled = false;
 
@@ -101,7 +109,6 @@ export function sanitizeArticleHtml(dirty: string): string {
       "scope",
     ],
     ALLOW_DATA_ATTR: false,
-    // Amankan link agar hanya boleh ke http(s), mailto, atau relative (#/path).
     ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|\/|#)/i,
   });
 }
