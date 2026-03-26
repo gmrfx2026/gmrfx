@@ -5,6 +5,9 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { generateUniqueWalletAddress } from "@/lib/wallet";
+import { getGoogleOAuthEnv } from "@/lib/googleOAuthEnv";
+
+const googleEnv = getGoogleOAuthEnv();
 
 const providers = [
   Credentials({
@@ -30,11 +33,11 @@ const providers = [
       };
     },
   }),
-  ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
+  ...(googleEnv
     ? [
         Google({
-          clientId: process.env.AUTH_GOOGLE_ID,
-          clientSecret: process.env.AUTH_GOOGLE_SECRET,
+          clientId: googleEnv.clientId,
+          clientSecret: googleEnv.clientSecret,
         }),
       ]
     : []),

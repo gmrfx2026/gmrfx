@@ -47,6 +47,16 @@ export function SiteFooter() {
                   Login
                 </Link>
               </li>
+              <li>
+                <Link href="/kebijakan-privasi" className="hover:text-broker-accent">
+                  Kebijakan privasi
+                </Link>
+              </li>
+              <li>
+                <Link href="/syarat-ketentuan" className="hover:text-broker-accent">
+                  Syarat &amp; ketentuan
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

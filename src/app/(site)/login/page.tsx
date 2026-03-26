@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { isGoogleOAuthConfigured } from "@/lib/googleOAuthEnv";
 import Link from "next/link";
 import { LoginForm } from "@/components/LoginForm";
 
@@ -8,7 +9,7 @@ export default async function LoginPage({
   searchParams: { callbackUrl?: string };
 }) {
   const session = await auth();
-  const googleOn = Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
+  const googleOn = isGoogleOAuthConfigured();
   const target =
     searchParams.callbackUrl && searchParams.callbackUrl.startsWith("/")
       ? searchParams.callbackUrl
