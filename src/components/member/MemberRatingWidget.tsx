@@ -9,12 +9,15 @@ export function MemberRatingWidget({
   myStars,
   avgStars,
   ratingCount,
+  isSelfView = false,
 }: {
   memberId: string;
   canRate: boolean;
   myStars: number | null;
   avgStars: number | null;
   ratingCount: number;
+  /** Sedang melihat profil sendiri — tidak bisa rate diri sendiri; jangan tampilkan teks "login". */
+  isSelfView?: boolean;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -79,7 +82,11 @@ export function MemberRatingWidget({
       </div>
       {!canRate && (
         <p className="mt-1 text-[10px] text-broker-muted">
-          {myStars != null ? "Anda sudah memberi rating." : "Login untuk memberi rating."}
+          {myStars != null
+            ? "Anda sudah memberi rating."
+            : isSelfView
+              ? "Rating diberikan oleh member lain pada profil Anda."
+              : "Login untuk memberi rating."}
         </p>
       )}
     </div>

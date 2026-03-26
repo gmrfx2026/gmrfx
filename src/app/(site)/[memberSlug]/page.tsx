@@ -8,8 +8,10 @@ import { MemberStatusCommentForm } from "@/components/MemberStatusCommentForm";
 import { MemberStatusComposer } from "@/components/MemberStatusComposer";
 import { MemberStatusLikeButton } from "@/components/MemberStatusLikeButton";
 import { MemberRatingWidget } from "@/components/member/MemberRatingWidget";
+import { unstable_noStore as noStore } from "next/cache";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const STATUS_PAGE_SIZE = 10;
 
@@ -26,6 +28,7 @@ export default async function MemberBySlugPage({
   params: { memberSlug: string };
   searchParams?: { stPage?: string };
 }) {
+  noStore();
   const slug = params.memberSlug;
 
   // Cari dulu exact match agar URL stabil.
@@ -221,22 +224,30 @@ export default async function MemberBySlugPage({
               myStars={myStars}
               avgStars={ratingAvg}
               ratingCount={ratingCount}
+              isSelfView={isSelf}
             />
           )}
         </div>
       </div>
 
       <section className="mt-12">
-        <h2 className="text-lg font-semibold text-white">Linimasa status</h2>
-        <p className="mt-1 text-sm text-broker-muted">
-          Seperti di profil sosial: {member.name} membagikan pembaruan, member lain bisa berkomentar.
-        </p>
-
         {isSelf && (
-          <div className="mt-6">
-            <MemberStatusComposer />
+          <div className="mb-8 rounded-2xl border border-broker-accent/35 bg-broker-accent/10 p-4 md:p-5">
+            <p className="text-sm font-semibold text-white">Halaman publik Anda</p>
+            <p className="mt-1 text-sm text-broker-muted">
+              Tulis status di bawah — pengunjung melihat linimasa ini, dan member lain bisa berkomentar dan
+              menyukai.
+            </p>
+            <div className="mt-4">
+              <MemberStatusComposer />
+            </div>
           </div>
         )}
+
+        <h2 className="text-lg font-semibold text-white">Linimasa status</h2>
+        <p className="mt-1 text-sm text-broker-muted">
+          Pembaruan dari {member.name}; berkomentar setelah login.
+        </p>
 
         {!viewerId && (
           <p className="mt-6 rounded-xl border border-broker-border/60 bg-broker-surface/25 px-4 py-3 text-sm text-broker-muted">
