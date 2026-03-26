@@ -10,7 +10,6 @@ const links = [
   { href: "/admin/articles", label: "Artikel" },
   { href: "/admin/comments", label: "Komentar" },
   { href: "/admin/gallery", label: "Galeri" },
-  { href: "/admin/mail", label: "Surat" },
   { href: "/admin/settings", label: "Pengaturan" },
 ];
 

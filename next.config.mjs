@@ -1,12 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverComponentsExternalPackages: ["sanitize-html", "htmlparser2"],
+    serverComponentsExternalPackages: ["xss"],
   },
   async redirects() {
     return [
       { source: "/privacy", destination: "/kebijakan-privasi", permanent: true },
       { source: "/terms", destination: "/syarat-ketentuan", permanent: true },
+      { source: "/admin/mail", destination: "/admin", permanent: false },
     ];
   },
   images: {

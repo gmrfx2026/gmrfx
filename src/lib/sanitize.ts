@@ -1,113 +1,86 @@
-import sanitizeHtml from "sanitize-html";
+import { FilterXSS } from "xss";
+import type { IFilterXSSOptions } from "xss";
 import { isAllowedArticleImageSrc } from "./articleImagePolicy";
 
-const ALLOWED_TAGS = [
-  "p",
-  "br",
-  "strong",
-  "b",
-  "em",
-  "i",
-  "u",
-  "s",
-  "h1",
-  "h2",
-  "h3",
-  "h4",
-  "ul",
-  "ol",
-  "li",
-  "a",
-  "blockquote",
-  "cite",
-  "footer",
-  "code",
-  "pre",
-  "span",
-  "img",
-  "hr",
-  "table",
-  "thead",
-  "tbody",
-  "tfoot",
-  "tr",
-  "th",
-  "td",
-  "caption",
-];
+const CLS = ["class"];
 
 function hrefAllowed(href: string): boolean {
   return /^(?:(?:https?|mailto):|\/|#)/i.test(String(href ?? "").trim());
 }
 
-function clampTableSpan(attribs: Record<string, string>): Record<string, string> {
-  const next = { ...attribs };
-  for (const key of ["colspan", "rowspan"] as const) {
-    const raw = next[key];
-    if (raw === undefined) continue;
-    const n = Number.parseInt(String(raw), 10);
-    if (!Number.isFinite(n) || n < 1 || n > 50) {
-      delete next[key];
-    }
-  }
-  return next;
+function extractImgSrc(openTagHtml: string): string | null {
+  const m = openTagHtml.match(/\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>/]+))/i);
+  if (!m) return null;
+  const v = (m[1] ?? m[2] ?? m[3] ?? "").trim();
+  return v || null;
 }
 
-/** Konten artikel: izinkan formatting umum, tanpa script/iframes berbahaya.
- *  Pakai `sanitize-html` (htmlparser2) — tanpa jsdom/DOMPurify agar tidak ada ERR_REQUIRE_ESM di Vercel.
- */
-export function sanitizeArticleHtml(dirty: string): string {
-  return sanitizeHtml(dirty, {
-    allowedTags: ALLOWED_TAGS,
-    allowedAttributes: {
-      "*": ["class"],
-      a: ["href", "title", "target", "rel"],
-      img: ["src", "alt", "loading"],
-      td: ["colspan", "rowspan"],
-      th: ["colspan", "rowspan", "scope"],
-    },
-    allowedSchemes: ["http", "https", "mailto"],
-    transformTags: {
-      img: (tagName, attribs) => {
-        const src = attribs.src;
-        if (src && !isAllowedArticleImageSrc(String(src))) {
-          const next = { ...attribs };
-          delete next.src;
-          return { tagName, attribs: next };
-        }
-        return { tagName, attribs };
-      },
-      a: (tagName, attribs) => {
-        const href = attribs.href;
-        if (href && !hrefAllowed(String(href))) {
-          const next = { ...attribs };
-          delete next.href;
-          return { tagName, attribs: next };
-        }
-        return { tagName, attribs };
-      },
-      td: (tagName, attribs) => ({ tagName, attribs: clampTableSpan(attribs) }),
-      th: (tagName, attribs) => {
-        let a = clampTableSpan(attribs);
-        if (a.scope) {
-          const v = String(a.scope).toLowerCase();
-          if (!["col", "row", "colgroup", "rowgroup"].includes(v)) {
-            const next = { ...a };
-            delete next.scope;
-            a = next;
-          }
-        }
-        return { tagName, attribs: a };
-      },
-    },
-    exclusiveFilter: (frame) => {
-      if (frame.tag === "img") {
-        const src = frame.attribs?.src;
-        if (!src || !isAllowedArticleImageSrc(String(src))) {
-          return true;
-        }
+const articleXssOptions: IFilterXSSOptions = {
+  stripIgnoreTag: true,
+  whiteList: {
+    p: CLS,
+    br: CLS,
+    strong: CLS,
+    b: CLS,
+    em: CLS,
+    i: CLS,
+    u: CLS,
+    s: CLS,
+    h1: CLS,
+    h2: CLS,
+    h3: CLS,
+    h4: CLS,
+    ul: CLS,
+    ol: CLS,
+    li: CLS,
+    a: ["href", "title", "target", "rel", "class"],
+    blockquote: CLS,
+    cite: CLS,
+    footer: CLS,
+    code: CLS,
+    pre: CLS,
+    span: CLS,
+    img: ["src", "alt", "loading", "class"],
+    hr: CLS,
+    table: CLS,
+    thead: CLS,
+    tbody: CLS,
+    tfoot: CLS,
+    tr: CLS,
+    th: ["colspan", "rowspan", "scope", "class"],
+    td: ["colspan", "rowspan", "class"],
+    caption: CLS,
+  },
+  onTag(tag, html, options) {
+    if (tag === "img" && !options.isClosing) {
+      const src = extractImgSrc(html);
+      if (!src || !isAllowedArticleImageSrc(src)) {
+        return "";
       }
-      return false;
-    },
-  });
+    }
+  },
+  onTagAttr(tag, name, value) {
+    if (tag === "a" && name === "href" && !hrefAllowed(value)) {
+      return "";
+    }
+    if ((tag === "td" || tag === "th") && (name === "colspan" || name === "rowspan")) {
+      const n = Number.parseInt(String(value), 10);
+      if (!Number.isFinite(n) || n < 1 || n > 50) {
+        return "";
+      }
+    }
+    if (tag === "th" && name === "scope") {
+      const v = String(value).toLowerCase();
+      if (!["col", "row", "colgroup", "rowgroup"].includes(v)) {
+        return "";
+      }
+    }
+  },
+};
+
+const articleFilter = new FilterXSS(articleXssOptions);
+
+/** Konten artikel: formatting umum, tanpa script/iframes. Pakai `xss` (tanpa jsdom/htmlparser2). */
+export function sanitizeArticleHtml(dirty: string): string {
+  return articleFilter.process(dirty);
 }

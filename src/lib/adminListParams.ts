@@ -54,19 +54,6 @@ export function buildProfilArticleListHref(
   return `/profil${qs ? `?${qs}` : ""}`;
 }
 
-/** Pagination kotak surat member: selalu `tab=mail` + `mPage` / `mPerPage` / `mQ`. */
-export function buildProfilMailListHref(opts: { page?: number; perPage?: number; q?: string }) {
-  const sp = new URLSearchParams();
-  sp.set("tab", "mail");
-  if (opts.page != null && opts.page > 1) sp.set("mPage", String(opts.page));
-  if (opts.perPage != null && opts.perPage !== DEFAULT_PAGE_SIZE) {
-    sp.set("mPerPage", String(opts.perPage));
-  }
-  if (opts.q) sp.set("mQ", opts.q);
-  const qs = sp.toString();
-  return `/profil?${qs}`;
-}
-
 export function resolvePagedWindow(
   requestedPage: number,
   pageSize: number,

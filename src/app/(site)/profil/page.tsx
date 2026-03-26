@@ -13,7 +13,6 @@ import {
   parseWalletHistoryListParams,
 } from "@/lib/walletTransferFilters";
 import { ProfilStatusBlock } from "@/components/ProfilStatusBlock";
-import { ProfilMailBox } from "@/components/ProfilMailBox";
 import { ProfilChatBox } from "@/components/ProfilChatBox";
 import { ProfilSecurityForms } from "@/components/ProfilSecurityForms";
 import { ProfilAvatarUpload } from "@/components/ProfilAvatarUpload";
@@ -37,15 +36,16 @@ export default async function ProfilPage({
     aPage?: string;
     aPerPage?: string;
     aQ?: string;
-    mPage?: string;
-    mPerPage?: string;
-    mQ?: string;
   };
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const tab = String(searchParams?.tab ?? "home").toLowerCase();
+  const tabRaw = String(searchParams?.tab ?? "home").toLowerCase();
+  if (tabRaw === "mail") {
+    redirect("/profil");
+  }
+  const tab = tabRaw;
   const requestedPeerId = searchParams?.peerId ? String(searchParams.peerId) : null;
   const requestedChatMode = searchParams?.chatMode ? String(searchParams.chatMode).toLowerCase() : null;
   const initialChatMode = requestedPeerId
@@ -62,7 +62,6 @@ export default async function ProfilPage({
 
   const showStatus = tab === "home" || tab === "status" || tab === "artikel";
   const showWalletTransfer = tab === "wallet";
-  const showMail = tab === "mail";
   const showChat = tab === "chat";
   const showSecurity = tab === "security";
   const showArticles = tab === "home" || tab === "artikel";
@@ -103,7 +102,7 @@ export default async function ProfilPage({
     select: { id: true, content: true },
   });
 
-  const [statusComments, mailBundle, peers, walletHistoryBundle, articleBundle] = await Promise.all([
+  const [statusComments, peers, walletHistoryBundle, articleBundle] = await Promise.all([
     showStatus && latestStatus
       ? prisma.comment.findMany({
           where: { targetType: CommentTarget.STATUS, statusId: latestStatus.id, hidden: false },
@@ -112,48 +111,6 @@ export default async function ProfilPage({
           include: { user: { select: { name: true } } },
         })
       : Promise.resolve([]),
-    showMail
-      ? (async () => {
-          // Tandai semua surat masuk sebagai sudah dibaca saat user membuka tab Surat.
-          await prisma.internalMail.updateMany({
-            where: { toUserId: user.id, readAt: null },
-            data: { readAt: new Date() },
-          });
-          const lp = parsePrefixedListQuery(
-            searchParams as Record<string, string | string[] | undefined>,
-            "m"
-          );
-          const where: Prisma.InternalMailWhereInput = {
-            toUserId: user.id,
-            ...(lp.q
-              ? {
-                  OR: [
-                    { subject: { contains: lp.q, mode: "insensitive" } },
-                    { body: { contains: lp.q, mode: "insensitive" } },
-                    {
-                      fromUser: {
-                        OR: [
-                          { name: { contains: lp.q, mode: "insensitive" } },
-                          { email: { contains: lp.q, mode: "insensitive" } },
-                        ],
-                      },
-                    },
-                  ],
-                }
-              : {}),
-          };
-          const total = await prisma.internalMail.count({ where });
-          const { page, skip, totalPages } = resolvePagedWindow(lp.page, lp.pageSize, total);
-          const rows = await prisma.internalMail.findMany({
-            where,
-            orderBy: { createdAt: "desc" },
-            skip,
-            take: lp.pageSize,
-            include: { fromUser: { select: { name: true, email: true } } },
-          });
-          return { rows, total, page, pageSize: lp.pageSize, totalPages, q: lp.q };
-        })()
-      : Promise.resolve(null),
     showChat
       ? (async () => {
           const candidateIds = new Set<string>(onlinePeerIds);
@@ -368,26 +325,6 @@ export default async function ProfilPage({
           pageSize={articleBundle.pageSize}
           totalPages={articleBundle.totalPages}
           q={articleBundle.q}
-        />
-      )}
-
-      {showMail && mailBundle && (
-        <ProfilMailBox
-          inbox={mailBundle.rows.map((m) => ({
-            id: m.id,
-            subject: m.subject,
-            body: m.body,
-            createdAt: m.createdAt.toISOString(),
-            readAt: m.readAt?.toISOString() ?? null,
-            fromUser: m.fromUser,
-          }))}
-          listMeta={{
-            total: mailBundle.total,
-            page: mailBundle.page,
-            pageSize: mailBundle.pageSize,
-            totalPages: mailBundle.totalPages,
-            q: mailBundle.q,
-          }}
         />
       )}
 

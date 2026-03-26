@@ -4,7 +4,6 @@ export const MEMBER_MENU_TAB_KEYS = [
   "home",
   "artikel",
   "wallet",
-  "mail",
   "chat",
   "security",
 ] as const;
@@ -21,9 +20,8 @@ const DEFAULTS: Record<MemberMenuTabKey, { label: string; sortOrder: number }> =
   home: { label: "Home", sortOrder: 0 },
   artikel: { label: "Artikel", sortOrder: 1 },
   wallet: { label: "Wallet & Transfer", sortOrder: 2 },
-  mail: { label: "Surat", sortOrder: 3 },
-  chat: { label: "Chat", sortOrder: 4 },
-  security: { label: "Keamanan", sortOrder: 5 },
+  chat: { label: "Chat", sortOrder: 3 },
+  security: { label: "Keamanan", sortOrder: 4 },
 };
 
 function isTabKey(s: string): s is MemberMenuTabKey {
@@ -41,7 +39,11 @@ export async function getResolvedMemberMenuItems(): Promise<MemberMenuResolvedIt
     const def = DEFAULTS[tabKey];
     const row = byKey.get(tabKey);
     if (row && !row.enabled) continue;
-    const label = (row?.label ?? def.label).trim() || def.label;
+    let label = (row?.label ?? def.label).trim() || def.label;
+    // Bekas salah ketik di admin: label "Surat" pada tab chat (menu surat sudah dihapus).
+    if (tabKey === "chat" && /^surat$/i.test(label)) {
+      label = def.label;
+    }
     const sortOrder = row?.sortOrder ?? def.sortOrder;
     withOrder.push({
       key: tabKey,
@@ -52,7 +54,10 @@ export async function getResolvedMemberMenuItems(): Promise<MemberMenuResolvedIt
   }
 
   withOrder.sort((a, b) => a.sortOrder - b.sortOrder || a.key.localeCompare(b.key));
-  return withOrder.map(({ sortOrder: _s, ...rest }) => rest);
+  const allowed = new Set<string>(MEMBER_MENU_TAB_KEYS);
+  return withOrder
+    .filter((x) => allowed.has(x.key))
+    .map(({ sortOrder: _s, ...rest }) => rest);
 }
 
 /** Daftar lengkap untuk form admin (satu baris per tab, termasuk yang nonaktif). */

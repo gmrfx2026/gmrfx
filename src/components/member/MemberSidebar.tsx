@@ -50,7 +50,6 @@ export function MemberSidebar({ items }: { items: MemberMenuResolvedItem[] }) {
   const activeTab = getActiveTab(pathname, tab);
 
   const [chatUnread, setChatUnread] = useState(0);
-  const [mailUnread, setMailUnread] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const prevChatUnreadRef = useRef(0);
@@ -62,18 +61,20 @@ export function MemberSidebar({ items }: { items: MemberMenuResolvedItem[] }) {
     let cancelled = false;
 
     async function loadCounts() {
-      const [chatRes, mailRes] = await Promise.allSettled([
-        fetch("/api/chat/unread-count").then((r) => (r.ok ? r.json() : null)),
-        fetch("/api/mail/unread-count").then((r) => (r.ok ? r.json() : null)),
-      ]);
+      let nextChat = 0;
+      try {
+        const r = await fetch("/api/chat/unread-count");
+        if (r.ok) {
+          const j = (await r.json()) as { unread?: number };
+          nextChat = Number(j?.unread ?? 0);
+        }
+      } catch {
+        /* ignore */
+      }
 
       if (cancelled) return;
 
-      const nextChat = chatRes.status === "fulfilled" ? Number(chatRes.value?.unread ?? 0) : 0;
-      const nextMail = mailRes.status === "fulfilled" ? Number(mailRes.value?.unread ?? 0) : 0;
-
       setChatUnread(nextChat);
-      setMailUnread(nextMail);
 
       if (nextChat > prevChatUnreadRef.current) {
         setToast(`Ada chat baru (${nextChat}).`);
@@ -122,12 +123,7 @@ export function MemberSidebar({ items }: { items: MemberMenuResolvedItem[] }) {
               <div className="flex gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {items.map((it) => {
                   const active = it.key === activeTab;
-                  const badge =
-                    it.key === "chat" && chatUnread > 0
-                      ? chatUnread
-                      : it.key === "mail" && mailUnread > 0
-                        ? mailUnread
-                        : null;
+                  const badge = it.key === "chat" && chatUnread > 0 ? chatUnread : null;
                   return (
                     <div key={it.key} className="shrink-0">
                       <Link
@@ -173,12 +169,7 @@ export function MemberSidebar({ items }: { items: MemberMenuResolvedItem[] }) {
             <nav className="mt-2 space-y-1">
               {items.map((it) => {
                 const active = it.key === activeTab;
-                const badge =
-                  it.key === "chat" && chatUnread > 0
-                    ? chatUnread
-                    : it.key === "mail" && mailUnread > 0
-                      ? mailUnread
-                      : null;
+                const badge = it.key === "chat" && chatUnread > 0 ? chatUnread : null;
                 return <NavLinkRow key={it.key} it={it} active={active} badge={badge} />;
               })}
             </nav>
