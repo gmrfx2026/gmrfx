@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { MemberSidebar } from "@/components/member/MemberSidebar";
 import { getResolvedMemberMenuItems } from "@/lib/memberMenu";
+import { isUserProfileComplete } from "@/lib/profileComplete";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function ProfilLayout({ children }: { children: ReactNode }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login?callbackUrl=/profil");
-  if (!session.user.profileComplete) redirect("/lengkapi-profil");
+  if (!(await isUserProfileComplete(session.user.id))) redirect("/lengkapi-profil");
 
   const menuItems = await getResolvedMemberMenuItems();
 

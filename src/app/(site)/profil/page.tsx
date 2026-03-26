@@ -44,7 +44,6 @@ export default async function ProfilPage({
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  if (!session.user.profileComplete) redirect("/lengkapi-profil");
 
   const tab = String(searchParams?.tab ?? "home").toLowerCase();
   const requestedPeerId = searchParams?.peerId ? String(searchParams.peerId) : null;

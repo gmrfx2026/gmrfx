@@ -10,7 +10,6 @@ const MemberArticleForm = dynamic(
 export default async function ProfilArtikelBaruPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  if (!session.user.profileComplete) redirect("/lengkapi-profil");
 
   return (
     <div className="space-y-4">

@@ -3,6 +3,7 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { isUserProfileComplete } from "@/lib/profileComplete";
 import {
   ARTICLE_IMAGES_SUBDIR,
   ARTICLE_IMAGE_MAX_BYTES,
@@ -12,7 +13,7 @@ import {
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.id || !session.user.profileComplete) {
+  if (!session?.user?.id || !(await isUserProfileComplete(session.user.id))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

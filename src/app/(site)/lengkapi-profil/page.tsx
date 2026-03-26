@@ -1,12 +1,13 @@
 import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import { CompleteProfileForm } from "@/components/CompleteProfileForm";
+import { isUserProfileComplete } from "@/lib/profileComplete";
+import { redirect } from "next/navigation";
 
 export default async function LengkapiProfilPage() {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  if (!session?.user?.id) redirect("/login");
 
-  if (session.user.profileComplete) redirect("/profil");
+  if (await isUserProfileComplete(session.user.id)) redirect("/profil");
 
   return (
     <div className="mx-auto max-w-lg px-4 py-12">

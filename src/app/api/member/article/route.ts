@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { isUserProfileComplete } from "@/lib/profileComplete";
 import { prisma } from "@/lib/prisma";
 import { ArticleStatus } from "@prisma/client";
 import { sanitizeArticleHtml, sanitizePlainText } from "@/lib/sanitize";
@@ -7,7 +8,7 @@ import { slugify } from "@/lib/slug";
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.id || !session.user.profileComplete) {
+  if (!session?.user?.id || !(await isUserProfileComplete(session.user.id))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
