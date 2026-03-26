@@ -75,14 +75,7 @@ export async function SiteHeader() {
         </nav>
         <div className="flex items-center gap-2">
           <MobileSiteNav links={mobileLinks} />
-          {session && (
-            <div className="flex items-center gap-1.5">
-              <NotificationBell />
-              <span className="hidden max-w-[5rem] truncate text-xs text-broker-muted sm:inline md:max-w-none">
-                Notifikasi
-              </span>
-            </div>
-          )}
+          {session && <NotificationBell />}
           <HeaderAuth session={session} />
         </div>
       </div>
