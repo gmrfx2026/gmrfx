@@ -37,7 +37,10 @@ export function RegisterForm() {
     const data = await res.json().catch(() => ({}));
     setLoading(false);
     if (!res.ok) {
-      setErr(data.error ?? "Gagal mendaftar");
+      const parts: string[] = [data.error ?? "Gagal mendaftar"];
+      if (data.prismaCode) parts.push(`[${data.prismaCode}]`);
+      if (data.hint) parts.push(String(data.hint));
+      setErr(parts.join(" "));
       return;
     }
     router.push("/login?registered=1");

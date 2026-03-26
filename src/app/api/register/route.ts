@@ -71,17 +71,48 @@ export async function POST(req: Request) {
       if (e.code === "P2002") {
         const fields = e.meta?.target as string[] | undefined;
         if (fields?.includes("email")) {
-          return NextResponse.json({ error: "Email sudah terdaftar" }, { status: 409 });
+          return NextResponse.json({ error: "Email sudah terdaftar", prismaCode: "P2002" }, { status: 409 });
         }
         if (fields?.includes("walletAddress") || fields?.includes("memberSlug")) {
-          return NextResponse.json({ error: "Coba lagi sebentar (konflik data sementara)" }, { status: 409 });
+          return NextResponse.json(
+            { error: "Coba lagi sebentar (konflik data sementara)", prismaCode: "P2002" },
+            { status: 409 }
+          );
         }
-        return NextResponse.json({ error: "Data bentrok dengan pengguna lain" }, { status: 409 });
+        return NextResponse.json(
+          { error: "Data bentrok dengan pengguna lain", prismaCode: "P2002" },
+          { status: 409 }
+        );
       }
+      return NextResponse.json(
+        { error: "Gagal mendaftar", prismaCode: e.code, hint: e.message },
+        { status: 500 }
+      );
     }
     if (e instanceof Prisma.PrismaClientInitializationError) {
-      return NextResponse.json({ error: "Koneksi database gagal. Coba lagi nanti." }, { status: 503 });
+      return NextResponse.json(
+        { error: "Koneksi database gagal. Coba lagi nanti.", prismaCode: "INIT" },
+        { status: 503 }
+      );
     }
-    return NextResponse.json({ error: "Gagal mendaftar" }, { status: 500 });
+    if (e instanceof Prisma.PrismaClientUnknownRequestError) {
+      return NextResponse.json(
+        {
+          error: "Gagal mendaftar",
+          prismaCode: "UNKNOWN",
+          hint: e.message.slice(0, 180),
+        },
+        { status: 500 }
+      );
+    }
+    const msg = e instanceof Error ? e.message.slice(0, 180) : "";
+    return NextResponse.json(
+      {
+        error: "Gagal mendaftar",
+        prismaCode: "OTHER",
+        ...(msg ? { hint: msg } : {}),
+      },
+      { status: 500 }
+    );
   }
 }
