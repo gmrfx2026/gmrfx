@@ -1,0 +1,62 @@
+import Link from "next/link";
+
+const disclaimer =
+  "Perdagangan valuta asing dengan margin memiliki tingkat risiko yang tinggi, dan mungkin tidak cocok untuk semua investor. Sebelum memutuskan untuk memperdagangkan produk yang ditawarkan oleh broker, Anda harus mempertimbangkan dengan cermat tujuan, situasi keuangan, kebutuhan, dan tingkat pengalaman Anda. Traders Family memberikan saran umum yang tidak mempertimbangkan tujuan, situasi keuangan, atau kebutuhan Anda. Isi situs web ini tidak boleh ditafsirkan sebagai nasihat pribadi. Ada kemungkinan Anda dapat mengalami kerugian melebihi dana yang Anda setorkan dan oleh karena itu, Anda tidak boleh berspekulasi dengan modal yang tidak mampu Anda rugikan. Anda harus menyadari semua risiko yang terkait dengan perdagangan dengan margin.";
+
+export function SiteFooter() {
+  return (
+    <footer className="mt-auto border-t border-broker-border bg-broker-surface/50">
+      <div className="mx-auto max-w-6xl px-4 py-10">
+        <div className="grid gap-8 md:grid-cols-3">
+          <div>
+            <p className="font-semibold text-white">GMR FX</p>
+            <p className="mt-2 text-sm text-broker-muted">
+              Edukasi dan komunitas forex. Pengembangan ke depan: toko indikator & wallet IDR anggota.
+            </p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-white">Menu</p>
+            <ul className="mt-2 space-y-1 text-sm text-broker-muted">
+              <li>
+                <Link href="/" className="hover:text-broker-accent">
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link href="/artikel" className="hover:text-broker-accent">
+                  Artikel
+                </Link>
+              </li>
+              <li>
+                <Link href="/galeri" className="hover:text-broker-accent">
+                  Galeri
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-white">Akun</p>
+            <ul className="mt-2 space-y-1 text-sm text-broker-muted">
+              <li>
+                <Link href="/daftar" className="hover:text-broker-accent">
+                  Daftar
+                </Link>
+              </li>
+              <li>
+                <Link href="/login" className="hover:text-broker-accent">
+                  Login
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <p className="mt-10 text-[10px] leading-relaxed text-broker-muted/80 md:text-[11px]">
+          {disclaimer}
+        </p>
+        <p className="mt-4 text-center text-xs text-broker-muted">
+          © {new Date().getFullYear()} GMR FX. Hak cipta dilindungi.
+        </p>
+      </div>
+    </footer>
+  );
+}

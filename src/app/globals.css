@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --broker-accent: #00d395;
+  --broker-accent-dim: #00a876;
+  --broker-bg: #0b0e11;
+  --broker-surface: #12161c;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-broker-bg text-white antialiased min-h-screen;
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(0, 211, 149, 0.12), transparent),
+    linear-gradient(180deg, #0b0e11 0%, #080a0c 100%);
+}
+
+/* TipTap — tipografi dari kelas `article-content prose` */
+.ProseMirror {
+  @apply min-h-[200px] outline-none;
+}
+
+/**
+ * Tata letak konten artikel (baca & editor): jarak, kutipan, gambar.
+ * Dipasangkan dengan kelas `article-content` dari articleProseTypographyClass.
+ */
+.article-content.prose blockquote {
+  @apply relative my-10 border-0 border-l-[3px] border-broker-accent/60 bg-broker-surface/25 py-5 pl-5 pr-4 rounded-r-lg;
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+.article-content.prose blockquote p {
+  @apply text-[1.05rem] leading-[1.7] text-zinc-200 mb-3 last:mb-0;
+}
+.article-content.prose blockquote p:first-of-type::before {
+  content: "\201C";
+  @apply text-3xl text-broker-accent/50 font-serif leading-none;
+  float: left;
+  margin: 0 0.15em 0 0;
+  height: 0.9em;
+}
+.article-content.prose blockquote footer,
+.article-content.prose blockquote cite {
+  @apply mt-4 block text-sm font-sans not-italic leading-snug text-broker-muted;
+}
+.article-content.prose blockquote cite {
+  @apply text-broker-accent font-medium;
+}
+.article-content.prose > p {
+  @apply mb-5;
+}
+.article-content.prose > h2 {
+  @apply mt-10 mb-4 first:mt-0;
+}
+.article-content.prose > h3 {
+  @apply mt-8 mb-3 first:mt-0;
+}
+.article-content.prose > ul,
+.article-content.prose > ol {
+  @apply my-6;
+}
+.article-content.prose > hr {
+  @apply my-12;
+}
+.article-content.prose > img,
+.article-content.prose p > img {
+  @apply my-8;
+}
+.article-content.prose > figure {
+  @apply my-8;
+}
+.article-content.prose a {
+  @apply font-medium text-broker-accent underline decoration-broker-accent/40 underline-offset-[3px] transition-colors;
+}
+.article-content.prose a:hover {
+  @apply text-white decoration-broker-accent;
+}
+
+/* Tabel artikel (HTML tanpa inline style) */
+.article-content.prose table.article-table,
+.article-content.prose table {
+  @apply my-8 w-full table-auto border-collapse overflow-x-auto border border-broker-border text-left;
+}
+.article-content.prose thead th,
+.article-content.prose tbody th,
+.article-content.prose tbody td {
+  @apply border border-broker-border px-3 py-2 align-top;
+}
+.article-content.prose thead th,
+.article-content.prose tbody th {
+  @apply bg-broker-surface/60 font-semibold text-white;
+}
+.article-content.prose tbody td {
+  @apply text-broker-muted;
+}
+.article-content.prose table caption {
+  @apply mb-2 caption-top text-sm text-broker-muted;
+}
+
+.ProseMirror table.article-table,
+.ProseMirror table {
+  @apply my-4 w-full table-auto border-collapse border border-broker-border text-left;
+}
+.ProseMirror thead th,
+.ProseMirror tbody th,
+.ProseMirror tbody td {
+  @apply border border-broker-border px-2 py-1.5 align-top text-sm;
+}
+.ProseMirror thead th,
+.ProseMirror tbody th {
+  @apply bg-broker-surface/50 font-semibold text-white;
+}
+.ProseMirror tbody td {
+  @apply text-zinc-300;
+}
+
+/* Admin bootstrap-ish */
+.admin-card {
+  @apply bg-white text-gray-800 rounded shadow-sm border border-gray-200;
+}

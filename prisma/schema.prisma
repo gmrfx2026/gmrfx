@@ -1,0 +1,307 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum MemberStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum ArticleStatus {
+  DRAFT
+  PENDING
+  PUBLISHED
+  REJECTED
+}
+
+enum OtpPurpose {
+  PHONE_UPDATE
+  PASSWORD_CHANGE
+}
+
+enum CommentTarget {
+  ARTICLE
+  STATUS
+}
+
+model User {
+  id              String       @id @default(cuid())
+  name            String?
+  email           String       @unique
+  emailVerified   DateTime?
+  image           String?
+  passwordHash    String?
+  role            Role         @default(USER)
+  memberStatus    MemberStatus @default(ACTIVE)
+  profileComplete Boolean      @default(false)
+
+  phoneWhatsApp String?
+  addressLine   String?
+  kecamatan     String?
+  kabupaten     String?
+  provinsi      String?
+  kodePos       String?
+  negara        String  @default("Indonesia")
+
+  walletAddress String? @unique
+  walletBalance Decimal @default(0)
+
+  profileStatus String?
+  memberSlug    String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts               Account[]
+  sessions               Session[]
+  articles               Article[]          @relation("ArticleAuthor")
+  articleRatings         ArticleRating[]
+  comments               Comment[]
+  otpChallenges          OtpChallenge[]
+  sentTransfers          WalletTransfer[]   @relation("TransferFrom")
+  receivedTransfers      WalletTransfer[]   @relation("TransferTo")
+  shopTransactionsBuyer  ShopTransaction[]  @relation("BuyerTx")
+  shopTransactionsSeller ShopTransaction[]  @relation("SellerTx")
+  chatMessages           ChatMessage[]
+  publicChatMessages    PublicChatMessage[]
+  conversationsA         ChatConversation[] @relation("ConvUserA")
+  conversationsB         ChatConversation[] @relation("ConvUserB")
+  mailSent               InternalMail[]     @relation("MailFrom")
+  mailReceived           InternalMail[]     @relation("MailTo")
+
+  statuses StatusEntry[]
+
+  memberRatingsReceived MemberRating[] @relation("MemberRatingsReceived")
+  memberRatingsGiven MemberRating[] @relation("MemberRatingsGiven")
+}
+
+model StatusEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime @default(now())
+
+  comments Comment[] @relation("StatusComments")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model OtpChallenge {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String
+  purpose   OtpPurpose
+  phone     String
+  expiresAt DateTime
+  consumed  Boolean    @default(false)
+  createdAt DateTime   @default(now())
+}
+
+model Article {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  excerpt     String?
+  contentHtml String
+  status      ArticleStatus @default(PENDING)
+  authorId    String
+  author      User          @relation("ArticleAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  ratings  ArticleRating[]
+  comments Comment[]
+}
+
+model ArticleRating {
+  id        String   @id @default(cuid())
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stars     Int
+  createdAt DateTime @default(now())
+
+  @@unique([articleId, userId])
+}
+
+model Comment {
+  id            String        @id @default(cuid())
+  targetType    CommentTarget
+  articleId     String?
+  article       Article?      @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  statusId      String?
+  status        StatusEntry?  @relation("StatusComments", fields: [statusId], references: [id], onDelete: Cascade)
+  statusOwnerId String?
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content       String
+  hidden        Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+}
+
+model MemberRating {
+  id        String   @id @default(cuid())
+  memberId  String
+  raterId   String
+  stars     Int
+  createdAt DateTime @default(now())
+
+  member User @relation("MemberRatingsReceived", fields: [memberId], references: [id], onDelete: Cascade)
+  rater  User @relation("MemberRatingsGiven", fields: [raterId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, raterId])
+}
+
+model GalleryCategory {
+  id          String         @id @default(cuid())
+  name        String
+  slug        String         @unique
+  description String?
+  images      GalleryImage[]
+  createdAt   DateTime       @default(now())
+}
+
+model GalleryImage {
+  id         String          @id @default(cuid())
+  categoryId String
+  category   GalleryCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  imageUrl   String
+  caption    String?
+  sortOrder  Int             @default(0)
+  createdAt  DateTime        @default(now())
+}
+
+model WalletTransfer {
+  id            String   @id @default(cuid())
+  transactionId String   @unique
+  fromUserId    String
+  toUserId      String
+  amount        Decimal
+  note          String?
+  createdAt     DateTime @default(now())
+
+  fromUser User @relation("TransferFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User @relation("TransferTo", fields: [toUserId], references: [id], onDelete: Cascade)
+}
+
+model ShopTransaction {
+  id            String   @id @default(cuid())
+  transactionId String   @unique
+  buyerId       String
+  sellerId      String
+  amount        Decimal
+  fee           Decimal
+  description   String?
+  createdAt     DateTime @default(now())
+
+  buyer  User @relation("BuyerTx", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller User @relation("SellerTx", fields: [sellerId], references: [id], onDelete: Cascade)
+}
+
+model SystemSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
+
+/// Item menu sidebar member (/profil?tab=…). Hanya tabKey yang di-whitelist di aplikasi.
+model MemberMenuItem {
+  id        String   @id @default(cuid())
+  tabKey    String   @unique
+  label     String
+  sortOrder Int      @default(0)
+  enabled   Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+}
+
+model ChatConversation {
+  id        String   @id @default(cuid())
+  userAId   String
+  userBId   String
+  updatedAt DateTime @updatedAt
+
+  userA    User          @relation("ConvUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB    User          @relation("ConvUserB", fields: [userBId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@unique([userAId, userBId])
+}
+
+model ChatMessage {
+  id             String           @id @default(cuid())
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User             @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  body           String
+  readAt         DateTime?
+  createdAt      DateTime         @default(now())
+}
+
+model PublicChatMessage {
+  id        String   @id @default(cuid())
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+}
+
+model InternalMail {
+  id         String    @id @default(cuid())
+  fromUserId String
+  toUserId   String
+  subject    String
+  body       String
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  fromUser User @relation("MailFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User @relation("MailTo", fields: [toUserId], references: [id], onDelete: Cascade)
+}

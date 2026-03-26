@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GMR FX</title>
+    <style>
+      :root {
+        --bg: #0b0e11;
+        --accent: #00d395;
+        --muted: #848e9c;
+        --surface: #12161c;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: var(--bg);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        text-align: center;
+      }
+      .logo {
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .logo span {
+        color: var(--accent);
+      }
+      p {
+        max-width: 32rem;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 0.95rem;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid #1e2329;
+        border-radius: 12px;
+        padding: 1.5rem 1.25rem;
+        max-width: 28rem;
+      }
+      code {
+        background: #1e2329;
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="logo">GMR <span>FX</span></div>
+      <p>
+        Halaman ini disajikan oleh <strong>Firebase Hosting</strong> (file statis). Aplikasi web Anda dibangun dengan
+        <strong>Next.js</strong> dan membutuhkan server Node.js (API, database, login).
+      </p>
+      <p>
+        Agar <strong>tidak Page Not Found</strong> dan semua fitur jalan: deploy proyek ke
+        <strong>Vercel</strong>, <strong>Railway</strong>, atau VPS, lalu arahkan domain ke sana. Untuk uji lokal,
+        jalankan <code>npm run dev</code>.
+      </p>
+      <p style="font-size: 0.8rem; margin-top: 1.25rem">
+        File ini ada di <code>public/index.html</code> supaya URL Firebase tetap menampilkan pesan ini, bukan error 404.
+      </p>
+    </div>
+  </body>
+</html>

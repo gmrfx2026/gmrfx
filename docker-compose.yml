@@ -1,0 +1,18 @@
+# Postgres lokal — jalankan: docker compose up -d
+# Lalu set DATABASE_URL di .env (lihat .env.example)
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gmrfx-postgres
+    # Host 5433: hindari bentrok dengan PostgreSQL Windows/native di 5432
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: gmrfx
+      POSTGRES_PASSWORD: gmrfx_local
+      POSTGRES_DB: gmrfx
+    volumes:
+      - gmrfx_pgdata:/var/lib/postgresql/data
+
+volumes:
+  gmrfx_pgdata:
