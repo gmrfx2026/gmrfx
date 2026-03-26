@@ -56,5 +56,9 @@
     "tailwindcss": "^3.4.15",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2"
+  },
+  "overrides": {
+    "html-encoding-sniffer": "4.0.0",
+    "jsdom": "24.1.3"
   }
 }
