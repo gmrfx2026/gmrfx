@@ -2,9 +2,11 @@ import type { PrismaClient } from "@prisma/client";
 
 const LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ";
 
+type DbWithUser = Pick<PrismaClient, "user">;
+
 /** Format: 2 huruf + 5 angka, unik di database */
 export async function generateUniqueWalletAddress(
-  db: PrismaClient
+  db: DbWithUser
 ): Promise<string> {
   for (let attempt = 0; attempt < 200; attempt++) {
     const a = LETTERS[Math.floor(Math.random() * LETTERS.length)];

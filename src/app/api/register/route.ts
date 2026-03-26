@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -5,6 +6,8 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { generateUniqueWalletAddress } from "@/lib/wallet";
 import { toMemberSlug } from "@/lib/memberSlug";
+
+export const maxDuration = 60;
 
 const schema = z.object({
   name: z.string().min(2).max(120),
@@ -34,11 +37,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email sudah terdaftar" }, { status: 409 });
     }
 
-    const passwordHash = await bcrypt.hash(d.password, 12);
+    // Satu INSERT saja: lebih aman dengan Neon pooler (hindari interactive transaction + kurangi round-trip).
+    const passwordHash = await bcrypt.hash(d.password, 10);
     const walletAddress = await generateUniqueWalletAddress(prisma);
-
-    const created = await prisma.user.create({
+    const id = randomUUID();
+    const memberSlug = toMemberSlug(d.name, id);
+    await prisma.user.create({
       data: {
+        id,
         email,
         name: d.name,
         passwordHash,
@@ -51,19 +57,16 @@ export async function POST(req: Request) {
         negara: d.negara,
         profileComplete: true,
         walletAddress,
-      },
-    });
-
-    await prisma.user.update({
-      where: { id: created.id },
-      data: {
-        memberSlug: toMemberSlug(d.name, created.id),
+        memberSlug,
       },
     });
 
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("register", e);
+    if (e instanceof Prisma.PrismaClientValidationError) {
+      return NextResponse.json({ error: "Data tidak valid" }, { status: 400 });
+    }
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2002") {
         const fields = e.meta?.target as string[] | undefined;
