@@ -27,6 +27,7 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gmrfx_ci
+      DATABASE_URL_UNPOOLED: postgresql://postgres:postgres@localhost:5432/gmrfx_ci
       AUTH_SECRET: ci-build-placeholder-secret-min-32-chars
       AUTH_URL: http://localhost:3000
 
