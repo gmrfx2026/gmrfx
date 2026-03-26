@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { isUserProfileComplete } from "@/lib/profileComplete";
 import { prisma } from "@/lib/prisma";
 import { sanitizePlainText } from "@/lib/sanitize";
 import { clientKeyFromRequest, rateLimit } from "@/lib/simpleRateLimit";
@@ -42,9 +43,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Data tidak valid" }, { status: 400 });
   }
 
-  await prisma.publicChatMessage.create({
-    data: { senderId, body: text },
-  });
+  try {
+    await prisma.publicChatMessage.create({
+      data: { senderId, body: text },
+    });
+  } catch (e) {
+    console.error("chat/public/send", e);
+    return NextResponse.json(
+      {
+        error:
+          "Gagal menyimpan pesan chat umum. Pastikan migrasi database sudah mencakup tabel PublicChatMessage (lihat prisma/migrations).",
+      },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({ ok: true });
 }

@@ -74,7 +74,9 @@ export function ProfilChatBox({
 
   const loadPrivate = useCallback(
     async (currentPeerId: string) => {
-      const res = await fetch(`/api/chat/thread?peerId=${encodeURIComponent(currentPeerId)}`);
+      const res = await fetch(`/api/chat/thread?peerId=${encodeURIComponent(currentPeerId)}`, {
+        credentials: "same-origin",
+      });
       const data = await res.json().catch(() => ({}));
       applyMessages((data.messages ?? []) as Msg[]);
     },
@@ -82,7 +84,7 @@ export function ProfilChatBox({
   );
 
   const loadPublic = useCallback(async () => {
-    const res = await fetch("/api/chat/public/thread");
+    const res = await fetch("/api/chat/public/thread", { credentials: "same-origin" });
     const data = await res.json().catch(() => ({}));
     applyMessages((data.messages ?? []) as Msg[]);
   }, [applyMessages]);
@@ -119,45 +121,51 @@ export function ProfilChatBox({
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
-    if (!body.trim()) return;
+    const text = body.trim();
+    if (!text) return;
 
-    // Chat privat (2 user)
-    if (mode === "private") {
-      if (!peerId) return;
-      setLoading(true);
-      const res = await fetch("/api/chat/send", {
+    if (mode === "private" && !peerId) {
+      show("Pilih member untuk chat privat.", "err");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (mode === "private") {
+        const res = await fetch("/api/chat/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ peerId, body: text }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          show(typeof j.error === "string" ? j.error : `Gagal mengirim (${res.status})`, "err");
+          return;
+        }
+        setBody("");
+        show("Pesan terkirim");
+        void loadPrivate(peerId);
+        return;
+      }
+
+      const resPub = await fetch("/api/chat/public/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ peerId, body }),
+        credentials: "same-origin",
+        body: JSON.stringify({ body: text }),
       });
-      setLoading(false);
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        show(typeof j.error === "string" ? j.error : "Gagal mengirim pesan", "err");
+      const j = await resPub.json().catch(() => ({}));
+      if (!resPub.ok) {
+        show(typeof j.error === "string" ? j.error : `Gagal mengirim (${resPub.status})`, "err");
         return;
       }
       setBody("");
       show("Pesan terkirim");
-      void loadPrivate(peerId);
-      return;
+      void loadPublic();
+    } finally {
+      setLoading(false);
     }
-
-    // Chat umum (global)
-    setLoading(true);
-    const resPub = await fetch("/api/chat/public/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body }),
-    });
-    setLoading(false);
-    if (!resPub.ok) {
-      const j = await resPub.json().catch(() => ({}));
-      show(typeof j.error === "string" ? j.error : "Gagal mengirim pesan", "err");
-      return;
-    }
-    setBody("");
-    show("Pesan terkirim");
-    void loadPublic();
   }
 
   if (mode === "private" && !peers.length) {
