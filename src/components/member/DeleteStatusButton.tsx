@@ -31,7 +31,7 @@ export function DeleteStatusButton({ statusId }: { statusId: string }) {
       type="button"
       disabled={busy}
       onClick={() => void onDelete()}
-      className="text-xs font-medium text-red-400/90 hover:text-red-300 hover:underline disabled:opacity-50"
+      className="shrink-0 text-xs font-medium text-red-400/90 hover:text-red-300 hover:underline disabled:opacity-50"
     >
       {busy ? "Menghapus…" : "Hapus"}
     </button>

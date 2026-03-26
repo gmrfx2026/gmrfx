@@ -268,34 +268,43 @@ export default async function MemberBySlugPage({
                 key={s.id}
                 className="rounded-2xl border border-broker-border/80 bg-broker-surface/25 p-4 shadow-sm md:p-5"
               >
-                <time
-                  dateTime={s.createdAt.toISOString()}
-                  className="text-xs text-broker-muted"
-                >
-                  {new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(
-                    new Date(s.createdAt)
-                  )}
-                </time>
-                <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-white">{s.content}</p>
+                <div className="flex gap-3">
+                  <SmallUserAvatar name={member.name} image={member.image} size="md" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <time
+                        dateTime={s.createdAt.toISOString()}
+                        className="text-xs text-broker-muted"
+                      >
+                        {new Intl.DateTimeFormat("id-ID", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        }).format(new Date(s.createdAt))}
+                      </time>
+                      {isSelf && viewerId && <DeleteStatusButton statusId={s.id} />}
+                    </div>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-white">{s.content}</p>
 
-                {viewerId ? (
-                  <MemberStatusActions
-                    statusId={s.id}
-                    initialCount={likeCountById.get(s.id) ?? 0}
-                    initialLiked={likedByViewer.has(s.id)}
-                  />
-                ) : (
-                  <p className="mt-3 text-xs text-broker-muted">
-                    <span>{likeCountById.get(s.id) ?? 0} suka</span>
-                    {" · "}
-                    <Link
-                      href={`/login?callbackUrl=${encodeURIComponent(`${profilePath}${safeStatusPage > 1 ? `?stPage=${safeStatusPage}` : ""}`)}`}
-                      className="text-broker-accent hover:underline"
-                    >
-                      Login untuk menyukai
-                    </Link>
-                  </p>
-                )}
+                    {viewerId ? (
+                      <MemberStatusActions
+                        statusId={s.id}
+                        initialCount={likeCountById.get(s.id) ?? 0}
+                        initialLiked={likedByViewer.has(s.id)}
+                      />
+                    ) : (
+                      <p className="mt-3 text-xs text-broker-muted">
+                        <span>{likeCountById.get(s.id) ?? 0} suka</span>
+                        {" · "}
+                        <Link
+                          href={`/login?callbackUrl=${encodeURIComponent(`${profilePath}${safeStatusPage > 1 ? `?stPage=${safeStatusPage}` : ""}`)}`}
+                          className="text-broker-accent hover:underline"
+                        >
+                          Login untuk menyukai
+                        </Link>
+                      </p>
+                    )}
+                  </div>
+                </div>
 
                 <div className="mt-5 border-t border-broker-border/50 pt-4">
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-broker-accent/90">
