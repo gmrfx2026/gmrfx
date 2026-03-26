@@ -80,14 +80,13 @@ export function MemberRatingWidget({
           );
         })}
       </div>
-      {!canRate && (
+      {!canRate && !isSelfView && (
         <p className="mt-1 text-[10px] text-broker-muted">
-          {myStars != null
-            ? "Anda sudah memberi rating."
-            : isSelfView
-              ? "Rating diberikan oleh member lain pada profil Anda."
-              : "Login untuk memberi rating."}
+          {myStars != null ? "Anda sudah memberi rating." : "Login untuk memberi rating."}
         </p>
+      )}
+      {!canRate && isSelfView && myStars != null && (
+        <p className="mt-1 text-[10px] text-broker-muted">Anda sudah memberi rating.</p>
       )}
     </div>
   );

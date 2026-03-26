@@ -88,6 +88,26 @@ model User {
   memberRatingsReceived MemberRating[] @relation("MemberRatingsReceived")
   memberRatingsGiven MemberRating[] @relation("MemberRatingsGiven")
   statusLikes         StatusLike[]
+
+  /** Akun ini mengikuti siapa (following). */
+  memberFollowsOutgoing MemberFollow[] @relation("MemberFollowsOutgoing")
+  /** Siapa yang mengikuti akun ini (followers). */
+  memberFollowsIncoming MemberFollow[] @relation("MemberFollowsIncoming")
+}
+
+/// Relasi follow antar member (Instagram-style): follower → following.
+model MemberFollow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("MemberFollowsOutgoing", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("MemberFollowsIncoming", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followingId])
+  @@index([followerId])
 }
 
 model StatusEntry {

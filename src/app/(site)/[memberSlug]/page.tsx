@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { ArticleStatus, CommentTarget } from "@prisma/client";
 import { MemberStatusActions } from "@/components/MemberStatusActions";
 import { MemberStatusComposer } from "@/components/MemberStatusComposer";
+import { MemberFollowButton, MemberFollowLoginLink } from "@/components/member/MemberFollowButton";
 import { MemberRatingWidget } from "@/components/member/MemberRatingWidget";
 import { unstable_noStore as noStore } from "next/cache";
 import {
@@ -31,12 +32,13 @@ function parseStatusPage(raw: string | undefined): number {
 
 export default async function MemberBySlugPage({
   params,
-  searchParams,
+  searchParams: searchParamsIn,
 }: {
   params: { memberSlug: string };
-  searchParams?: { stPage?: string };
+  searchParams?: PageSearchParams | Promise<PageSearchParams>;
 }) {
   noStore();
+  const searchParams = await resolvePageSearchParams(searchParamsIn);
   const slug = params.memberSlug;
 
   // Cari dulu exact match agar URL stabil.
@@ -100,30 +102,44 @@ export default async function MemberBySlugPage({
   const safeStatusPage = Math.min(parseStatusPage(stPageStr), statusTotalPages);
   const statusSkip = (safeStatusPage - 1) * statusPageSize;
 
-  const [statuses, articles, ratingRows, myRating] = await Promise.all([
-    prisma.statusEntry.findMany({
-      where: { userId: member.id },
-      orderBy: { createdAt: "desc" },
-      skip: statusSkip,
-      take: statusPageSize,
-    }),
-    prisma.article.findMany({
-      where: { authorId: member.id, status: ArticleStatus.PUBLISHED },
-      orderBy: { publishedAt: "desc" },
-      take: 10,
-      select: { id: true, slug: true, title: true, excerpt: true, publishedAt: true },
-    }),
-    prisma.memberRating.findMany({
-      where: { memberId: member.id },
-      select: { stars: true },
-    }),
-    viewerId
-      ? prisma.memberRating.findFirst({
-          where: { memberId: member.id, raterId: viewerId },
-          select: { stars: true },
-        })
-      : Promise.resolve(null),
-  ]);
+  const [statuses, articles, ratingRows, myRating, followerCount, followingCount, viewerFollows] =
+    await Promise.all([
+      prisma.statusEntry.findMany({
+        where: { userId: member.id },
+        orderBy: { createdAt: "desc" },
+        skip: statusSkip,
+        take: statusPageSize,
+      }),
+      prisma.article.findMany({
+        where: { authorId: member.id, status: ArticleStatus.PUBLISHED },
+        orderBy: { publishedAt: "desc" },
+        take: 10,
+        select: { id: true, slug: true, title: true, excerpt: true, publishedAt: true },
+      }),
+      prisma.memberRating.findMany({
+        where: { memberId: member.id },
+        select: { stars: true },
+      }),
+      viewerId
+        ? prisma.memberRating.findFirst({
+            where: { memberId: member.id, raterId: viewerId },
+            select: { stars: true },
+          })
+        : Promise.resolve(null),
+      prisma.memberFollow.count({ where: { followingId: member.id } }),
+      prisma.memberFollow.count({ where: { followerId: member.id } }),
+      viewerId && viewerId !== member.id
+        ? prisma.memberFollow.findUnique({
+            where: {
+              followerId_followingId: {
+                followerId: viewerId,
+                followingId: member.id,
+              },
+            },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
 
   const statusIds = statuses.map((s) => s.id);
 
@@ -280,7 +296,7 @@ export default async function MemberBySlugPage({
 
       <div className="mt-4 flex flex-col items-start gap-4 md:flex-row md:items-center">
         <div className="flex flex-col items-start gap-3">
-          <div className="relative h-24 w-24 overflow-hidden rounded-full border-2 border-broker-accent/40 bg-broker-surface">
+          <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full border-2 border-broker-accent/40 bg-broker-surface">
             {member.image?.startsWith("/") ? (
               <Image src={member.image} alt="" fill className="object-cover" unoptimized />
             ) : member.image ? (
@@ -293,29 +309,39 @@ export default async function MemberBySlugPage({
             )}
           </div>
 
-          <div className="w-full">
-            {isSelf ? (
-              <button
-                type="button"
-                disabled
-                className="w-full cursor-not-allowed rounded-lg bg-broker-surface/60 px-3 py-2 text-sm text-broker-muted"
-              >
-                Chat (dengan diri sendiri)
-              </button>
-            ) : (
+          {!isSelf && (
+            <div className="w-full min-w-[9rem]">
               <Link
                 href={chatHref ?? "/"}
-                className="block w-full rounded-lg bg-broker-accent/15 px-3 py-2 text-sm font-semibold text-broker-accent hover:bg-broker-accent/20"
+                className="block w-full rounded-lg bg-broker-accent/15 px-3 py-2 text-center text-sm font-semibold text-broker-accent hover:bg-broker-accent/20"
               >
                 Chat
               </Link>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-bold text-white">{member.name}</h1>
           <p className="text-sm text-broker-muted">{member.kabupaten}</p>
+          <p className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm text-broker-muted">
+            <span>
+              <span className="tabular-nums font-semibold text-white">{followingCount}</span> mengikuti
+            </span>
+            <span className="text-broker-muted/50" aria-hidden>
+              ·
+            </span>
+            <span>
+              <span className="tabular-nums font-semibold text-white">{followerCount}</span> pengikut
+            </span>
+          </p>
+          {!isSelf && viewerId && (
+            <MemberFollowButton
+              memberId={member.id}
+              initialFollowing={viewerFollows != null}
+            />
+          )}
+          {!isSelf && !viewerId && <MemberFollowLoginLink loginCallbackUrl={profileHrefCurrent} />}
           {hasStatuses && (
             <MemberRatingWidget
               memberId={member.id}
