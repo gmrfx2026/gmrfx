@@ -20,13 +20,13 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "peerId wajib" }, { status: 400 });
   }
 
-  const [userAId, userBId] = orderedPair(session.user.id, peerId);
-
   try {
     const dmAccess = await getPrivateDmAccess(session.user.id, peerId);
     if (!dmAccess.allowed) {
       return NextResponse.json({ messages: [], dmAccess });
     }
+
+    const [userAId, userBId] = orderedPair(session.user.id, peerId);
 
     const conv = await prisma.chatConversation.findUnique({
       where: { userAId_userBId: { userAId, userBId } },

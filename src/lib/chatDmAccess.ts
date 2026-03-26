@@ -51,7 +51,6 @@ export async function getPrivateDmAccess(
     where: {
       requesterId_targetId: { requesterId: viewerId, targetId: peerId },
     },
-    include: { target: { select: { name: true } } },
   });
   if (reqAsRequester) {
     if (reqAsRequester.status === ChatDmRequestStatus.ACCEPTED) {
