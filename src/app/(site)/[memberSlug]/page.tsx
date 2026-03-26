@@ -5,11 +5,27 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ArticleStatus, CommentTarget } from "@prisma/client";
 import { MemberStatusCommentForm } from "@/components/MemberStatusCommentForm";
+import { MemberStatusComposer } from "@/components/MemberStatusComposer";
+import { MemberStatusLikeButton } from "@/components/MemberStatusLikeButton";
 import { MemberRatingWidget } from "@/components/member/MemberRatingWidget";
 
 export const dynamic = "force-dynamic";
 
-export default async function MemberBySlugPage({ params }: { params: { memberSlug: string } }) {
+const STATUS_PAGE_SIZE = 10;
+
+function parseStatusPage(raw: string | undefined): number {
+  const n = Number.parseInt(String(raw ?? "1"), 10);
+  if (!Number.isFinite(n) || n < 1) return 1;
+  return n;
+}
+
+export default async function MemberBySlugPage({
+  params,
+  searchParams,
+}: {
+  params: { memberSlug: string };
+  searchParams?: { stPage?: string };
+}) {
   const slug = params.memberSlug;
 
   // Cari dulu exact match agar URL stabil.
@@ -57,27 +73,33 @@ export default async function MemberBySlugPage({ params }: { params: { memberSlu
     ? null
     : viewerId
       ? chatPathForViewer
-      : `/login?callbackUrl=${encodeURIComponent(chatPathForViewer)}`;
+      : `/login?callbackUrl=${encodeURIComponent(`/${member.memberSlug}`)}`;
+
+  const statusTotal = await prisma.statusEntry.count({ where: { userId: member.id } });
+  const statusTotalPages = Math.max(1, Math.ceil(statusTotal / STATUS_PAGE_SIZE) || 1);
+  const safeStatusPage = Math.min(parseStatusPage(searchParams?.stPage), statusTotalPages);
+  const statusSkip = (safeStatusPage - 1) * STATUS_PAGE_SIZE;
 
   const [statuses, comments, articles, ratingRows, myRating] = await Promise.all([
     prisma.statusEntry.findMany({
       where: { userId: member.id },
       orderBy: { createdAt: "desc" },
-      take: 3,
+      skip: statusSkip,
+      take: STATUS_PAGE_SIZE,
     }),
     (async () => {
-      const ids = (
-        await prisma.statusEntry.findMany({
-          where: { userId: member.id },
-          orderBy: { createdAt: "desc" },
-          take: 3,
-          select: { id: true },
-        })
-      ).map((s) => s.id);
+      const pageStatuses = await prisma.statusEntry.findMany({
+        where: { userId: member.id },
+        orderBy: { createdAt: "desc" },
+        skip: statusSkip,
+        take: STATUS_PAGE_SIZE,
+        select: { id: true },
+      });
+      const ids = pageStatuses.map((s) => s.id);
       if (!ids.length) return [];
       return prisma.comment.findMany({
         where: { targetType: CommentTarget.STATUS, statusId: { in: ids }, hidden: false },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: "asc" },
         include: { user: { select: { name: true } } },
       });
     })(),
@@ -99,7 +121,7 @@ export default async function MemberBySlugPage({ params }: { params: { memberSlu
       : Promise.resolve(null),
   ]);
 
-  const commentByStatusId = new Map<string, any[]>();
+  const commentByStatusId = new Map<string, (typeof comments)[number][]>();
   for (const c of comments) {
     const key = c.statusId as string;
     const arr = commentByStatusId.get(key) ?? [];
@@ -107,11 +129,43 @@ export default async function MemberBySlugPage({ params }: { params: { memberSlu
     commentByStatusId.set(key, arr);
   }
 
+  const statusIds = statuses.map((s) => s.id);
+  const likeCountById = new Map<string, number>();
+  const likedByViewer = new Set<string>();
+  if (statusIds.length > 0) {
+    const [grouped, mine] = await Promise.all([
+      prisma.statusLike.groupBy({
+        by: ["statusId"],
+        where: { statusId: { in: statusIds } },
+        _count: { _all: true },
+      }),
+      viewerId
+        ? prisma.statusLike.findMany({
+            where: { userId: viewerId, statusId: { in: statusIds } },
+            select: { statusId: true },
+          })
+        : Promise.resolve([]),
+    ]);
+    for (const g of grouped) {
+      likeCountById.set(g.statusId, g._count._all);
+    }
+    for (const m of mine) {
+      likedByViewer.add(m.statusId);
+    }
+  }
+
   const ratingCount = ratingRows.length;
   const ratingAvg = ratingCount > 0 ? ratingRows.reduce((s, r) => s + r.stars, 0) / ratingCount : null;
   const myStars = myRating?.stars ?? null;
-  const hasStatuses = statuses.length > 0;
+  const hasStatuses = statusTotal > 0;
   const canRate = viewerId != null && viewerId !== member.id && hasStatuses;
+
+  const profilePath = `/${member.memberSlug}`;
+
+  function statusPageHref(p: number): string {
+    if (p <= 1) return profilePath;
+    return `${profilePath}?stPage=${p}`;
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -142,7 +196,7 @@ export default async function MemberBySlugPage({ params }: { params: { memberSlu
               <button
                 type="button"
                 disabled
-                className="w-full rounded-lg bg-broker-surface/60 px-3 py-2 text-sm text-broker-muted cursor-not-allowed"
+                className="w-full cursor-not-allowed rounded-lg bg-broker-surface/60 px-3 py-2 text-sm text-broker-muted"
               >
                 Chat (dengan diri sendiri)
               </button>
@@ -173,25 +227,81 @@ export default async function MemberBySlugPage({ params }: { params: { memberSlu
       </div>
 
       <section className="mt-12">
-        <h2 className="text-lg font-semibold text-white">Status (3 terbaru)</h2>
-        <div className="mt-4 space-y-4">
+        <h2 className="text-lg font-semibold text-white">Linimasa status</h2>
+        <p className="mt-1 text-sm text-broker-muted">
+          Seperti di profil sosial: {member.name} membagikan pembaruan, member lain bisa berkomentar.
+        </p>
+
+        {isSelf && (
+          <div className="mt-6">
+            <MemberStatusComposer />
+          </div>
+        )}
+
+        {!viewerId && (
+          <p className="mt-6 rounded-xl border border-broker-border/60 bg-broker-surface/25 px-4 py-3 text-sm text-broker-muted">
+            <Link href={`/login?callbackUrl=${encodeURIComponent(profilePath)}`} className="font-medium text-broker-accent hover:underline">
+              Login
+            </Link>{" "}
+            untuk berkomentar pada status.
+          </p>
+        )}
+
+        <div className="mt-6 space-y-5">
           {statuses.map((s) => {
             const list = commentByStatusId.get(s.id) ?? [];
             return (
-              <div key={s.id} className="rounded-xl border border-broker-border bg-broker-surface/30 p-4">
-                <p className="text-sm text-broker-muted">
-                  {new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(new Date(s.createdAt))}
-                </p>
-                <p className="mt-2 text-sm text-white whitespace-pre-wrap">{s.content}</p>
+              <article
+                key={s.id}
+                className="rounded-2xl border border-broker-border/80 bg-broker-surface/25 p-4 shadow-sm md:p-5"
+              >
+                <time
+                  dateTime={s.createdAt.toISOString()}
+                  className="text-xs text-broker-muted"
+                >
+                  {new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(
+                    new Date(s.createdAt)
+                  )}
+                </time>
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-white">{s.content}</p>
 
-                <div className="mt-4">
-                  <h3 className="text-sm font-medium text-broker-accent">Komentar</h3>
+                {viewerId ? (
+                  <MemberStatusLikeButton
+                    statusId={s.id}
+                    initialCount={likeCountById.get(s.id) ?? 0}
+                    initialLiked={likedByViewer.has(s.id)}
+                  />
+                ) : (
+                  <p className="mt-3 text-xs text-broker-muted">
+                    <span>{likeCountById.get(s.id) ?? 0} suka</span>
+                    {" · "}
+                    <Link
+                      href={`/login?callbackUrl=${encodeURIComponent(`${profilePath}${safeStatusPage > 1 ? `?stPage=${safeStatusPage}` : ""}`)}`}
+                      className="text-broker-accent hover:underline"
+                    >
+                      Login untuk menyukai
+                    </Link>
+                  </p>
+                )}
+
+                <div className="mt-5 border-t border-broker-border/50 pt-4">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-broker-accent/90">
+                    Komentar
+                  </h3>
                   {list.length > 0 ? (
-                    <ul className="mt-2 space-y-2">
+                    <ul className="mt-3 space-y-3">
                       {list.map((c) => (
-                        <li key={c.id} className="rounded-lg border border-broker-border bg-broker-bg p-3 text-sm">
-                          <p className="text-broker-accent">{c.user.name ?? "Member"}</p>
+                        <li
+                          key={c.id}
+                          className="rounded-xl border border-broker-border/60 bg-broker-bg/80 px-3 py-2.5 text-sm"
+                        >
+                          <p className="font-medium text-broker-accent">{c.user.name ?? "Member"}</p>
                           <p className="mt-1 text-broker-muted">{c.content}</p>
+                          <p className="mt-1.5 text-[11px] text-broker-muted/60">
+                            {new Intl.DateTimeFormat("id-ID", { dateStyle: "short", timeStyle: "short" }).format(
+                              new Date(c.createdAt)
+                            )}
+                          </p>
                         </li>
                       ))}
                     </ul>
@@ -200,16 +310,55 @@ export default async function MemberBySlugPage({ params }: { params: { memberSlu
                   )}
                 </div>
 
-                {session?.user?.id && session.user.id !== member.id && (
-                  <MemberStatusCommentForm statusId={s.id} />
-                )}
-              </div>
+                {session?.user?.id && <MemberStatusCommentForm statusId={s.id} />}
+              </article>
             );
           })}
           {statuses.length === 0 && (
-            <p className="text-sm text-broker-muted">Member belum pernah menulis status.</p>
+            <p className="text-sm text-broker-muted">
+              {isSelf
+                ? "Belum ada status. Tulis pembaruan di kotak di atas agar teman bisa menyapa."
+                : "Member ini belum membagikan status."}
+            </p>
           )}
         </div>
+
+        {statusTotal > STATUS_PAGE_SIZE && (
+          <nav
+            className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-broker-border/50 pt-6 text-sm"
+            aria-label="Pagination status"
+          >
+            <span className="text-broker-muted">
+              Halaman {safeStatusPage} dari {statusTotalPages} · {statusTotal} status
+            </span>
+            <div className="flex gap-2">
+              {safeStatusPage > 1 ? (
+                <Link
+                  href={statusPageHref(safeStatusPage - 1)}
+                  className="rounded-lg border border-broker-border px-3 py-1.5 text-broker-accent hover:bg-broker-surface/40"
+                >
+                  ← Sebelumnya
+                </Link>
+              ) : (
+                <span className="rounded-lg border border-broker-border/40 px-3 py-1.5 text-broker-muted/50">
+                  ← Sebelumnya
+                </span>
+              )}
+              {safeStatusPage < statusTotalPages ? (
+                <Link
+                  href={statusPageHref(safeStatusPage + 1)}
+                  className="rounded-lg border border-broker-border px-3 py-1.5 text-broker-accent hover:bg-broker-surface/40"
+                >
+                  Berikutnya →
+                </Link>
+              ) : (
+                <span className="rounded-lg border border-broker-border/40 px-3 py-1.5 text-broker-muted/50">
+                  Berikutnya →
+                </span>
+              )}
+            </div>
+          </nav>
+        )}
       </section>
 
       <section className="mt-10">
@@ -229,4 +378,3 @@ export default async function MemberBySlugPage({ params }: { params: { memberSlu
     </div>
   );
 }
-

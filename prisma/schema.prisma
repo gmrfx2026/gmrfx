@@ -87,6 +87,7 @@ model User {
 
   memberRatingsReceived MemberRating[] @relation("MemberRatingsReceived")
   memberRatingsGiven MemberRating[] @relation("MemberRatingsGiven")
+  statusLikes         StatusLike[]
 }
 
 model StatusEntry {
@@ -96,7 +97,20 @@ model StatusEntry {
   content   String
   createdAt DateTime @default(now())
 
-  comments Comment[] @relation("StatusComments")
+  comments Comment[]    @relation("StatusComments")
+  likes    StatusLike[]
+}
+
+model StatusLike {
+  id        String      @id @default(cuid())
+  statusId  String
+  status    StatusEntry @relation(fields: [statusId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+
+  @@unique([statusId, userId])
+  @@index([statusId])
 }
 
 model Account {
