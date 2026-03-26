@@ -166,7 +166,7 @@ export function ProfilChatBox({
         /* bukan JSON */
       }
       if (trimmed.startsWith("<!DOCTYPE") || trimmed.toLowerCase().startsWith("<html")) {
-        return "Server mengembalikan HTML (bukan JSON). Cek Vercel Logs — sering karena error platform atau env.";
+        return `HTTP ${res.status}: respons HTML (bukan JSON). Buka Vercel → Logs, filter POST /api/chat/… Pastikan deployment terbaru sudah Ready. Cek env Production: DATABASE_URL, AUTH_SECRET, AUTH_URL.`;
       }
       return trimmed.slice(0, 240) || `Gagal mengirim (HTTP ${res.status})`;
     }
