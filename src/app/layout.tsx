@@ -33,7 +33,13 @@ export default function RootLayout({
           overflow-x-hidden mencegah marquee / konten lebar membuat halaman “meluber” horizontal.
         */}
         <div className="flex min-h-screen w-full max-w-[100vw] flex-col overflow-x-hidden">
-          <Providers>{children}</Providers>
+          {/*
+            Kolom flex di sini supaya SiteHeader / main.flex-1 / SiteFooter (dari page atau (site)/layout)
+            punya induk flex — tanpa ini, flex-1 di <main> tidak berlaku dan footer bisa “naik”, tampilan berantakan.
+          */}
+          <Providers>
+            <div className="flex min-h-screen w-full flex-1 flex-col">{children}</div>
+          </Providers>
         </div>
       </body>
     </html>

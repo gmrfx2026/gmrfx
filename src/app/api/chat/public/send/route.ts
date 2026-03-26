@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { chatDbErrorMessage } from "@/lib/chatDbErrorMessage";
 import { isUserProfileComplete } from "@/lib/profileComplete";
 import { prisma } from "@/lib/prisma";
-import { sanitizePlainText } from "@/lib/sanitize";
+import { sanitizePlainText } from "@/lib/sanitizePlainText";
 import { clientKeyFromRequest, rateLimit } from "@/lib/simpleRateLimit";
 import { z } from "zod";
 

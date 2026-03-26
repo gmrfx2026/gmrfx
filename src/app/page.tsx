@@ -21,7 +21,7 @@ export default async function HomePage() {
   return (
     <>
       <SiteHeader />
-      <main className="min-w-0 flex-1">
+      <main className="min-h-0 min-w-0 flex-1">
         <HomePageContent />
       </main>
       <SiteFooter />

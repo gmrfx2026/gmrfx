@@ -105,8 +105,3 @@ export function sanitizeArticleHtml(dirty: string): string {
     ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|\/|#)/i,
   });
 }
-
-export function sanitizePlainText(text: string, maxLen: number): string {
-  const t = text.replace(/[<>]/g, "").trim().slice(0, maxLen);
-  return t;
-}

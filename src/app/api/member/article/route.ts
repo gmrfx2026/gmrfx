@@ -3,7 +3,8 @@ import { auth } from "@/auth";
 import { isUserProfileComplete } from "@/lib/profileComplete";
 import { prisma } from "@/lib/prisma";
 import { ArticleStatus } from "@prisma/client";
-import { sanitizeArticleHtml, sanitizePlainText } from "@/lib/sanitize";
+import { sanitizeArticleHtml } from "@/lib/sanitize";
+import { sanitizePlainText } from "@/lib/sanitizePlainText";
 import { slugify } from "@/lib/slug";
 
 export async function POST(req: Request) {

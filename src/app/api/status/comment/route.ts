@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { CommentTarget } from "@prisma/client";
-import { sanitizePlainText } from "@/lib/sanitize";
+import { sanitizePlainText } from "@/lib/sanitizePlainText";
 import { clientKeyFromRequest, rateLimit } from "@/lib/simpleRateLimit";
 
 const WINDOW_MS = 10 * 60 * 1000;

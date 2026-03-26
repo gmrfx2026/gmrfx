@@ -44,6 +44,10 @@ const providers = [
 ];
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  /** Wajib untuk App Router — hindari inferensi `basePath` dari `AUTH_URL` yang pathname-nya `/` (bisa jadi `/` dan merusak `/api/auth`). */
+  basePath: "/api/auth",
+  /** Produksi (Vercel): percayai Host header; tanpa ini `auth()` bisa gagal di domain produksi. */
+  trustHost: true,
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   pages: {
