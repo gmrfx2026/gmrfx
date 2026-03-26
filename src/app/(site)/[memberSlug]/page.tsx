@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { SmallUserAvatar } from "@/components/SmallUserAvatar";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ArticleStatus, CommentTarget } from "@prisma/client";
@@ -102,7 +103,7 @@ export default async function MemberBySlugPage({
       return prisma.comment.findMany({
         where: { targetType: CommentTarget.STATUS, statusId: { in: ids }, hidden: false },
         orderBy: { createdAt: "asc" },
-        include: { user: { select: { name: true } } },
+        include: { user: { select: { name: true, image: true } } },
       });
     })(),
     prisma.article.findMany({
@@ -303,15 +304,25 @@ export default async function MemberBySlugPage({
                       {list.map((c) => (
                         <li
                           key={c.id}
-                          className="rounded-xl border border-broker-border/60 bg-broker-bg/80 px-3 py-2.5 text-sm"
+                          className="flex gap-2.5 rounded-xl border border-broker-border/60 bg-broker-bg/80 py-2.5 pl-2 pr-3 text-sm"
                         >
-                          <p className="font-medium text-broker-accent">{c.user.name ?? "Member"}</p>
-                          <p className="mt-1 text-broker-muted">{c.content}</p>
-                          <p className="mt-1.5 text-[11px] text-broker-muted/60">
-                            {new Intl.DateTimeFormat("id-ID", { dateStyle: "short", timeStyle: "short" }).format(
-                              new Date(c.createdAt)
-                            )}
-                          </p>
+                          <SmallUserAvatar
+                            name={c.user.name}
+                            image={c.user.image}
+                            size="sm"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium leading-tight text-broker-accent">
+                              {c.user.name ?? "Member"}
+                            </p>
+                            <p className="mt-0.5 text-broker-muted">{c.content}</p>
+                            <p className="mt-1 text-[11px] text-broker-muted/60">
+                              {new Intl.DateTimeFormat("id-ID", {
+                                dateStyle: "short",
+                                timeStyle: "short",
+                              }).format(new Date(c.createdAt))}
+                            </p>
+                          </div>
                         </li>
                       ))}
                     </ul>
