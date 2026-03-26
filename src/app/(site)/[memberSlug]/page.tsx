@@ -167,7 +167,7 @@ export default async function MemberBySlugPage({
             statusId,
             hidden: false,
           },
-          orderBy: { createdAt: "asc" },
+          orderBy: { createdAt: "desc" },
           skip,
           take: commentPageSize,
           include: { user: { select: { name: true, image: true } } },
