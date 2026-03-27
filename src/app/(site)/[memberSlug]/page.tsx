@@ -301,17 +301,20 @@ export default async function MemberBySlugPage({
     ) : null;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      <div className="flex items-center gap-3">
-        <Link href="/" className="text-xs text-broker-accent hover:underline">
+    <div className="mx-auto max-w-3xl px-4 pb-10 pt-6 sm:px-5 sm:pb-12 sm:pt-8 md:px-6 md:pt-10">
+      <nav className="flex items-center gap-2 text-xs text-broker-muted" aria-label="Breadcrumb">
+        <Link href="/" className="text-broker-accent transition hover:underline">
           ← Home
         </Link>
-        <span className="text-xs text-broker-muted">· Member</span>
-      </div>
+        <span className="text-broker-muted/60" aria-hidden>
+          /
+        </span>
+        <span className="truncate">Member</span>
+      </nav>
 
-      <div className="mt-4 flex flex-col items-start gap-4 md:flex-row md:items-center">
-        <div className="flex flex-col items-start gap-3">
-          <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full border-2 border-broker-accent/40 bg-broker-surface">
+      <div className="mt-6 flex flex-col gap-6 sm:mt-8 md:flex-row md:items-start md:gap-8">
+        <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-start md:flex-col md:items-center">
+          <div className="relative mx-auto h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-broker-accent/40 bg-broker-surface shadow-lg shadow-black/20 sm:mx-0 sm:h-24 sm:w-24">
             {member.image?.startsWith("/") ? (
               <Image src={member.image} alt="" fill className="object-cover" unoptimized />
             ) : member.image ? (
@@ -325,10 +328,10 @@ export default async function MemberBySlugPage({
           </div>
 
           {!isSelf && (
-            <div className="w-full min-w-[9rem]">
+            <div className="w-full min-w-[9rem] sm:w-auto md:w-full">
               <Link
                 href={chatHref ?? "/"}
-                className="block w-full rounded-lg bg-broker-accent/15 px-3 py-2 text-center text-sm font-semibold text-broker-accent hover:bg-broker-accent/20"
+                className="block w-full rounded-xl bg-broker-accent/15 px-4 py-2.5 text-center text-sm font-semibold text-broker-accent transition hover:bg-broker-accent/25"
               >
                 Chat
               </Link>
@@ -336,9 +339,11 @@ export default async function MemberBySlugPage({
           )}
         </div>
 
-        <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-bold text-white">{member.name}</h1>
-          <p className="text-sm text-broker-muted">{member.kabupaten}</p>
+        <div className="min-w-0 flex-1 space-y-1">
+          <h1 className="text-balance text-xl font-bold tracking-tight text-white sm:text-2xl">{member.name}</h1>
+          {member.kabupaten ? (
+            <p className="text-sm text-broker-muted">{member.kabupaten}</p>
+          ) : null}
           <p className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm text-broker-muted">
             <span>
               <span className="tabular-nums font-semibold text-white">{followingCount}</span> mengikuti
@@ -371,27 +376,24 @@ export default async function MemberBySlugPage({
         </div>
       </div>
 
-      <section className="mt-12">
+      <section className="mt-10 sm:mt-12">
         {isSelf && (
-          <div className="mb-8 rounded-2xl border border-broker-accent/35 bg-broker-accent/10 p-4 md:p-5">
-            <p className="text-sm font-semibold text-white">Halaman publik Anda</p>
-            <p className="mt-1 text-sm text-broker-muted">
-              Tulis status di bawah — pengunjung melihat linimasa ini, dan member lain bisa berkomentar dan
-              menyukai.
-            </p>
-            <div className="mt-4">
-              <MemberStatusComposer />
-            </div>
+          <div className="mb-8 sm:mb-10">
+            <MemberStatusComposer />
           </div>
         )}
 
-        <h2 className="text-lg font-semibold text-white">Linimasa status</h2>
-        <p className="mt-1 text-sm text-broker-muted">
-          Pembaruan dari {member.name}; berkomentar setelah login.
-        </p>
+        <div className="border-b border-broker-border/40 pb-4 sm:pb-5">
+          <h2 className="text-base font-semibold tracking-tight text-white sm:text-lg">Linimasa status</h2>
+          <p className="mt-1.5 max-w-prose text-pretty text-xs leading-relaxed text-broker-muted sm:text-sm">
+            {viewerId
+              ? `Pembaruan dari ${member.name ?? "member"}.`
+              : `Pembaruan dari ${member.name ?? "member"}; berkomentar setelah login.`}
+          </p>
+        </div>
 
         {!viewerId && (
-          <p className="mt-6 rounded-xl border border-broker-border/60 bg-broker-surface/25 px-4 py-3 text-sm text-broker-muted">
+          <p className="mt-5 rounded-xl border border-broker-border/60 bg-broker-surface/25 px-4 py-3 text-sm text-broker-muted sm:px-5">
             <Link
               href={`/login?callbackUrl=${encodeURIComponent(profileHrefCurrent)}`}
               className="font-medium text-broker-accent hover:underline"
@@ -402,7 +404,7 @@ export default async function MemberBySlugPage({
           </p>
         )}
 
-        <div className="mt-6 space-y-5">
+        <div className="mt-5 space-y-4 sm:mt-6 sm:space-y-5">
           {statuses.map((s) => {
             const block = commentByStatusId.get(s.id);
             const list = block?.comments ?? [];
@@ -559,11 +561,14 @@ export default async function MemberBySlugPage({
         )}
       </section>
 
-      <section className="mt-10">
-        <h2 className="text-lg font-semibold text-white">Artikel</h2>
-        <ul className="mt-3 space-y-2">
+      <section className="mt-10 border-t border-broker-border/40 pt-10 sm:mt-12 sm:pt-12">
+        <h2 className="text-base font-semibold tracking-tight text-white sm:text-lg">Artikel</h2>
+        <ul className="mt-4 space-y-3 sm:mt-5">
           {articles.map((a) => (
-            <li key={a.id} className="rounded-lg border border-broker-border bg-broker-surface/30 p-4">
+            <li
+              key={a.id}
+              className="rounded-xl border border-broker-border/80 bg-broker-surface/25 p-4 transition hover:border-broker-border sm:p-5"
+            >
               <Link href={`/artikel/${a.slug}`} className="text-broker-accent hover:underline">
                 {a.title}
               </Link>
