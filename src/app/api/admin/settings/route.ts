@@ -7,6 +7,7 @@ import {
   MEMBER_TIMELINE_PER_PAGE_KEY,
 } from "@/lib/memberStatusPagination";
 import { clampPageSize } from "@/lib/walletTransferFilters";
+import { HOME_MEMBER_TICKER_VISIBLE_KEY } from "@/lib/homePageSettings";
 
 export async function GET() {
   const session = await auth();
@@ -71,6 +72,15 @@ export async function PATCH(req: Request) {
       where: { key: MEMBER_TIMELINE_PER_PAGE_KEY },
       create: { key: MEMBER_TIMELINE_PER_PAGE_KEY, value: String(clamped) },
       update: { value: String(clamped) },
+    });
+  }
+
+  if (body.homeMemberTickerVisible !== undefined) {
+    const on = Boolean(body.homeMemberTickerVisible);
+    await prisma.systemSetting.upsert({
+      where: { key: HOME_MEMBER_TICKER_VISIBLE_KEY },
+      create: { key: HOME_MEMBER_TICKER_VISIBLE_KEY, value: on ? "1" : "0" },
+      update: { value: on ? "1" : "0" },
     });
   }
 

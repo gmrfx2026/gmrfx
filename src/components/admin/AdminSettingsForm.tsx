@@ -8,17 +8,20 @@ export function AdminSettingsForm({
   initialArticleCommentsPerPage,
   initialMemberTimelinePerPage,
   initialMemberStatusCommentsPerPage,
+  initialHomeMemberTickerVisible,
 }: {
   initialFee: string;
   initialArticleCommentsPerPage: string;
   initialMemberTimelinePerPage: string;
   initialMemberStatusCommentsPerPage: string;
+  initialHomeMemberTickerVisible: boolean;
 }) {
   const router = useRouter();
   const [v, setV] = useState(initialFee);
   const [commentsPer, setCommentsPer] = useState(initialArticleCommentsPerPage);
   const [timelinePer, setTimelinePer] = useState(initialMemberTimelinePerPage);
   const [statusCommentsPer, setStatusCommentsPer] = useState(initialMemberStatusCommentsPerPage);
+  const [memberTickerVisible, setMemberTickerVisible] = useState(initialHomeMemberTickerVisible);
   const [msg, setMsg] = useState("");
 
   async function save(e: React.FormEvent) {
@@ -31,6 +34,7 @@ export function AdminSettingsForm({
         articleCommentsPerPage: commentsPer,
         memberTimelinePerPage: timelinePer,
         memberStatusCommentsPerPage: statusCommentsPer,
+        homeMemberTickerVisible: memberTickerVisible,
       }),
     });
     setMsg(res.ok ? "Disimpan." : "Gagal");
@@ -73,6 +77,21 @@ export function AdminSettingsForm({
         />
         <span className="mt-1 block text-xs text-gray-500">
           Halaman publik profil member (`/nama-member`): jumlah status yang ditampilkan per halaman.
+        </span>
+      </label>
+      <label className="flex cursor-pointer items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={memberTickerVisible}
+          onChange={(e) => setMemberTickerVisible(e.target.checked)}
+          className="mt-1 h-4 w-4 shrink-0"
+        />
+        <span>
+          <span className="font-medium text-gray-800">Tampilkan strip &quot;Member baru&quot; di beranda</span>
+          <span className="mt-1 block text-xs text-gray-500">
+            Bilah horizontal di bawah hero yang menampilkan nama member terbaru. Nonaktifkan jika ingin
+            menyembunyikannya.
+          </span>
         </span>
       </label>
       <label className="block text-sm">

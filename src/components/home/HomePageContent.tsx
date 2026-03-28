@@ -2,9 +2,15 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { ArticleStatus } from "@prisma/client";
 import { MemberTicker } from "@/components/MemberTicker";
+import { HOME_MEMBER_TICKER_VISIBLE_KEY, isHomeMemberTickerVisible } from "@/lib/homePageSettings";
 
 /** Konten beranda (data + JSX). Dipakai dari `app/page.tsx` di luar layout `(site)`. */
 export async function HomePageContent() {
+  const tickerRow = await prisma.systemSetting.findUnique({
+    where: { key: HOME_MEMBER_TICKER_VISIBLE_KEY },
+  });
+  const showMemberTicker = isHomeMemberTickerVisible(tickerRow?.value ?? null);
+
   const [articles, members] = await Promise.all([
     prisma.article.findMany({
       where: { status: ArticleStatus.PUBLISHED },
@@ -12,12 +18,14 @@ export async function HomePageContent() {
       take: 6,
       include: { author: { select: { name: true } } },
     }),
-    prisma.user.findMany({
-      where: { role: "USER", profileComplete: true },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-      select: { name: true, kabupaten: true },
-    }),
+    showMemberTicker
+      ? prisma.user.findMany({
+          where: { role: "USER", profileComplete: true },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+          select: { name: true, kabupaten: true },
+        })
+      : Promise.resolve([]),
   ]);
 
   return (
@@ -51,13 +59,12 @@ export async function HomePageContent() {
         </div>
       </section>
 
-      <MemberTicker members={members} />
+      {showMemberTicker ? <MemberTicker members={members} /> : null}
 
       <section className="mx-auto max-w-6xl px-4 py-14">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold text-white md:text-2xl">Artikel terbaru</h2>
-            <p className="mt-1 text-sm text-broker-muted">Enam publikasi terakhir dari redaksi & member.</p>
           </div>
           <Link href="/artikel" className="text-sm font-medium text-broker-accent hover:underline">
             Lihat semua
