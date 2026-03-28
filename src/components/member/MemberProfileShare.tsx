@@ -117,7 +117,7 @@ export function MemberProfileShare({
         className={clsx(
           "flex flex-wrap items-center gap-1.5",
           variant === "toolbar"
-            ? "w-full justify-start sm:w-auto sm:justify-end"
+            ? "w-full justify-end"
             : "justify-center md:justify-start",
         )}
       >
