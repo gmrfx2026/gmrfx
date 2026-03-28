@@ -360,7 +360,7 @@ export default async function MemberBySlugPage({
           )}
         </div>
 
-        <div className="min-w-0 flex-1 space-y-1">
+        <div className="flex min-w-0 flex-1 flex-col items-center space-y-1 text-center md:items-start md:text-left">
           <h1 className="text-balance text-xl font-bold tracking-tight text-white sm:text-2xl">{member.name}</h1>
           {member.kabupaten ? (
             <p className="text-sm text-broker-muted">{member.kabupaten}</p>
@@ -369,6 +369,7 @@ export default async function MemberBySlugPage({
             memberUserId={member.id}
             followerCount={followerCount}
             followingCount={followingCount}
+            className="justify-center md:justify-start"
           />
           <MemberSocialLinks
             tiktokUrl={member.socialTiktokUrl}
@@ -376,10 +377,10 @@ export default async function MemberBySlugPage({
             facebookUrl={member.socialFacebookUrl}
             telegramUrl={member.socialTelegramUrl}
             youtubeUrl={member.socialYoutubeUrl}
-            className="mt-2"
+            className="mt-2 justify-center md:justify-start"
           />
           {!isSelf && viewerId && (
-            <div className="mt-3">
+            <div className="flex w-full justify-center md:justify-start">
               <MemberFollowButton
                 memberId={member.id}
                 followState={followState}
@@ -388,19 +389,21 @@ export default async function MemberBySlugPage({
             </div>
           )}
           {!isSelf && !viewerId && (
-            <div className="mt-3">
+            <div className="flex w-full justify-center md:justify-start">
               <MemberFollowLoginLink loginCallbackUrl={profileHrefCurrent} />
             </div>
           )}
           {hasStatuses && (
-            <MemberRatingWidget
-              memberId={member.id}
-              canRate={canRate}
-              myStars={myStars}
-              avgStars={ratingAvg}
-              ratingCount={ratingCount}
-              isSelfView={isSelf}
-            />
+            <div className="flex w-full justify-center md:justify-start">
+              <MemberRatingWidget
+                memberId={member.id}
+                canRate={canRate}
+                myStars={myStars}
+                avgStars={ratingAvg}
+                ratingCount={ratingCount}
+                isSelfView={isSelf}
+              />
+            </div>
           )}
         </div>
       </div>
