@@ -106,9 +106,20 @@ const BOTTOM_TABS = [
   { id: "hourly" as const, label: "Jam" },
 ];
 
-type Props = { model: PortfolioStatsModel };
+type Props = {
+  model: PortfolioStatsModel;
+  /** Tampilan pembaca komunitas: judul nama akun, tanpa nomor login & tanpa trade log pemilik. */
+  communityPresentation?: {
+    accountTitle: string;
+    ownerName: string | null;
+    ownerSlug: string | null;
+  };
+};
 
-export function PortfolioAccountStatsBoard({ model }: Props) {
+export function PortfolioAccountStatsBoard({ model, communityPresentation }: Props) {
+  const cp = communityPresentation;
+  const isCommunity = cp != null;
+
   const [chartTab, setChartTab] = useState<(typeof CHART_TABS)[number]["id"]>("growth");
   const [bottomTab, setBottomTab] = useState<(typeof BOTTOM_TABS)[number]["id"]>("trading");
 
@@ -138,8 +149,29 @@ export function PortfolioAccountStatsBoard({ model }: Props) {
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-accent">Akun MT</p>
-          <h2 className="mt-1 font-mono text-xl font-bold text-white sm:text-2xl">{model.mtLogin}</h2>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-accent">
+            {isCommunity ? "Ringkasan publik" : "Akun MT"}
+          </p>
+          <h2
+            className={clsx(
+              "mt-1 text-xl font-bold text-white sm:text-2xl",
+              isCommunity ? "font-semibold tracking-tight" : "font-mono"
+            )}
+          >
+            {isCommunity ? cp.accountTitle : model.mtLogin}
+          </h2>
+          {isCommunity ? (
+            <p className="mt-1 text-xs text-broker-muted">
+              Pemilik:{" "}
+              {cp.ownerSlug ? (
+                <Link href={`/${cp.ownerSlug}`} className="font-medium text-broker-accent hover:underline">
+                  @{cp.ownerSlug}
+                </Link>
+              ) : (
+                <span className="text-white/90">{cp.ownerName ?? "—"}</span>
+              )}
+            </p>
+          ) : null}
           <PortfolioAccountBrokerLine
             brokerName={model.brokerName}
             brokerServer={model.brokerServer}
@@ -157,12 +189,21 @@ export function PortfolioAccountStatsBoard({ model }: Props) {
             {model.sidebar.noteTz}
           </p>
         </div>
-        <Link
-          href={`/profil/portfolio/trade-log?mtLogin=${encodeURIComponent(model.mtLogin)}`}
-          className="inline-flex w-fit items-center rounded-lg border border-broker-border/80 bg-broker-bg/40 px-3 py-2 text-xs font-medium text-broker-accent hover:bg-broker-surface/60"
-        >
-          Lihat trade log →
-        </Link>
+        {isCommunity ? (
+          <Link
+            href="/profil/portfolio/community/accounts"
+            className="inline-flex w-fit items-center rounded-lg border border-broker-border/80 bg-broker-bg/40 px-3 py-2 text-xs font-medium text-broker-accent hover:bg-broker-surface/60"
+          >
+            ← Akun komunitas
+          </Link>
+        ) : (
+          <Link
+            href={`/profil/portfolio/trade-log?mtLogin=${encodeURIComponent(model.mtLogin)}`}
+            className="inline-flex w-fit items-center rounded-lg border border-broker-border/80 bg-broker-bg/40 px-3 py-2 text-xs font-medium text-broker-accent hover:bg-broker-surface/60"
+          >
+            Lihat trade log →
+          </Link>
+        )}
       </div>
 
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">

@@ -23,34 +23,22 @@ function toneClass(t: MetricTone): string {
   }
 }
 
-function AccountNameCell({ row: r }: { row: CommunityPublishedAccountView }) {
-  const nameMatch =
-    (r.publisherName?.trim().toLowerCase() ?? "") === r.displayName.trim().toLowerCase();
-  const titleParts = [r.displayName];
-  if (r.publisherSlug) titleParts.push(`@${r.publisherSlug}`);
-  else if (!nameMatch && r.publisherName) titleParts.push(r.publisherName);
-  titleParts.push(`MT ${r.mtLogin}`);
-  const title = titleParts.join(" · ");
+function communityAccountSummaryHref(r: CommunityPublishedAccountView): string {
+  return `/profil/portfolio/community/account/${encodeURIComponent(r.publisherUserId)}/${encodeURIComponent(r.mtLogin)}`;
+}
 
+/** Hanya nama akun (tanpa nomor MT di daftar); klik → ringkasan statistik. */
+function AccountNameCell({ row: r }: { row: CommunityPublishedAccountView }) {
+  const href = communityAccountSummaryHref(r);
+  const hint = [r.displayName, r.publisherSlug ? `@${r.publisherSlug}` : r.publisherName].filter(Boolean).join(" · ");
   return (
-    <p className="truncate text-sm leading-snug text-white/90" title={title}>
-      <span className="font-medium text-broker-accent">{r.displayName}</span>
-      {r.publisherSlug ? (
-        <>
-          <span className="text-broker-border"> · </span>
-          <Link href={`/${r.publisherSlug}`} className="text-broker-accent hover:underline">
-            @{r.publisherSlug}
-          </Link>
-        </>
-      ) : !nameMatch && r.publisherName ? (
-        <>
-          <span className="text-broker-border"> · </span>
-          <span>{r.publisherName}</span>
-        </>
-      ) : null}
-      <span className="text-broker-border"> · </span>
-      <span className="font-mono text-[11px] text-broker-muted sm:text-xs">MT {r.mtLogin}</span>
-    </p>
+    <Link
+      href={href}
+      className="block min-w-0 truncate text-sm font-medium text-broker-accent hover:underline"
+      title={hint ? `${hint} — buka ringkasan` : "Buka ringkasan"}
+    >
+      {r.displayName}
+    </Link>
   );
 }
 
@@ -74,7 +62,8 @@ export default async function PortfolioCommunityAccountsPage({
         <div>
           <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Akun komunitas</h1>
           <p className="mt-1 text-sm text-broker-muted">
-            Akun trading yang pemiliknya mengizinkan copy. Untuk mempublikasikan akun Anda, buka{" "}
+            Nomor login MT tidak ditampilkan di daftar; klik <strong className="text-white">nama akun</strong> untuk
+            ringkasan statistik. Untuk mempublikasikan akun Anda, buka{" "}
             <Link href="/profil/portfolio/community/publish" className="text-broker-accent hover:underline">
               Publikasi copy trade
             </Link>
@@ -106,7 +95,7 @@ export default async function PortfolioCommunityAccountsPage({
             <table className="w-full min-w-[1180px] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-broker-border/80 bg-broker-bg/40 text-[10px] uppercase tracking-wide text-broker-muted sm:text-xs">
-                  <th className="px-2 py-3 font-medium sm:px-3">Nama / pemilik</th>
+                  <th className="px-2 py-3 font-medium sm:px-3">Nama akun</th>
                   <th className="px-2 py-3 font-medium sm:px-3">Platform</th>
                   <th className="px-2 py-3 font-medium sm:px-3">Mode</th>
                   <th className="px-2 py-3 font-medium sm:px-3">Metode</th>
