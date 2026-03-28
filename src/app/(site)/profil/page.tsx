@@ -20,7 +20,9 @@ import { ProfilNotificationsPanel } from "@/components/ProfilNotificationsPanel"
 import { ProfilSecurityForms } from "@/components/ProfilSecurityForms";
 import { ProfilAvatarUpload } from "@/components/ProfilAvatarUpload";
 import { ProfilArticlesSection } from "@/components/ProfilArticlesSection";
+import { MemberFollowStatsLinks } from "@/components/member/MemberFollowStatsLinks";
 import { parsePrefixedListQuery, resolvePagedWindow } from "@/lib/adminListParams";
+import { listablePublicMemberWhere } from "@/lib/memberFollowListable";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +64,23 @@ export default async function ProfilPage({
   });
 
   if (!user) redirect("/login");
+
+  const [followerCount, followingCount] = await Promise.all([
+    prisma.memberFollow.count({
+      where: {
+        followingId: user.id,
+        status: "ACCEPTED",
+        follower: listablePublicMemberWhere,
+      },
+    }),
+    prisma.memberFollow.count({
+      where: {
+        followerId: user.id,
+        status: "ACCEPTED",
+        following: listablePublicMemberWhere,
+      },
+    }),
+  ]);
 
   const showStatus = tab === "home" || tab === "status" || tab === "artikel";
   /** Blok status di dashboard: tidak ditampilkan di Home (linimasa ada di halaman publik). */
@@ -264,6 +283,12 @@ export default async function ProfilPage({
             {user.name ?? user.email}
           </Link>
           <p className="text-center text-xs text-broker-muted">{user.email}</p>
+          <MemberFollowStatsLinks
+            memberUserId={user.id}
+            followerCount={followerCount}
+            followingCount={followingCount}
+            className="mt-3 justify-center"
+          />
         </div>
 
         <div className="flex-1 space-y-2">

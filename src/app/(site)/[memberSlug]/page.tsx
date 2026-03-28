@@ -10,6 +10,7 @@ import { ArticleStatus, CommentTarget } from "@prisma/client";
 import { MemberStatusActions } from "@/components/MemberStatusActions";
 import { MemberStatusComposer } from "@/components/MemberStatusComposer";
 import { MemberFollowButton, MemberFollowLoginLink } from "@/components/member/MemberFollowButton";
+import { MemberFollowStatsLinks } from "@/components/member/MemberFollowStatsLinks";
 import { MemberRatingWidget } from "@/components/member/MemberRatingWidget";
 import { unstable_noStore as noStore } from "next/cache";
 import {
@@ -20,6 +21,7 @@ import {
   resolvePageSearchParams,
   type PageSearchParams,
 } from "@/lib/memberStatusPagination";
+import { listablePublicMemberWhere } from "@/lib/memberFollowListable";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -129,10 +131,18 @@ export default async function MemberBySlugPage({
           })
         : Promise.resolve(null),
       prisma.memberFollow.count({
-        where: { followingId: member.id, status: "ACCEPTED" },
+        where: {
+          followingId: member.id,
+          status: "ACCEPTED",
+          follower: listablePublicMemberWhere,
+        },
       }),
       prisma.memberFollow.count({
-        where: { followerId: member.id, status: "ACCEPTED" },
+        where: {
+          followerId: member.id,
+          status: "ACCEPTED",
+          following: listablePublicMemberWhere,
+        },
       }),
       viewerId && viewerId !== member.id
         ? prisma.memberFollow.findUnique({
@@ -344,17 +354,11 @@ export default async function MemberBySlugPage({
           {member.kabupaten ? (
             <p className="text-sm text-broker-muted">{member.kabupaten}</p>
           ) : null}
-          <p className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm text-broker-muted">
-            <span>
-              <span className="tabular-nums font-semibold text-white">{followingCount}</span> mengikuti
-            </span>
-            <span className="text-broker-muted/50" aria-hidden>
-              ·
-            </span>
-            <span>
-              <span className="tabular-nums font-semibold text-white">{followerCount}</span> pengikut
-            </span>
-          </p>
+          <MemberFollowStatsLinks
+            memberUserId={member.id}
+            followerCount={followerCount}
+            followingCount={followingCount}
+          />
           {!isSelf && viewerId && (
             <MemberFollowButton
               memberId={member.id}
