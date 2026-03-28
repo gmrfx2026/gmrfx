@@ -79,6 +79,10 @@ export default async function CommunityPublishedAccountSummaryPage({
       <PortfolioAccountStatsBoard
         model={model}
         activity={activity}
+        activityPoll={{
+          url: `/api/portfolio/community/mt-activity?ownerId=${encodeURIComponent(ownerId)}&mtLogin=${encodeURIComponent(mtLogin)}`,
+          intervalMs: 10_000,
+        }}
         communityPresentation={{
           accountTitle,
           ownerName: pub.user.name,

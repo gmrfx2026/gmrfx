@@ -177,7 +177,14 @@ export default async function PortfolioDashboardPage({
         </div>
       </header>
 
-      <PortfolioAccountStatsBoard model={model} activity={activity} />
+      <PortfolioAccountStatsBoard
+        model={model}
+        activity={activity}
+        activityPoll={{
+          url: `/api/portfolio/mt-activity?mtLogin=${encodeURIComponent(mtLogin)}`,
+          intervalMs: 10_000,
+        }}
+      />
     </div>
   );
 }

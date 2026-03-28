@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
 import {
@@ -141,15 +141,63 @@ type Props = {
   };
   /** Posisi terbuka & order tertunda (snapshot terakhir dari EA v1.05+). */
   activity?: TradingActivityView | null;
+  /** Ambil ulang aktivitas dari API secara berkala → Net P/L / poin ikut data EA tanpa refresh halaman. */
+  activityPoll?: { url: string; intervalMs?: number } | null;
 };
 
-export function PortfolioAccountStatsBoard({ model, communityPresentation, activity }: Props) {
+export function PortfolioAccountStatsBoard({ model, communityPresentation, activity, activityPoll }: Props) {
   const cp = communityPresentation;
   const isCommunity = cp != null;
 
   const [chartTab, setChartTab] = useState<(typeof CHART_TABS)[number]["id"]>("growth");
   const [bottomTab, setBottomTab] = useState<(typeof BOTTOM_TABS)[number]["id"]>("trading");
   const [activityTab, setActivityTab] = useState<"open" | "pending">("open");
+  /** undefined = pakai prop `activity`; selain itu hasil fetch polling. */
+  const [livePoll, setLivePoll] = useState<TradingActivityView | null | undefined>(undefined);
+
+  useEffect(() => {
+    setLivePoll(undefined);
+  }, [activityPoll?.url, model.mtLogin]);
+
+  useEffect(() => {
+    if (!activityPoll?.url) return;
+    const intervalMs = Math.max(3000, activityPoll.intervalMs ?? 10_000);
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        const r = await fetch(activityPoll.url, { credentials: "include", cache: "no-store" });
+        if (!r.ok || cancelled) return;
+        const j = (await r.json()) as { ok?: boolean; activity?: TradingActivityView | null };
+        if (!j.ok || cancelled) return;
+        setLivePoll(j.activity ?? null);
+      } catch {
+        if (!cancelled) setLivePoll(null);
+      }
+    };
+
+    void run();
+    const id = setInterval(run, intervalMs);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [activityPoll?.url, activityPoll?.intervalMs]);
+
+  const merged: TradingActivityView | null = livePoll === undefined ? (activity ?? null) : livePoll;
+  const showActivityPanel = Boolean(activityPoll?.url) || Boolean(activity);
+  const showOnboarding = !showActivityPanel;
+
+  const act: TradingActivityView =
+    merged ??
+    ({
+      positions: [],
+      pendingOrders: [],
+      recordedAt: new Date().toISOString(),
+    } as TradingActivityView);
+
+  const snapshotRef = merged ? new Date(merged.recordedAt) : null;
+  const durationRef = snapshotRef ?? new Date();
 
   const chartData = useMemo(() => {
     switch (chartTab) {
@@ -173,19 +221,19 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation, activ
         : "∞"
       : model.summary.profitFactor.toLocaleString("id-ID", { maximumFractionDigits: 2 });
 
-  const activityRef = activity ? new Date(activity.recordedAt) : null;
   const openTotals = useMemo(() => {
-    if (!activity) return null;
+    const positions = merged?.positions ?? [];
+    if (positions.length === 0) return null;
     let profit = 0;
     let swap = 0;
     let points = 0;
-    for (const p of activity.positions) {
+    for (const p of positions) {
       profit += p.profit;
       swap += p.swap;
       if (p.points != null && Number.isFinite(p.points)) points += p.points;
     }
     return { profit, swap, points };
-  }, [activity]);
+  }, [merged]);
 
   const curSfx = model.accountCurrency ? ` ${model.accountCurrency}` : "";
 
@@ -605,18 +653,30 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation, activ
 
       <div className="rounded-xl border border-broker-border/80 bg-broker-surface/40 p-3 sm:p-4">
         <div className="flex flex-col gap-2 border-b border-broker-border/50 pb-3 sm:flex-row sm:items-center sm:justify-between">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-white">Aktivitas</h3>
-          {activity && activityRef ? (
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-white">Aktivitas</h3>
+            {activityPoll?.url ? (
+              <p className="mt-0.5 text-[10px] text-broker-muted/90 sm:text-[11px]">
+                Memperbarui otomatis ±{Math.round(Math.max(3000, activityPoll.intervalMs ?? 10_000) / 1000)} dtk
+                (nilai mengikuti snapshot EA terbaru di server).
+              </p>
+            ) : null}
+          </div>
+          {merged?.recordedAt ? (
             <p className="text-[10px] text-broker-muted sm:text-xs">
               Terakhir dari EA:{" "}
               <span className="font-mono text-white/85">
-                {new Intl.DateTimeFormat("id-ID", { dateStyle: "short", timeStyle: "short" }).format(activityRef)}
+                {new Intl.DateTimeFormat("id-ID", { dateStyle: "short", timeStyle: "short" }).format(
+                  new Date(merged.recordedAt)
+                )}
               </span>
             </p>
+          ) : activityPoll?.url ? (
+            <p className="text-[10px] text-amber-200/80 sm:text-xs">Menunggu data EA…</p>
           ) : null}
         </div>
 
-        {!activity ? (
+        {showOnboarding ? (
           <p className="py-4 text-sm leading-relaxed text-broker-muted">
             Tabel posisi terbuka dan order tertunda akan tampil di sini setelah{" "}
             <strong className="text-white/90">EA GMRFX v1.05+</strong> mengirim data ke server (jalankan{" "}
@@ -636,7 +696,7 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation, activ
               </TabBtn>
             </div>
 
-            {activityTab === "open" && activityRef && (
+            {activityTab === "open" && showActivityPanel ? (
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full min-w-[920px] border-collapse text-left text-[11px] sm:text-xs">
                   <thead>
@@ -655,14 +715,14 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation, activ
                     </tr>
                   </thead>
                   <tbody>
-                    {activity.positions.length === 0 ? (
+                    {act.positions.length === 0 ? (
                       <tr>
                         <td colSpan={11} className="py-6 text-center text-broker-muted">
                           Tidak ada posisi terbuka pada snapshot terakhir.
                         </td>
                       </tr>
                     ) : (
-                      activity.positions.map((p) => (
+                      act.positions.map((p) => (
                         <tr key={p.ticket} className="border-b border-broker-border/30">
                           <td className="py-2 pr-2 font-mono text-white/90">
                             {new Intl.DateTimeFormat("id-ID", {
@@ -671,7 +731,7 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation, activ
                             }).format(new Date(p.openTime * 1000))}
                           </td>
                           <td className="py-2 pr-2 text-broker-muted">
-                            {formatDurationFromOpen(p.openTime, activityRef)}
+                            {formatDurationFromOpen(p.openTime, durationRef)}
                           </td>
                           <td className="py-2 pr-2 font-medium text-broker-accent">{p.symbol}</td>
                           <td className="py-2 pr-2 text-white/90">{sideLabel(p.side)}</td>
@@ -690,7 +750,7 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation, activ
                         </tr>
                       ))
                     )}
-                    {activity.positions.length > 0 && openTotals ? (
+                    {act.positions.length > 0 && openTotals ? (
                       <tr className="border-t border-broker-border/80 bg-broker-bg/40 font-semibold">
                         <td colSpan={8} className="py-2 pr-2 text-right text-broker-muted">
                           Total
@@ -708,9 +768,9 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation, activ
                   </tbody>
                 </table>
               </div>
-            )}
+            ) : null}
 
-            {activityTab === "pending" && activityRef && (
+            {activityTab === "pending" && showActivityPanel ? (
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full min-w-[640px] border-collapse text-left text-[11px] sm:text-xs">
                   <thead>
@@ -725,14 +785,14 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation, activ
                     </tr>
                   </thead>
                   <tbody>
-                    {activity.pendingOrders.length === 0 ? (
+                    {act.pendingOrders.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="py-6 text-center text-broker-muted">
                           Tidak ada order tertunda pada snapshot terakhir.
                         </td>
                       </tr>
                     ) : (
-                      activity.pendingOrders.map((o) => (
+                      act.pendingOrders.map((o) => (
                         <tr key={o.ticket} className="border-b border-broker-border/30">
                           <td className="py-2 pr-2 font-mono text-white/90">
                             {new Intl.DateTimeFormat("id-ID", {
@@ -752,7 +812,7 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation, activ
                   </tbody>
                 </table>
               </div>
-            )}
+            ) : null}
           </>
         )}
       </div>
