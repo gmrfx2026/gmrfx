@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { listablePublicMemberWhere } from "@/lib/memberFollowListable";
 import { buildPortfolioStatsModel } from "@/lib/mt5Stats";
+import { tradingActivityFromRow } from "@/lib/mtTradingActivity";
 import { PortfolioAccountStatsBoard } from "@/components/portfolio/PortfolioAccountStatsBoard";
 import { notFound } from "next/navigation";
 
@@ -31,7 +32,7 @@ export default async function CommunityPublishedAccountSummaryPage({
 
   if (!pub) notFound();
 
-  const [deals, snaps] = await Promise.all([
+  const [deals, snaps, actRow] = await Promise.all([
     prisma.mtDeal.findMany({
       where: { userId: ownerId, mtLogin },
       orderBy: { dealTime: "asc" },
@@ -60,9 +61,13 @@ export default async function CommunityPublishedAccountSummaryPage({
         tradeAccountName: true,
       },
     }),
+    prisma.mtTradingActivity.findUnique({
+      where: { userId_mtLogin: { userId: ownerId, mtLogin } },
+    }),
   ]);
 
   const model = buildPortfolioStatsModel(deals, snaps, mtLogin);
+  const activity = tradingActivityFromRow(actRow);
 
   const tradeName = model.tradeAccountName?.trim() ?? "";
   const ownerNm = pub.user.name?.trim() ?? null;
@@ -73,6 +78,7 @@ export default async function CommunityPublishedAccountSummaryPage({
     <div className="space-y-6">
       <PortfolioAccountStatsBoard
         model={model}
+        activity={activity}
         communityPresentation={{
           accountTitle,
           ownerName: pub.user.name,

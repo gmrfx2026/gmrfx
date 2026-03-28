@@ -15,6 +15,8 @@ import {
   YAxis,
 } from "recharts";
 import type { PortfolioStatsModel } from "@/lib/mt5Stats";
+import type { TradingActivityView } from "@/lib/mtTradingActivity";
+import { mtPendingOrderTypeLabel } from "@/lib/mtTradingActivity";
 import { PortfolioAccountBrokerLine } from "@/components/portfolio/PortfolioAccountBrokerLine";
 
 function fmtNum(n: number | null | undefined, maxFrac = 2): string {
@@ -31,6 +33,29 @@ function signedClass(n: number): string {
   if (n > 0) return "text-emerald-400";
   if (n < 0) return "text-broker-danger";
   return "text-broker-muted";
+}
+
+function formatDurationFromOpen(openUnixSec: number, ref: Date): string {
+  const fromMs = openUnixSec * 1000;
+  let ms = ref.getTime() - fromMs;
+  if (!Number.isFinite(ms) || ms < 0) ms = 0;
+  const totalMin = Math.floor(ms / 60000);
+  const days = Math.floor(totalMin / (60 * 24));
+  const hours = Math.floor((totalMin % (60 * 24)) / 60);
+  const mins = totalMin % 60;
+  if (days > 0) return `${days} hari ${hours} jam`;
+  if (hours > 0) return `${hours} jam ${mins} mnt`;
+  if (mins > 0) return `${mins} mnt`;
+  return "<1 mnt";
+}
+
+function fmtLevel(n: number | null | undefined, frac = 5): string {
+  if (n == null || !Number.isFinite(n) || n === 0) return "—";
+  return n.toLocaleString("id-ID", { maximumFractionDigits: frac });
+}
+
+function sideLabel(side: number): string {
+  return side === 0 ? "Buy" : side === 1 ? "Sell" : `Tipe ${side}`;
 }
 
 function TabBtn({
@@ -114,14 +139,17 @@ type Props = {
     ownerName: string | null;
     ownerSlug: string | null;
   };
+  /** Posisi terbuka & order tertunda (snapshot terakhir dari EA v1.05+). */
+  activity?: TradingActivityView | null;
 };
 
-export function PortfolioAccountStatsBoard({ model, communityPresentation }: Props) {
+export function PortfolioAccountStatsBoard({ model, communityPresentation, activity }: Props) {
   const cp = communityPresentation;
   const isCommunity = cp != null;
 
   const [chartTab, setChartTab] = useState<(typeof CHART_TABS)[number]["id"]>("growth");
   const [bottomTab, setBottomTab] = useState<(typeof BOTTOM_TABS)[number]["id"]>("trading");
+  const [activityTab, setActivityTab] = useState<"open" | "pending">("open");
 
   const chartData = useMemo(() => {
     switch (chartTab) {
@@ -144,6 +172,22 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation }: Pro
         ? "—"
         : "∞"
       : model.summary.profitFactor.toLocaleString("id-ID", { maximumFractionDigits: 2 });
+
+  const activityRef = activity ? new Date(activity.recordedAt) : null;
+  const openTotals = useMemo(() => {
+    if (!activity) return null;
+    let profit = 0;
+    let swap = 0;
+    let points = 0;
+    for (const p of activity.positions) {
+      profit += p.profit;
+      swap += p.swap;
+      if (p.points != null && Number.isFinite(p.points)) points += p.points;
+    }
+    return { profit, swap, points };
+  }, [activity]);
+
+  const curSfx = model.accountCurrency ? ` ${model.accountCurrency}` : "";
 
   return (
     <div className="space-y-5">
@@ -557,6 +601,160 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation }: Pro
             </div>
           )}
         </div>
+      </div>
+
+      <div className="rounded-xl border border-broker-border/80 bg-broker-surface/40 p-3 sm:p-4">
+        <div className="flex flex-col gap-2 border-b border-broker-border/50 pb-3 sm:flex-row sm:items-center sm:justify-between">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-white">Aktivitas</h3>
+          {activity && activityRef ? (
+            <p className="text-[10px] text-broker-muted sm:text-xs">
+              Terakhir dari EA:{" "}
+              <span className="font-mono text-white/85">
+                {new Intl.DateTimeFormat("id-ID", { dateStyle: "short", timeStyle: "short" }).format(activityRef)}
+              </span>
+            </p>
+          ) : null}
+        </div>
+
+        {!activity ? (
+          <p className="py-4 text-sm leading-relaxed text-broker-muted">
+            Tabel posisi terbuka dan order tertunda akan tampil di sini setelah{" "}
+            <strong className="text-white/90">EA GMRFX v1.05+</strong> mengirim data ke server (jalankan{" "}
+            <code className="rounded bg-broker-bg/80 px-1 font-mono text-[11px] text-broker-accent">
+              npx prisma migrate deploy
+            </code>{" "}
+            lalu compile ulang EA). Durasi &amp; P/L mengacu pada waktu sinkron terakhir, bukan live tick.
+          </p>
+        ) : (
+          <>
+            <div className="mt-3 flex flex-wrap gap-1">
+              <TabBtn active={activityTab === "open"} onClick={() => setActivityTab("open")}>
+                Posisi terbuka
+              </TabBtn>
+              <TabBtn active={activityTab === "pending"} onClick={() => setActivityTab("pending")}>
+                Order tertunda
+              </TabBtn>
+            </div>
+
+            {activityTab === "open" && activityRef && (
+              <div className="mt-3 overflow-x-auto">
+                <table className="w-full min-w-[920px] border-collapse text-left text-[11px] sm:text-xs">
+                  <thead>
+                    <tr className="border-b border-broker-border/80 text-[10px] uppercase tracking-wide text-broker-muted">
+                      <th className="py-2 pr-2 font-medium">Buka</th>
+                      <th className="py-2 pr-2 font-medium">Durasi</th>
+                      <th className="py-2 pr-2 font-medium">Simbol</th>
+                      <th className="py-2 pr-2 font-medium">Tipe</th>
+                      <th className="py-2 pr-2 font-medium">Lot</th>
+                      <th className="py-2 pr-2 font-medium">Harga buka</th>
+                      <th className="py-2 pr-2 font-medium">S/L</th>
+                      <th className="py-2 pr-2 font-medium">T/P</th>
+                      <th className="py-2 pr-2 font-medium">Net P/L</th>
+                      <th className="py-2 pr-2 font-medium">Poin</th>
+                      <th className="py-2 font-medium">Swap</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activity.positions.length === 0 ? (
+                      <tr>
+                        <td colSpan={11} className="py-6 text-center text-broker-muted">
+                          Tidak ada posisi terbuka pada snapshot terakhir.
+                        </td>
+                      </tr>
+                    ) : (
+                      activity.positions.map((p) => (
+                        <tr key={p.ticket} className="border-b border-broker-border/30">
+                          <td className="py-2 pr-2 font-mono text-white/90">
+                            {new Intl.DateTimeFormat("id-ID", {
+                              dateStyle: "short",
+                              timeStyle: "short",
+                            }).format(new Date(p.openTime * 1000))}
+                          </td>
+                          <td className="py-2 pr-2 text-broker-muted">
+                            {formatDurationFromOpen(p.openTime, activityRef)}
+                          </td>
+                          <td className="py-2 pr-2 font-medium text-broker-accent">{p.symbol}</td>
+                          <td className="py-2 pr-2 text-white/90">{sideLabel(p.side)}</td>
+                          <td className="py-2 pr-2 font-mono">{fmtNum(p.volume, 4)}</td>
+                          <td className="py-2 pr-2 font-mono">{fmtLevel(p.priceOpen)}</td>
+                          <td className="py-2 pr-2 font-mono text-broker-muted">{fmtLevel(p.sl ?? null)}</td>
+                          <td className="py-2 pr-2 font-mono text-broker-muted">{fmtLevel(p.tp ?? null)}</td>
+                          <td className={clsx("py-2 pr-2 font-mono", signedClass(p.profit))}>
+                            {fmtNum(p.profit)}
+                            {curSfx}
+                          </td>
+                          <td className="py-2 pr-2 font-mono text-broker-muted">
+                            {p.points == null || !Number.isFinite(p.points) ? "—" : fmtNum(p.points, 1)}
+                          </td>
+                          <td className={clsx("py-2 font-mono", signedClass(p.swap))}>{fmtNum(p.swap)}</td>
+                        </tr>
+                      ))
+                    )}
+                    {activity.positions.length > 0 && openTotals ? (
+                      <tr className="border-t border-broker-border/80 bg-broker-bg/40 font-semibold">
+                        <td colSpan={8} className="py-2 pr-2 text-right text-broker-muted">
+                          Total
+                        </td>
+                        <td className={clsx("py-2 pr-2 font-mono", signedClass(openTotals.profit))}>
+                          {fmtNum(openTotals.profit)}
+                          {curSfx}
+                        </td>
+                        <td className="py-2 pr-2 font-mono text-broker-muted">
+                          {fmtNum(openTotals.points, 1)}
+                        </td>
+                        <td className={clsx("py-2 font-mono", signedClass(openTotals.swap))}>{fmtNum(openTotals.swap)}</td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {activityTab === "pending" && activityRef && (
+              <div className="mt-3 overflow-x-auto">
+                <table className="w-full min-w-[640px] border-collapse text-left text-[11px] sm:text-xs">
+                  <thead>
+                    <tr className="border-b border-broker-border/80 text-[10px] uppercase tracking-wide text-broker-muted">
+                      <th className="py-2 pr-2 font-medium">Waktu</th>
+                      <th className="py-2 pr-2 font-medium">Simbol</th>
+                      <th className="py-2 pr-2 font-medium">Tipe</th>
+                      <th className="py-2 pr-2 font-medium">Lot</th>
+                      <th className="py-2 pr-2 font-medium">Harga</th>
+                      <th className="py-2 pr-2 font-medium">S/L</th>
+                      <th className="py-2 font-medium">T/P</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activity.pendingOrders.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="py-6 text-center text-broker-muted">
+                          Tidak ada order tertunda pada snapshot terakhir.
+                        </td>
+                      </tr>
+                    ) : (
+                      activity.pendingOrders.map((o) => (
+                        <tr key={o.ticket} className="border-b border-broker-border/30">
+                          <td className="py-2 pr-2 font-mono text-white/90">
+                            {new Intl.DateTimeFormat("id-ID", {
+                              dateStyle: "short",
+                              timeStyle: "short",
+                            }).format(new Date(o.setupTime * 1000))}
+                          </td>
+                          <td className="py-2 pr-2 font-medium text-broker-accent">{o.symbol}</td>
+                          <td className="py-2 pr-2 text-white/90">{mtPendingOrderTypeLabel(o.orderType)}</td>
+                          <td className="py-2 pr-2 font-mono">{fmtNum(o.volume, 4)}</td>
+                          <td className="py-2 pr-2 font-mono">{fmtLevel(o.priceOrder)}</td>
+                          <td className="py-2 pr-2 font-mono text-broker-muted">{fmtLevel(o.sl ?? null)}</td>
+                          <td className="py-2 font-mono text-broker-muted">{fmtLevel(o.tp ?? null)}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

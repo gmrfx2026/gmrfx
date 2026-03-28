@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "GMR FX"
 #property link      "https://github.com/"
-#property version   "1.04"
+#property version   "1.05"
 #property strict
 
 ulong  g_gmrfx_pos_ids[];
@@ -52,6 +52,136 @@ input string InpApiBase    = "https://your-domain.com"; // URL situs (tanpa slas
 input string InpApiToken   = "";                        // Token dari dashboard (Bearer)
 input int    InpIntervalSec = 300;                       // Interval sinkron (detik), min 60
 input int    InpHistoryDays = 14;                        // Riwayat deal (hari ke belakang)
+
+string GmrfxJsonEscape(const string s)
+{
+   string o = s;
+   StringTrimLeft(o);
+   StringTrimRight(o);
+   StringReplace(o, "\\", "");
+   StringReplace(o, "\"", "'");
+   StringReplace(o, "\r", " ");
+   StringReplace(o, "\n", " ");
+   return o;
+}
+
+// Posisi terbuka (MODE_TRADES) → JSON array untuk panel Aktivitas di website.
+string GmrfxOpenPositionsJson()
+{
+   string out = "[";
+   bool first = true;
+   int n = PositionsTotal();
+   for(int i = 0; i < n; i++)
+   {
+      ulong ticket = PositionGetTicket(i);
+      if(ticket == 0)
+         continue;
+      if(!PositionSelectByTicket(ticket))
+         continue;
+
+      string sym = PositionGetString(POSITION_SYMBOL);
+      sym = GmrfxJsonEscape(sym);
+      long ptype = (long)PositionGetInteger(POSITION_TYPE);
+      double vol = PositionGetDouble(POSITION_VOLUME);
+      double priceOpen = PositionGetDouble(POSITION_PRICE_OPEN);
+      double priceCur = PositionGetDouble(POSITION_PRICE_CURRENT);
+      double sl = PositionGetDouble(POSITION_SL);
+      double tp = PositionGetDouble(POSITION_TP);
+      double profit = PositionGetDouble(POSITION_PROFIT);
+      double swap = PositionGetDouble(POSITION_SWAP);
+      double comm = PositionGetDouble(POSITION_COMMISSION);
+      long openTime = (long)PositionGetInteger(POSITION_TIME);
+
+      double point = SymbolInfoDouble(sym, SYMBOL_POINT);
+      if(point <= 0.0)
+         point = _Point;
+      double pts = 0.0;
+      if(ptype == POSITION_TYPE_BUY)
+         pts = (priceCur - priceOpen) / point;
+      else if(ptype == POSITION_TYPE_SELL)
+         pts = (priceOpen - priceCur) / point;
+
+      if(!first)
+         out += ",";
+      first = false;
+
+      out += "{";
+      out += "\"ticket\":\"" + StringFormat("%I64u", ticket) + "\",";
+      out += "\"symbol\":\"" + sym + "\",";
+      out += "\"side\":" + IntegerToString((int)ptype) + ",";
+      out += "\"volume\":" + DoubleToString(vol, 8) + ",";
+      out += "\"priceOpen\":" + DoubleToString(priceOpen, 8) + ",";
+      out += "\"priceCurrent\":" + DoubleToString(priceCur, 8) + ",";
+      out += "\"sl\":";
+      if(sl > 0.0)
+         out += DoubleToString(sl, 8);
+      else
+         out += "null";
+      out += ",\"tp\":";
+      if(tp > 0.0)
+         out += DoubleToString(tp, 8);
+      else
+         out += "null";
+      out += ",\"profit\":" + DoubleToString(profit, 8);
+      out += ",\"swap\":" + DoubleToString(swap, 8);
+      out += ",\"commission\":" + DoubleToString(comm, 8);
+      out += ",\"openTime\":" + StringFormat("%I64d", openTime);
+      out += ",\"points\":" + DoubleToString(pts, 2);
+      out += "}";
+   }
+   out += "]";
+   return out;
+}
+
+// Order tertunda (bukan buy/sell market).
+string GmrfxPendingOrdersJson()
+{
+   string out = "[";
+   bool first = true;
+   int m = OrdersTotal();
+   for(int j = 0; j < m; j++)
+   {
+      if(!OrderSelect(j, SELECT_BY_POS, MODE_TRADES))
+         continue;
+      ENUM_ORDER_TYPE otype = (ENUM_ORDER_TYPE)OrderGetInteger(ORDER_TYPE);
+      if(otype == ORDER_TYPE_BUY || otype == ORDER_TYPE_SELL)
+         continue;
+
+      ulong ticket = (ulong)OrderGetInteger(ORDER_TICKET);
+      string sym = OrderGetString(ORDER_SYMBOL);
+      sym = GmrfxJsonEscape(sym);
+      double vol = OrderGetDouble(ORDER_VOLUME_INITIAL);
+      double price = OrderGetDouble(ORDER_PRICE_OPEN);
+      double sl = OrderGetDouble(ORDER_SL);
+      double tp = OrderGetDouble(ORDER_TP);
+      long setup = (long)OrderGetInteger(ORDER_TIME_SETUP);
+
+      if(!first)
+         out += ",";
+      first = false;
+
+      out += "{";
+      out += "\"ticket\":\"" + StringFormat("%I64u", ticket) + "\",";
+      out += "\"symbol\":\"" + sym + "\",";
+      out += "\"orderType\":" + IntegerToString((int)otype) + ",";
+      out += "\"volume\":" + DoubleToString(vol, 8) + ",";
+      out += "\"priceOrder\":" + DoubleToString(price, 8) + ",";
+      out += "\"sl\":";
+      if(sl > 0.0)
+         out += DoubleToString(sl, 8);
+      else
+         out += "null";
+      out += ",\"tp\":";
+      if(tp > 0.0)
+         out += DoubleToString(tp, 8);
+      else
+         out += "null";
+      out += ",\"setupTime\":" + StringFormat("%I64d", setup);
+      out += "}";
+   }
+   out += "]";
+   return out;
+}
 
 string BuildJsonBody()
 {
@@ -190,7 +320,12 @@ string BuildJsonBody()
       }
    }
 
-   json += "]}";
+   json += "]";
+   json += ",\"openPositions\":";
+   json += GmrfxOpenPositionsJson();
+   json += ",\"pendingOrders\":";
+   json += GmrfxPendingOrdersJson();
+   json += "}";
    return json;
 }
 

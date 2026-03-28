@@ -65,6 +65,45 @@ const dealSchema = z.object({
     }),
 });
 
+const openPositionIngestSchema = z.object({
+  ticket: z
+    .union([z.string(), z.number()])
+    .transform((v) => String(v).trim().slice(0, 32))
+    .refine((s) => s.length > 0, "ticket"),
+  symbol: z
+    .string()
+    .max(64)
+    .transform((s) => (s.trim().length > 0 ? s.trim() : "(internal)")),
+  side: z.number().int(),
+  volume: z.number(),
+  priceOpen: z.number(),
+  priceCurrent: z.number().optional(),
+  sl: z.union([z.number(), z.null()]).optional(),
+  tp: z.union([z.number(), z.null()]).optional(),
+  profit: z.number().optional().default(0),
+  swap: z.number().optional().default(0),
+  commission: z.number().optional().default(0),
+  openTime: z.number().int(),
+  points: z.union([z.number(), z.null()]).optional(),
+});
+
+const pendingOrderIngestSchema = z.object({
+  ticket: z
+    .union([z.string(), z.number()])
+    .transform((v) => String(v).trim().slice(0, 32))
+    .refine((s) => s.length > 0, "ticket"),
+  symbol: z
+    .string()
+    .max(64)
+    .transform((s) => (s.trim().length > 0 ? s.trim() : "(internal)")),
+  orderType: z.number().int(),
+  volume: z.number(),
+  priceOrder: z.number(),
+  sl: z.union([z.number(), z.null()]).optional(),
+  tp: z.union([z.number(), z.null()]).optional(),
+  setupTime: z.number().int(),
+});
+
 const bodySchema = z.object({
   login: z.union([z.string().min(1).max(32), z.number()]),
   server: z.string().max(256).optional(),
@@ -99,6 +138,8 @@ const bodySchema = z.object({
       brokerServer: optionalAccountMetaString(128),
     })
     .optional(),
+  openPositions: z.array(openPositionIngestSchema).max(200).optional(),
+  pendingOrders: z.array(pendingOrderIngestSchema).max(200).optional(),
 });
 
 type ParsedDeal = z.infer<typeof dealSchema>;
@@ -191,8 +232,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Payload tidak valid", details: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { login, deals, account, platform } = parsed.data;
+  const { login, deals, account, platform, openPositions, pendingOrders } = parsed.data;
   const mtLogin = String(login);
+  const shouldUpsertActivity = openPositions !== undefined || pendingOrders !== undefined;
 
   try {
     await prisma.$transaction(
@@ -218,6 +260,26 @@ export async function POST(req: Request) {
             },
           });
         }
+
+        if (shouldUpsertActivity) {
+          const posJson = (openPositions ?? []) as Prisma.InputJsonValue;
+          const pendJson = (pendingOrders ?? []) as Prisma.InputJsonValue;
+          await tx.mtTradingActivity.upsert({
+            where: {
+              userId_mtLogin: { userId: link.userId, mtLogin },
+            },
+            create: {
+              userId: link.userId,
+              mtLogin,
+              positions: posJson,
+              pendingOrders: pendJson,
+            },
+            update: {
+              positions: posJson,
+              pendingOrders: pendJson,
+            },
+          });
+        }
       },
       { maxWait: 10_000, timeout: 15_000 }
     );
@@ -237,6 +299,7 @@ export async function POST(req: Request) {
       ok: true,
       acceptedDeals: deals?.length ?? 0,
       snapshot: Boolean(account),
+      activity: shouldUpsertActivity,
     });
   } catch (e) {
     console.error("mt5/ingest", e);

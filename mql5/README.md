@@ -7,7 +7,8 @@ File **`GMRFX_TradeLogger.mq5`** mengirim:
 - snapshot **balance / equity / margin** akun, **mata uang deposit** (`account.currency`), **nama broker** (`account.brokerName`), **server** (`account.brokerServer`), **nama akun trading** (`account.tradeAccountName` / `ACCOUNT_NAME` — ini yang dipakai sebagai **nama tampilan** di daftar Komunitas tanpa menampilkan nomor login), serta **`platform":"mt5"`** di root JSON untuk komunitas copy;
 
 **Nama akun tidak muncul di website?** (1) Jalankan **`npx prisma migrate deploy`** lalu **compile ulang** EA dan biarkan satu siklus kirim selesai (snapshot baru menyimpan `tradeAccountName`). (2) Banyak broker mengembalikan `ACCOUNT_NAME` **kosong** di terminal — maka website memakai fallback (nama profil / nomor login). Untuk nama kustom, isi label akun di MetaTrader jika broker/terminal mengizinkan, atau andalkan nama di profil website untuk tampilan komunitas.
-- semua **deal** dalam rentang histori (default 14 hari) ke endpoint `POST /api/mt5/ingest`.
+- semua **deal** dalam rentang histori (default 14 hari) ke endpoint `POST /api/mt5/ingest`;
+- **`openPositions`** dan **`pendingOrders`** (array JSON) untuk panel **Aktivitas** di ringkasan publik / dashboard — diisi dari posisi terbuka & order tertunda di terminal (v1.05+).
 
 Per deal trading (buy/sell), EA juga mengirim **`positionId`** (MT5 `DEAL_POSITION_ID`) dan, untuk kaki **penutupan** (OUT / OUT_BY), **`positionOpenTime`** (Unix detik dari deal **masuk** pertama posisi itu) agar backend bisa menghitung **durasi posisi** tanpa UI tambahan di EA.
 

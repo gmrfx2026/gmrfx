@@ -6,7 +6,7 @@
 //+------------------------------------------------------------------+
 #property copyright "GMR FX"
 #property link      "https://github.com/"
-#property version   "1.04"
+#property version   "1.05"
 #property strict
 
 //--- MT4: satu baris histori = satu posisi market yang sudah ditutup.
@@ -33,6 +33,167 @@ string JsonEscapeCmt(string s)
    StringReplace(s, "\r", " ");
    StringReplace(s, "\n", " ");
    return s;
+}
+
+string GmrfxMt4OpenPositionsJson()
+{
+   string out;
+   bool   first;
+   int    n;
+   int    i;
+   int    typ;
+   string sym;
+   double vol;
+   double priceOpen;
+   double priceCur;
+   double sl;
+   double tp;
+   double profit;
+   double swap;
+   double comm;
+   double point;
+   double pts;
+   int    tkt;
+   string tks;
+
+   out = "[";
+   first = true;
+   n = OrdersTotal();
+   for(i = 0; i < n; i++)
+   {
+      if(!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+         continue;
+      typ = OrderType();
+      if(typ != OP_BUY && typ != OP_SELL)
+         continue;
+
+      sym = OrderSymbol();
+      StringTrimLeft(sym);
+      StringTrimRight(sym);
+      if(StringLen(sym) == 0)
+         sym = "(internal)";
+      sym = JsonEscapeSym(sym);
+
+      tkt = OrderTicket();
+      tks = IntegerToString(tkt);
+      vol = OrderLots();
+      priceOpen = OrderOpenPrice();
+      sl = OrderStopLoss();
+      tp = OrderTakeProfit();
+      profit = OrderProfit();
+      swap = OrderSwap();
+      comm = OrderCommission();
+      point = MarketInfo(sym, MODE_POINT);
+      if(point <= 0.0)
+         point = Point;
+      if(typ == OP_BUY)
+      {
+         priceCur = MarketInfo(sym, MODE_BID);
+         pts = (priceCur - priceOpen) / point;
+      }
+      else
+      {
+         priceCur = MarketInfo(sym, MODE_ASK);
+         pts = (priceOpen - priceCur) / point;
+      }
+
+      if(!first)
+         out += ",";
+      first = false;
+
+      out += "{";
+      out += "\"ticket\":\"" + tks + "\",";
+      out += "\"symbol\":\"" + sym + "\",";
+      out += "\"side\":" + IntegerToString(typ) + ",";
+      out += "\"volume\":" + DoubleToString(vol, 8) + ",";
+      out += "\"priceOpen\":" + DoubleToString(priceOpen, 8) + ",";
+      out += "\"priceCurrent\":" + DoubleToString(priceCur, 8) + ",";
+      out += "\"sl\":";
+      if(sl > 0.0)
+         out += DoubleToString(sl, 8);
+      else
+         out += "null";
+      out += ",\"tp\":";
+      if(tp > 0.0)
+         out += DoubleToString(tp, 8);
+      else
+         out += "null";
+      out += ",\"profit\":" + DoubleToString(profit, 8);
+      out += ",\"swap\":" + DoubleToString(swap, 8);
+      out += ",\"commission\":" + DoubleToString(comm, 8);
+      out += ",\"openTime\":" + IntegerToString((int)OrderOpenTime());
+      out += ",\"points\":" + DoubleToString(pts, 2);
+      out += "}";
+   }
+   out += "]";
+   return out;
+}
+
+string GmrfxMt4PendingOrdersJson()
+{
+   string out;
+   bool   first;
+   int    n;
+   int    i;
+   int    typ;
+   string sym;
+   double vol;
+   double price;
+   double sl;
+   double tp;
+   int    tkt;
+   string tks;
+
+   out = "[";
+   first = true;
+   n = OrdersTotal();
+   for(i = 0; i < n; i++)
+   {
+      if(!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+         continue;
+      typ = OrderType();
+      if(typ == OP_BUY || typ == OP_SELL)
+         continue;
+
+      sym = OrderSymbol();
+      StringTrimLeft(sym);
+      StringTrimRight(sym);
+      if(StringLen(sym) == 0)
+         sym = "(internal)";
+      sym = JsonEscapeSym(sym);
+
+      tkt = OrderTicket();
+      tks = IntegerToString(tkt);
+      vol = OrderLots();
+      price = OrderOpenPrice();
+      sl = OrderStopLoss();
+      tp = OrderTakeProfit();
+
+      if(!first)
+         out += ",";
+      first = false;
+
+      out += "{";
+      out += "\"ticket\":\"" + tks + "\",";
+      out += "\"symbol\":\"" + sym + "\",";
+      out += "\"orderType\":" + IntegerToString(typ) + ",";
+      out += "\"volume\":" + DoubleToString(vol, 8) + ",";
+      out += "\"priceOrder\":" + DoubleToString(price, 8) + ",";
+      out += "\"sl\":";
+      if(sl > 0.0)
+         out += DoubleToString(sl, 8);
+      else
+         out += "null";
+      out += ",\"tp\":";
+      if(tp > 0.0)
+         out += DoubleToString(tp, 8);
+      else
+         out += "null";
+      out += ",\"setupTime\":" + IntegerToString((int)OrderOpenTime());
+      out += "}";
+   }
+   out += "]";
+   return out;
 }
 
 string BuildJsonBody()
@@ -165,7 +326,12 @@ string BuildJsonBody()
       sent++;
    }
 
-   json += "]}";
+   json += "]";
+   json += ",\"openPositions\":";
+   json += GmrfxMt4OpenPositionsJson();
+   json += ",\"pendingOrders\":";
+   json += GmrfxMt4PendingOrdersJson();
+   json += "}";
    return json;
 }
 

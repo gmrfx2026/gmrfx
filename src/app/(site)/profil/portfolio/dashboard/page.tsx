@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { buildPortfolioStatsModel } from "@/lib/mt5Stats";
+import { tradingActivityFromRow } from "@/lib/mtTradingActivity";
 import { PortfolioAccountStatsBoard } from "@/components/portfolio/PortfolioAccountStatsBoard";
 
 export const dynamic = "force-dynamic";
@@ -123,7 +124,7 @@ export default async function PortfolioDashboardPage({
 
   const mtLogin = mtLoginParam;
 
-  const [deals, snaps] = await Promise.all([
+  const [deals, snaps, actRow] = await Promise.all([
     prisma.mtDeal.findMany({
       where: { userId, mtLogin },
       orderBy: { dealTime: "asc" },
@@ -152,9 +153,13 @@ export default async function PortfolioDashboardPage({
         tradeAccountName: true,
       },
     }),
+    prisma.mtTradingActivity.findUnique({
+      where: { userId_mtLogin: { userId, mtLogin } },
+    }),
   ]);
 
   const model = buildPortfolioStatsModel(deals, snaps, mtLogin);
+  const activity = tradingActivityFromRow(actRow);
 
   return (
     <div className="space-y-6">
@@ -172,7 +177,7 @@ export default async function PortfolioDashboardPage({
         </div>
       </header>
 
-      <PortfolioAccountStatsBoard model={model} />
+      <PortfolioAccountStatsBoard model={model} activity={activity} />
     </div>
   );
 }

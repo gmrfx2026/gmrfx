@@ -135,6 +135,7 @@ model User {
   mtCommunityPublishedAccounts MtCommunityPublishedAccount[]
   copyFollowsAsFollower      MtCopyFollow[] @relation("CopyFollowFollower")
   copyFollowsAsPublisher     MtCopyFollow[] @relation("CopyFollowPublisher")
+  mtTradingActivities        MtTradingActivity[]
 }
 
 /// Token untuk EA MetaTrader 5 — hanya hash yang disimpan; plaintext ditampilkan sekali saat dibuat.
@@ -205,6 +206,21 @@ model MtAccountSnapshot {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, mtLogin, recordedAt])
+}
+
+/// Snapshot terakhir posisi terbuka & order tertunda dari EA (diperbarui tiap ingest).
+model MtTradingActivity {
+  id            String   @id @default(cuid())
+  userId        String
+  mtLogin       String
+  positions     Json
+  pendingOrders Json
+  recordedAt    DateTime @default(now()) @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mtLogin])
+  @@index([userId])
 }
 
 /// Publikasi akun MT ke komunitas (copy trade): izin & harga IDR.
