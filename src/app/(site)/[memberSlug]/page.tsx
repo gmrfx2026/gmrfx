@@ -12,7 +12,8 @@ import { MemberStatusComposer } from "@/components/MemberStatusComposer";
 import { MemberFollowButton, MemberFollowLoginLink } from "@/components/member/MemberFollowButton";
 import { MemberFollowStatsLinks } from "@/components/member/MemberFollowStatsLinks";
 import { MemberSocialLinks } from "@/components/member/MemberSocialLinks";
-import { MemberRatingWidget } from "@/components/member/MemberRatingWidget";
+import { MemberProfileShare } from "@/components/member/MemberProfileShare";
+import { requestOrigin } from "@/lib/requestOrigin";
 import { unstable_noStore as noStore } from "next/cache";
 import {
   buildMemberProfileHref,
@@ -117,8 +118,7 @@ export default async function MemberBySlugPage({
   const safeStatusPage = Math.min(parseStatusPage(stPageStr), statusTotalPages);
   const statusSkip = (safeStatusPage - 1) * statusPageSize;
 
-  const [statuses, articles, ratingRows, myRating, followerCount, followingCount, viewerFollows] =
-    await Promise.all([
+  const [statuses, articles, followerCount, followingCount, viewerFollows] = await Promise.all([
       prisma.statusEntry.findMany({
         where: { userId: member.id },
         orderBy: { createdAt: "desc" },
@@ -131,16 +131,6 @@ export default async function MemberBySlugPage({
         take: 10,
         select: { id: true, slug: true, title: true, excerpt: true, publishedAt: true },
       }),
-      prisma.memberRating.findMany({
-        where: { memberId: member.id },
-        select: { stars: true },
-      }),
-      viewerId
-        ? prisma.memberRating.findFirst({
-            where: { memberId: member.id, raterId: viewerId },
-            select: { stars: true },
-          })
-        : Promise.resolve(null),
       prisma.memberFollow.count({
         where: {
           followingId: member.id,
@@ -166,7 +156,7 @@ export default async function MemberBySlugPage({
             select: { id: true, status: true },
           })
         : Promise.resolve(null),
-    ]);
+  ]);
 
   const statusIds = statuses.map((s) => s.id);
 
@@ -252,12 +242,6 @@ export default async function MemberBySlugPage({
     }
   }
 
-  const ratingCount = ratingRows.length;
-  const ratingAvg = ratingCount > 0 ? ratingRows.reduce((s, r) => s + r.stars, 0) / ratingCount : null;
-  const myStars = myRating?.stars ?? null;
-  const hasStatuses = statusTotal > 0;
-  const canRate = viewerId != null && viewerId !== member.id && hasStatuses;
-
   const followState =
     viewerId && viewerId !== member.id
       ? viewerFollows?.status === "ACCEPTED"
@@ -267,8 +251,9 @@ export default async function MemberBySlugPage({
           : "none"
       : "none";
 
-  const profilePath = `/${member.memberSlug}`;
+  const profilePath = `/${member.memberSlug ?? slug}`;
   const profileHrefCurrent = buildMemberProfileHref(profilePath, searchParams, {});
+  const shareProfileUrl = `${requestOrigin()}${profilePath}`;
 
   const statusIdxFrom = statusTotal === 0 ? 0 : (safeStatusPage - 1) * statusPageSize + 1;
   const statusIdxTo = Math.min(safeStatusPage * statusPageSize, statusTotal);
@@ -393,18 +378,11 @@ export default async function MemberBySlugPage({
               <MemberFollowLoginLink loginCallbackUrl={profileHrefCurrent} />
             </div>
           )}
-          {hasStatuses && (
-            <div className="flex w-full justify-center md:justify-start">
-              <MemberRatingWidget
-                memberId={member.id}
-                canRate={canRate}
-                myStars={myStars}
-                avgStars={ratingAvg}
-                ratingCount={ratingCount}
-                isSelfView={isSelf}
-              />
-            </div>
-          )}
+          <MemberProfileShare
+            shareUrl={shareProfileUrl}
+            shareTitle={member.name ?? "Member GMR FX"}
+            className="flex w-full flex-col items-center md:items-start"
+          />
         </div>
       </div>
 
