@@ -38,6 +38,8 @@ Endpoint: **`POST /api/mt4/ingest`** — di server Next.js ini **alias** ke hand
 
 ## Perbedaan penting vs MT5
 
+- **Aktivitas (posisi / pending):** di MT4 pemindaian order terbuka memakai **`OrderSelect(i, SELECT_BY_POS, MODE_TRADES)`** — ini API **benar untuk MQL4**. Di MT5 pola itu **salah**; MT5 wajib `OrderGetTicket(i)` + `OrderSelect(ticket)`. EA `.mq4` tidak dicampur sintaks MT5.
+- **Komisi posisi terbuka:** MT4 memakai **`OrderCommission()`** pada order yang sedang terpilih; tidak ada setara `POSITION_COMMISSION` yang deprecated seperti di MT5 (di MT5 komisi dihitung dari deal per `POSITION_IDENTIFIER`).
 - MT4 memakai **order historis**, bukan **deal** bertingkat (IN/OUT) seperti MT5.
 - Partial close / scaling di MT4 bisa tercatat sebagai **beberapa order** terpisah; server menyimpan per `ticket`.
 - Untuk fitur lanjutan yang mengandalkan banyak deal per posisi MT5, perilaku agregasi bisa sedikit berbeda.

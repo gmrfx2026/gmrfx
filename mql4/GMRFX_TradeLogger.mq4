@@ -35,6 +35,7 @@ string JsonEscapeCmt(string s)
    return s;
 }
 
+// MODE_TRADES + OrderSelect(i, SELECT_BY_POS, ...) adalah API asli MT4 (bukan pola MQL5 OrderGetTicket).
 string GmrfxMt4OpenPositionsJson()
 {
    string out;
@@ -42,7 +43,8 @@ string GmrfxMt4OpenPositionsJson()
    int    n;
    int    i;
    int    typ;
-   string sym;
+   string symRaw;
+   string symJson;
    double vol;
    double priceOpen;
    double priceCur;
@@ -67,12 +69,12 @@ string GmrfxMt4OpenPositionsJson()
       if(typ != OP_BUY && typ != OP_SELL)
          continue;
 
-      sym = OrderSymbol();
-      StringTrimLeft(sym);
-      StringTrimRight(sym);
-      if(StringLen(sym) == 0)
-         sym = "(internal)";
-      sym = JsonEscapeSym(sym);
+      symRaw = OrderSymbol();
+      StringTrimLeft(symRaw);
+      StringTrimRight(symRaw);
+      if(StringLen(symRaw) == 0)
+         symRaw = "(internal)";
+      symJson = JsonEscapeSym(symRaw);
 
       tkt = OrderTicket();
       tks = IntegerToString(tkt);
@@ -83,17 +85,17 @@ string GmrfxMt4OpenPositionsJson()
       profit = OrderProfit();
       swap = OrderSwap();
       comm = OrderCommission();
-      point = MarketInfo(sym, MODE_POINT);
+      point = MarketInfo(symRaw, MODE_POINT);
       if(point <= 0.0)
          point = Point;
       if(typ == OP_BUY)
       {
-         priceCur = MarketInfo(sym, MODE_BID);
+         priceCur = MarketInfo(symRaw, MODE_BID);
          pts = (priceCur - priceOpen) / point;
       }
       else
       {
-         priceCur = MarketInfo(sym, MODE_ASK);
+         priceCur = MarketInfo(symRaw, MODE_ASK);
          pts = (priceOpen - priceCur) / point;
       }
 
@@ -103,7 +105,7 @@ string GmrfxMt4OpenPositionsJson()
 
       out += "{";
       out += "\"ticket\":\"" + tks + "\",";
-      out += "\"symbol\":\"" + sym + "\",";
+      out += "\"symbol\":\"" + symJson + "\",";
       out += "\"side\":" + IntegerToString(typ) + ",";
       out += "\"volume\":" + DoubleToString(vol, 8) + ",";
       out += "\"priceOpen\":" + DoubleToString(priceOpen, 8) + ",";
@@ -155,12 +157,12 @@ string GmrfxMt4PendingOrdersJson()
       if(typ == OP_BUY || typ == OP_SELL)
          continue;
 
-      sym = OrderSymbol();
-      StringTrimLeft(sym);
-      StringTrimRight(sym);
-      if(StringLen(sym) == 0)
-         sym = "(internal)";
-      sym = JsonEscapeSym(sym);
+      symRaw = OrderSymbol();
+      StringTrimLeft(symRaw);
+      StringTrimRight(symRaw);
+      if(StringLen(symRaw) == 0)
+         symRaw = "(internal)";
+      symJson = JsonEscapeSym(symRaw);
 
       tkt = OrderTicket();
       tks = IntegerToString(tkt);
@@ -175,7 +177,7 @@ string GmrfxMt4PendingOrdersJson()
 
       out += "{";
       out += "\"ticket\":\"" + tks + "\",";
-      out += "\"symbol\":\"" + sym + "\",";
+      out += "\"symbol\":\"" + symJson + "\",";
       out += "\"orderType\":" + IntegerToString(typ) + ",";
       out += "\"volume\":" + DoubleToString(vol, 8) + ",";
       out += "\"priceOrder\":" + DoubleToString(price, 8) + ",";
