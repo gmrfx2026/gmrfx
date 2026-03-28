@@ -1,118 +1,141 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { PortfolioPlaceholderPanel } from "@/components/portfolio/PortfolioPlaceholderPanel";
 import { redirect } from "next/navigation";
+import { buildPortfolioStatsModel } from "@/lib/mt5Stats";
+import { PortfolioAccountStatsBoard } from "@/components/portfolio/PortfolioAccountStatsBoard";
 
 export const dynamic = "force-dynamic";
 
-export default async function PortfolioDashboardPage() {
+async function linkedLogins(userId: string): Promise<string[]> {
+  const [fromDeals, fromSnaps] = await Promise.all([
+    prisma.mtDeal.groupBy({ by: ["mtLogin"], where: { userId } }),
+    prisma.mtAccountSnapshot.groupBy({ by: ["mtLogin"], where: { userId } }),
+  ]);
+  const set = new Set<string>();
+  for (const r of fromDeals) set.add(r.mtLogin);
+  for (const r of fromSnaps) set.add(r.mtLogin);
+  return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+}
+
+export default async function PortfolioDashboardPage({
+  searchParams,
+}: {
+  searchParams: { mtLogin?: string };
+}) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login?callbackUrl=/profil/portfolio/dashboard");
 
   const userId = session.user.id;
+  const logins = await linkedLogins(userId);
 
-  const [dealCount, lastDeal, lastSnap, logins] = await Promise.all([
-    prisma.mtDeal.count({ where: { userId } }),
-    prisma.mtDeal.findFirst({
-      where: { userId },
-      orderBy: { dealTime: "desc" },
-      select: { dealTime: true, mtLogin: true },
+  const mtLoginParam = typeof searchParams?.mtLogin === "string" ? searchParams.mtLogin.trim() : "";
+
+  if (logins.length === 0) {
+    return (
+      <div className="space-y-6">
+        <header>
+          <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Dashboard portofolio</h1>
+          <p className="mt-1 text-sm text-broker-muted">
+            Statistik akun muncul setelah EA mengirim deal atau snapshot ke server.
+          </p>
+        </header>
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm text-amber-100/90">
+          <p className="font-medium text-white">Belum ada akun MT terhubung</p>
+          <p className="mt-2 text-broker-muted">
+            Pasang token di{" "}
+            <Link href="/profil/portfolio/summary" className="text-broker-accent hover:underline">
+              Ringkasan
+            </Link>{" "}
+            dan aktifkan EA. Lalu buka{" "}
+            <Link href="/profil/portfolio/trade-log" className="text-broker-accent hover:underline">
+              Trade log
+            </Link>{" "}
+            untuk memastikan data masuk.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (logins.length === 1 && !mtLoginParam) {
+    redirect(`/profil/portfolio/dashboard?mtLogin=${encodeURIComponent(logins[0]!)}`);
+  }
+
+  if (mtLoginParam && !logins.includes(mtLoginParam)) {
+    redirect("/profil/portfolio/dashboard");
+  }
+
+  if (!mtLoginParam) {
+    return (
+      <div className="space-y-6">
+        <header>
+          <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Dashboard portofolio</h1>
+          <p className="mt-1 text-sm text-broker-muted">
+            Pilih akun MT untuk melihat statistik agregat (aliran mirip journal trading profesional).
+          </p>
+        </header>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {logins.map((login) => (
+            <Link
+              key={login}
+              href={`/profil/portfolio/dashboard?mtLogin=${encodeURIComponent(login)}`}
+              className="rounded-2xl border border-broker-border/80 bg-broker-surface/50 p-4 shadow-md transition hover:border-broker-accent/40 hover:bg-broker-surface/70"
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-muted">Login MT</p>
+              <p className="mt-2 font-mono text-lg font-semibold text-broker-accent">{login}</p>
+              <p className="mt-2 text-xs text-broker-muted">Buka statistik &amp; grafik →</p>
+            </Link>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const mtLogin = mtLoginParam;
+
+  const [deals, snaps] = await Promise.all([
+    prisma.mtDeal.findMany({
+      where: { userId, mtLogin },
+      orderBy: { dealTime: "asc" },
+      select: {
+        dealTime: true,
+        symbol: true,
+        dealType: true,
+        entryType: true,
+        volume: true,
+        price: true,
+        commission: true,
+        swap: true,
+        profit: true,
+      },
     }),
-    prisma.mtAccountSnapshot.findFirst({
-      where: { userId },
-      orderBy: { recordedAt: "desc" },
-    }),
-    prisma.mtDeal.groupBy({
-      by: ["mtLogin"],
-      where: { userId },
+    prisma.mtAccountSnapshot.findMany({
+      where: { userId, mtLogin },
+      orderBy: { recordedAt: "asc" },
+      select: { recordedAt: true, balance: true, equity: true },
     }),
   ]);
 
-  const bal = lastSnap ? Number(lastSnap.balance) : null;
-  const eq = lastSnap ? Number(lastSnap.equity) : null;
-  const lastSync =
-    lastSnap?.recordedAt != null
-      ? new Intl.DateTimeFormat("id-ID", { dateStyle: "short", timeStyle: "short" }).format(
-          lastSnap.recordedAt
-        )
-      : null;
+  const model = buildPortfolioStatsModel(deals, snaps, mtLogin);
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Dashboard</h1>
-        <p className="mt-1 text-sm text-broker-muted">
-          Ringkasan dari data yang sudah diterima server dari EA.{" "}
-          <Link href="/profil/portfolio/trade-log" className="text-broker-accent hover:underline">
-            Lihat trade log →
-          </Link>
-        </p>
+      <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Dashboard portofolio</h1>
+          <p className="mt-1 text-sm text-broker-muted">
+            Statistik dihitung dari deal &amp; snapshot yang tersimpan.{" "}
+            {logins.length > 1 ? (
+              <Link href="/profil/portfolio/dashboard" className="text-broker-accent hover:underline">
+                Ganti akun
+              </Link>
+            ) : null}
+          </p>
+        </div>
       </header>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-broker-border/80 bg-broker-surface/50 p-4 shadow-md shadow-black/20">
-          <p className="text-xs font-medium uppercase tracking-wide text-broker-muted">Deal tersimpan</p>
-          <p className="mt-2 font-mono text-lg font-semibold text-white">{dealCount}</p>
-          <p className="mt-1 text-xs text-broker-muted/80">
-            {lastDeal
-              ? `Terakhir: ${new Intl.DateTimeFormat("id-ID", {
-                  dateStyle: "short",
-                  timeStyle: "short",
-                }).format(lastDeal.dealTime)}`
-              : "Menunggu EA pertama kali"}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-broker-border/80 bg-broker-surface/50 p-4 shadow-md shadow-black/20">
-          <p className="text-xs font-medium uppercase tracking-wide text-broker-muted">Login MT</p>
-          <p className="mt-2 font-mono text-lg font-semibold text-white">{logins.length || "—"}</p>
-          <p className="mt-1 text-xs text-broker-muted/80">
-            {logins.length > 0
-              ? logins
-                  .map((g) => g.mtLogin)
-                  .slice(0, 3)
-                  .join(", ") + (logins.length > 3 ? "…" : "")
-              : "Belum ada"}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-broker-border/80 bg-broker-surface/50 p-4 shadow-md shadow-black/20">
-          <p className="text-xs font-medium uppercase tracking-wide text-broker-muted">Saldo (snapshot)</p>
-          <p className="mt-2 font-mono text-lg font-semibold text-white">
-            {bal != null && Number.isFinite(bal) ? bal.toLocaleString("id-ID", { maximumFractionDigits: 2 }) : "—"}
-          </p>
-          <p className="mt-1 text-xs text-broker-muted/80">
-            {eq != null && Number.isFinite(eq)
-              ? `Equity: ${eq.toLocaleString("id-ID", { maximumFractionDigits: 2 })}`
-              : "Dari kiriman EA terakhir"}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-broker-border/80 bg-broker-surface/50 p-4 shadow-md shadow-black/20">
-          <p className="text-xs font-medium uppercase tracking-wide text-broker-muted">Sinkron snapshot</p>
-          <p className="mt-2 font-mono text-sm font-semibold text-white">{lastSync ?? "—"}</p>
-          <p className="mt-1 text-xs text-broker-muted/80">
-            {lastDeal ? `Akun: ${lastDeal.mtLogin}` : "Pasang token & EA"}
-          </p>
-        </div>
-      </div>
-
-      {dealCount === 0 && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
-          Belum ada deal di database. Buka{" "}
-          <Link href="/profil/portfolio/trade-log" className="font-medium underline">
-            Trade log
-          </Link>{" "}
-          untuk panduan pengecekan EA &amp; token.
-        </div>
-      )}
-
-      <div className="grid gap-4 lg:grid-cols-[1fr_16rem]">
-        <PortfolioPlaceholderPanel title="Kalender aktivitas">
-          Grid harian (hijau / merah) menyusul dari agregasi deal per tanggal.
-        </PortfolioPlaceholderPanel>
-        <PortfolioPlaceholderPanel title="Berita & jadwal">
-          Widget ringkas — opsional nanti.
-        </PortfolioPlaceholderPanel>
-      </div>
+      <PortfolioAccountStatsBoard model={model} />
     </div>
   );
 }

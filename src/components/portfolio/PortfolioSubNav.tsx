@@ -168,10 +168,12 @@ export function PortfolioNavEmbedded() {
                   {mtLogins.map((login) => (
                     <SubNavLink
                       key={login}
-                      href={`/profil/portfolio/trade-log?mtLogin=${encodeURIComponent(login)}`}
+                      href={`/profil/portfolio/dashboard?mtLogin=${encodeURIComponent(login)}`}
                       label={login}
                       indent
-                      isActive={tradeLogActive && selectedMtLogin === login}
+                      isActive={
+                        pathname.startsWith("/profil/portfolio/dashboard") && selectedMtLogin === login
+                      }
                       compact
                     />
                   ))}
