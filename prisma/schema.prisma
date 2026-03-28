@@ -131,6 +131,10 @@ model User {
   mtLinkTokens       MtLinkToken[]
   mtDeals            MtDeal[]
   mtAccountSnapshots MtAccountSnapshot[]
+
+  mtCommunityPublishedAccounts MtCommunityPublishedAccount[]
+  copyFollowsAsFollower      MtCopyFollow[] @relation("CopyFollowFollower")
+  copyFollowsAsPublisher     MtCopyFollow[] @relation("CopyFollowPublisher")
 }
 
 /// Token untuk EA MetaTrader 5 — hanya hash yang disimpan; plaintext ditampilkan sekali saat dibuat.
@@ -192,11 +196,52 @@ model MtAccountSnapshot {
   brokerName   String?  @db.VarChar(128)
   /// Nama server trading (ACCOUNT_SERVER / AccountServer).
   brokerServer String?  @db.VarChar(128)
+  /// Nama akun di terminal (ACCOUNT_NAME / AccountName), dari broker.
+  tradeAccountName String? @db.VarChar(128)
+  /// mt4 | mt5 dari EA.
+  sourcePlatform   String? @db.VarChar(8)
   recordedAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, mtLogin, recordedAt])
+}
+
+/// Publikasi akun MT ke komunitas (copy trade): izin & harga IDR.
+model MtCommunityPublishedAccount {
+  id           String   @id @default(cuid())
+  userId       String
+  mtLogin      String
+  allowCopy    Boolean  @default(false)
+  /// true = member lain boleh copy gratis; false = wajib bayar copyPriceIdr.
+  copyFree     Boolean  @default(true)
+  copyPriceIdr Decimal  @default(0) @db.Decimal(18, 2)
+  /// "mt5" | "mt4" — dari payload ingest / EA.
+  platform     String   @default("mt5") @db.VarChar(8)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mtLogin])
+  @@index([allowCopy])
+}
+
+/// Member yang memilih "Copy" pada akun komunitas (gratis atau berbayar via wallet).
+model MtCopyFollow {
+  id              String   @id @default(cuid())
+  followerUserId  String
+  publisherUserId String
+  mtLogin         String
+  paidAmountIdr   Decimal  @default(0) @db.Decimal(18, 2)
+  createdAt       DateTime @default(now())
+
+  followerUser  User @relation("CopyFollowFollower", fields: [followerUserId], references: [id], onDelete: Cascade)
+  publisherUser User @relation("CopyFollowPublisher", fields: [publisherUserId], references: [id], onDelete: Cascade)
+
+  @@unique([followerUserId, publisherUserId, mtLogin])
+  @@index([followerUserId])
+  @@index([publisherUserId, mtLogin])
 }
 
 /// Referensi wilayah Indonesia (kode BPS) — diisi dengan `npm run db:seed-wilayah`.

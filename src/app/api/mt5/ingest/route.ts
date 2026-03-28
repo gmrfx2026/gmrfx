@@ -68,12 +68,23 @@ const dealSchema = z.object({
 const bodySchema = z.object({
   login: z.union([z.string().min(1).max(32), z.number()]),
   server: z.string().max(256).optional(),
+  platform: z
+    .union([z.string(), z.null(), z.undefined()])
+    .optional()
+    .transform((v) => {
+      if (v == null) return undefined;
+      const s = String(v).trim().toLowerCase();
+      if (s === "mt4") return "mt4";
+      if (s === "mt5") return "mt5";
+      return undefined;
+    }),
   deals: z.array(dealSchema).max(MAX_DEALS).nullish(),
   account: z
     .object({
       balance: z.number(),
       equity: z.number(),
       margin: z.number().optional(),
+      tradeAccountName: optionalAccountMetaString(128),
       currency: z
         .union([z.string(), z.null(), z.undefined()])
         .optional()
@@ -180,7 +191,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Payload tidak valid", details: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { login, deals, account } = parsed.data;
+  const { login, deals, account, platform } = parsed.data;
   const mtLogin = String(login);
 
   try {
@@ -202,6 +213,8 @@ export async function POST(req: Request) {
               currency: account.currency ?? null,
               brokerName: account.brokerName ?? null,
               brokerServer: account.brokerServer ?? null,
+              tradeAccountName: account.tradeAccountName ?? null,
+              sourcePlatform: platform ?? null,
             },
           });
         }

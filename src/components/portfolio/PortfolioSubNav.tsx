@@ -87,6 +87,7 @@ export function PortfolioNavEmbedded() {
   const playbookActive = pathname.startsWith("/profil/portfolio/playbook");
   const commAccountsActive = pathname.startsWith("/profil/portfolio/community/accounts");
   const commFollowingActive = pathname.startsWith("/profil/portfolio/community/following");
+  const commPublishActive = pathname.startsWith("/profil/portfolio/community/publish");
 
   useEffect(() => {
     if (!pathname.startsWith("/profil/portfolio")) {
@@ -215,6 +216,13 @@ export function PortfolioNavEmbedded() {
                 isActive={commFollowingActive}
                 compact
               />
+              <SubNavLink
+                href="/profil/portfolio/community/publish"
+                label="Publikasi copy"
+                indent
+                isActive={commPublishActive}
+                compact
+              />
             </div>
           )}
         </div>
@@ -231,6 +239,7 @@ const MOBILE_LINKS: { href: string; label: string }[] = [
   { href: "/profil/portfolio/playbook", label: "Playbook" },
   { href: "/profil/portfolio/community/accounts", label: "Akun" },
   { href: "/profil/portfolio/community/following", label: "Mengikuti" },
+  { href: "/profil/portfolio/community/publish", label: "Publikasi" },
 ];
 
 /** Strip navigasi horizontal untuk layar sempit (sub-menu tidak ada di dock bawah). */

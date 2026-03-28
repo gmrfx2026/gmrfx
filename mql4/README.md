@@ -2,7 +2,7 @@
 
 File **`GMRFX_TradeLogger.mq4`** mengirim:
 
-- snapshot **balance / equity / margin** akun MT4, **`account.currency`**, **`account.brokerName`** (`AccountCompany()`), dan **`account.brokerServer`** (`AccountServer()`);
+- snapshot akun MT4: **`account.currency`**, **`account.brokerName`**, **`account.brokerServer`**, **`account.tradeAccountName`** (`AccountName()`), dan **`"platform":"mt4"`** di root JSON;
 - hingga **2500** order **market** yang sudah **ditutup** (`OP_BUY` / `OP_SELL`) dalam rentang `InpHistoryDays`, berdasarkan **waktu tutup** (`OrderCloseTime`).
 
 Endpoint: **`POST /api/mt4/ingest`** — di server Next.js ini **alias** ke handler yang sama dengan `/api/mt5/ingest` (format JSON deal identik).

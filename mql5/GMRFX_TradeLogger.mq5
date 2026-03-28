@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "GMR FX"
 #property link      "https://github.com/"
-#property version   "1.03"
+#property version   "1.04"
 #property strict
 
 ulong  g_gmrfx_pos_ids[];
@@ -78,16 +78,25 @@ string BuildJsonBody()
    StringReplace(srv, "\"", "'");
    StringReplace(srv, "\r", " ");
    StringReplace(srv, "\n", " ");
+   string accName = AccountInfoString(ACCOUNT_NAME);
+   StringTrimLeft(accName);
+   StringTrimRight(accName);
+   StringReplace(accName, "\\", "");
+   StringReplace(accName, "\"", "'");
+   StringReplace(accName, "\r", " ");
+   StringReplace(accName, "\n", " ");
 
    string json = "{";
    json += "\"login\":" + IntegerToString(login) + ",";
+   json += "\"platform\":\"mt5\",";
    json += "\"account\":{";
    json += "\"balance\":" + DoubleToString(bal, 8) + ",";
    json += "\"equity\":" + DoubleToString(eq, 8) + ",";
    json += "\"margin\":" + DoubleToString(mg, 8) + ",";
    json += "\"currency\":\"" + cur + "\",";
    json += "\"brokerName\":\"" + brk + "\",";
-   json += "\"brokerServer\":\"" + srv + "\"";
+   json += "\"brokerServer\":\"" + srv + "\",";
+   json += "\"tradeAccountName\":\"" + accName + "\"";
    json += "},";
    json += "\"deals\":[";
 

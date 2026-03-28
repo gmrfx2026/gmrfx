@@ -6,7 +6,7 @@
 //+------------------------------------------------------------------+
 #property copyright "GMR FX"
 #property link      "https://github.com/"
-#property version   "1.03"
+#property version   "1.04"
 #property strict
 
 //--- MT4: satu baris histori = satu posisi market yang sudah ditutup.
@@ -54,6 +54,7 @@ string BuildJsonBody()
    string cur;
    string brk;
    string srv;
+   string accName;
    double vol;
    double price;
    double comm;
@@ -79,16 +80,22 @@ string BuildJsonBody()
    StringTrimLeft(srv);
    StringTrimRight(srv);
    srv = JsonEscapeSym(srv);
+   accName = AccountName();
+   StringTrimLeft(accName);
+   StringTrimRight(accName);
+   accName = JsonEscapeSym(accName);
 
    json = "{";
    json += "\"login\":" + IntegerToString((int)login) + ",";
+   json += "\"platform\":\"mt4\",";
    json += "\"account\":{";
    json += "\"balance\":" + DoubleToString(bal, 8) + ",";
    json += "\"equity\":" + DoubleToString(eq, 8) + ",";
    json += "\"margin\":" + DoubleToString(mg, 8) + ",";
    json += "\"currency\":\"" + cur + "\",";
    json += "\"brokerName\":\"" + brk + "\",";
-   json += "\"brokerServer\":\"" + srv + "\"";
+   json += "\"brokerServer\":\"" + srv + "\",";
+   json += "\"tradeAccountName\":\"" + accName + "\"";
    json += "},";
    json += "\"deals\":[";
 
