@@ -23,7 +23,7 @@ export async function SiteHeader() {
     mobileLinks.push(item);
   }
   if (session) {
-    mobileLinks.push({ href: "/profil", label: "Profil" });
+    mobileLinks.push({ href: "/profil", label: "Dashboard" });
     if (session.user.role === "ADMIN") {
       mobileLinks.push({ href: "/admin", label: "Admin" });
     }
@@ -60,7 +60,7 @@ export async function SiteHeader() {
                 href="/profil"
                 className="rounded-md px-3 py-2 text-sm text-broker-muted transition hover:bg-broker-surface hover:text-white"
               >
-                Profil
+                Dashboard
               </Link>
               {session.user.role === "ADMIN" && (
                 <Link
