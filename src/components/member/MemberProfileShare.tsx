@@ -123,8 +123,7 @@ export function MemberProfileShare({
 
   return (
     <div className={`mt-3 w-full ${className}`}>
-      <p className="text-xs font-medium text-broker-muted">Bagikan profil</p>
-      <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 md:justify-start">
+      <div className="flex flex-wrap items-center justify-center gap-1.5 md:justify-start">
         {showNativeShare ? (
           <button
             type="button"

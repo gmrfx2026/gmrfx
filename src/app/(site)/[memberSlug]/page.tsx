@@ -393,15 +393,6 @@ export default async function MemberBySlugPage({
           </div>
         )}
 
-        <div className="border-b border-broker-border/40 pb-4 sm:pb-5">
-          <h2 className="text-base font-semibold tracking-tight text-white sm:text-lg">Linimasa status</h2>
-          <p className="mt-1.5 max-w-prose text-pretty text-xs leading-relaxed text-broker-muted sm:text-sm">
-            {viewerId
-              ? `Pembaruan dari ${member.name ?? "member"}.`
-              : `Pembaruan dari ${member.name ?? "member"}; berkomentar setelah login.`}
-          </p>
-        </div>
-
         {!viewerId && (
           <p className="mt-5 rounded-xl border border-broker-border/60 bg-broker-surface/25 px-4 py-3 text-sm text-broker-muted sm:px-5">
             <Link
