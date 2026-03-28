@@ -127,6 +127,65 @@ model User {
 
   dmRequestsSent     ChatDmRequest[] @relation("DmRequestFrom")
   dmRequestsReceived ChatDmRequest[] @relation("DmRequestTo")
+
+  mtLinkTokens       MtLinkToken[]
+  mtDeals            MtDeal[]
+  mtAccountSnapshots MtAccountSnapshot[]
+}
+
+/// Token untuk EA MetaTrader 5 — hanya hash yang disimpan; plaintext ditampilkan sekali saat dibuat.
+model MtLinkToken {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  tokenHint  String
+  label      String?
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Deal historis dari MT5 (HistoryDeals) per akun login.
+model MtDeal {
+  id         String   @id @default(cuid())
+  userId     String
+  mtLogin    String
+  ticket     String
+  dealTime   DateTime
+  symbol     String
+  dealType   Int
+  entryType  Int
+  volume     Decimal  @db.Decimal(18, 8)
+  price      Decimal  @db.Decimal(18, 8)
+  commission Decimal  @default(0) @db.Decimal(18, 8)
+  swap       Decimal  @default(0) @db.Decimal(18, 8)
+  profit     Decimal  @default(0) @db.Decimal(18, 8)
+  magic      Int      @default(0)
+  comment    String   @default("")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mtLogin, ticket])
+  @@index([userId, mtLogin, dealTime])
+}
+
+/// Snapshot saldo/equity dari EA (opsional per sinkronisasi).
+model MtAccountSnapshot {
+  id         String   @id @default(cuid())
+  userId     String
+  mtLogin    String
+  balance    Decimal  @db.Decimal(18, 8)
+  equity     Decimal  @db.Decimal(18, 8)
+  margin     Decimal  @default(0) @db.Decimal(18, 8)
+  recordedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, mtLogin, recordedAt])
 }
 
 /// Referensi wilayah Indonesia (kode BPS) — diisi dengan `npm run db:seed-wilayah`.
