@@ -1,18 +1,41 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import { fetchCommunityPublishedAccounts } from "@/lib/communityCopyAccounts";
+import { fetchCommunityPublishedAccounts, type MetricTone } from "@/lib/communityCopyAccounts";
 import { CommunityCopyFollowButton } from "@/components/portfolio/CommunityCopyFollowButton";
+import clsx from "clsx";
 
 export const dynamic = "force-dynamic";
 
-export default async function PortfolioCommunityAccountsPage() {
+function toneClass(t: MetricTone): string {
+  switch (t) {
+    case "up":
+      return "text-emerald-400";
+    case "down":
+      return "text-broker-danger";
+    case "flat":
+      return "text-broker-muted";
+    default:
+      return "text-broker-muted";
+  }
+}
+
+export default async function PortfolioCommunityAccountsPage({
+  searchParams,
+}: {
+  searchParams: { page?: string };
+}) {
   const session = await auth();
   const viewerId = session?.user?.id ?? null;
-  const rows = await fetchCommunityPublishedAccounts(viewerId);
+  const pageRaw = typeof searchParams?.page === "string" ? searchParams.page : "1";
+  const page = Math.max(1, Number.parseInt(pageRaw, 10) || 1);
+
+  const bundle = await fetchCommunityPublishedAccounts(viewerId, { page });
+
+  const basePath = "/profil/portfolio/community/accounts";
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Akun komunitas</h1>
           <p className="mt-1 text-sm text-broker-muted">
@@ -23,9 +46,18 @@ export default async function PortfolioCommunityAccountsPage() {
             .
           </p>
         </div>
+        {bundle.total > 0 ? (
+          <p className="text-xs text-broker-muted">
+            Menampilkan{" "}
+            <span className="font-mono text-white">
+              {(page - 1) * bundle.pageSize + 1}–{Math.min(page * bundle.pageSize, bundle.total)}
+            </span>{" "}
+            dari <span className="font-mono text-white">{bundle.total}</span> akun
+          </p>
+        ) : null}
       </header>
 
-      {rows.length === 0 ? (
+      {bundle.rows.length === 0 ? (
         <div className="rounded-2xl border border-broker-border/80 bg-broker-surface/40 px-6 py-12 text-center text-sm text-broker-muted">
           <p className="font-medium text-white">Belum ada akun yang dipublikasikan</p>
           <p className="mx-auto mt-2 max-w-md">
@@ -34,87 +66,169 @@ export default async function PortfolioCommunityAccountsPage() {
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-broker-border/80 bg-broker-surface/40 shadow-inner shadow-black/20">
-          <table className="w-full min-w-[900px] border-collapse text-left text-sm">
-            <thead>
-              <tr className="border-b border-broker-border/80 bg-broker-bg/40 text-xs uppercase tracking-wide text-broker-muted">
-                <th className="px-3 py-3 font-medium">Nama / pemilik</th>
-                <th className="px-3 py-3 font-medium">Platform</th>
-                <th className="px-3 py-3 font-medium">Mode</th>
-                <th className="px-3 py-3 font-medium">Metode</th>
-                <th className="px-3 py-3 font-medium">Gain</th>
-                <th className="px-3 py-3 font-medium">Harian</th>
-                <th className="px-3 py-3 font-medium">Drawdown</th>
-                <th className="px-3 py-3 font-medium">Saldo</th>
-                <th className="px-3 py-3 font-medium">Net PnL</th>
-                <th className="px-3 py-3 text-right font-medium">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={`${r.publisherUserId}-${r.mtLogin}`} className="border-b border-broker-border/40 last:border-0">
-                  <td className="px-3 py-2.5">
-                    <p className="font-medium text-broker-accent/90">{r.displayName}</p>
-                    <p className="text-xs text-broker-muted">
-                      {r.publisherName ?? "Member"}{" "}
-                      {r.publisherSlug ? (
-                        <Link
-                          href={`/${r.publisherSlug}`}
-                          className="text-broker-accent hover:underline"
-                        >
-                          @{r.publisherSlug}
-                        </Link>
-                      ) : null}
-                    </p>
-                    <p className="font-mono text-[10px] text-broker-muted">MT {r.mtLogin}</p>
-                  </td>
-                  <td className="px-3 py-2.5 text-broker-muted">{r.platformLabel}</td>
-                  <td className="px-3 py-2.5 text-broker-muted">{r.modeLabel}</td>
-                  <td className="px-3 py-2.5 text-broker-muted">{r.methodLabel}</td>
-                  <td className="px-3 py-2.5 font-mono text-xs text-broker-muted">{r.gainLabel}</td>
-                  <td className="px-3 py-2.5 font-mono text-xs text-broker-muted">{r.dailyLabel}</td>
-                  <td className="px-3 py-2.5 font-mono text-xs text-broker-danger/80">{r.ddLabel}</td>
-                  <td className="px-3 py-2.5 font-mono text-xs text-white">
-                    {r.balanceLabel}
-                    {r.currency ? (
-                      <span className="ml-1 text-[10px] text-broker-muted">{r.currency}</span>
-                    ) : null}
-                  </td>
-                  <td className="px-3 py-2.5 font-mono text-xs text-white">
-                    {r.pnlLabel}
-                    {r.currency ? (
-                      <span className="ml-1 text-[10px] text-broker-muted">{r.currency}</span>
-                    ) : null}
-                  </td>
-                  <td className="px-3 py-2.5 text-right align-top">
-                    {viewerId ? (
-                      <CommunityCopyFollowButton
-                        publisherUserId={r.publisherUserId}
-                        mtLogin={r.mtLogin}
-                        copyFree={r.copyFree}
-                        copyPriceIdr={r.copyPriceIdr}
-                        alreadyFollowing={r.alreadyFollowing}
-                      />
-                    ) : (
-                      <Link
-                        href={`/login?callbackUrl=/profil/portfolio/community/accounts`}
-                        className="inline-block rounded-lg border border-broker-accent/40 px-3 py-1.5 text-xs font-semibold text-broker-accent hover:bg-broker-accent/10"
-                      >
-                        Login untuk Copy
-                      </Link>
-                    )}
-                  </td>
+        <>
+          <div className="overflow-x-auto rounded-2xl border border-broker-border/80 bg-broker-surface/40 shadow-inner shadow-black/20">
+            <table className="w-full min-w-[1180px] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-broker-border/80 bg-broker-bg/40 text-[10px] uppercase tracking-wide text-broker-muted sm:text-xs">
+                  <th className="px-2 py-3 font-medium sm:px-3">Nama / pemilik</th>
+                  <th className="px-2 py-3 font-medium sm:px-3">Platform</th>
+                  <th className="px-2 py-3 font-medium sm:px-3">Mode</th>
+                  <th className="px-2 py-3 font-medium sm:px-3">Metode</th>
+                  <th className="px-2 py-3 font-medium sm:px-3">Skor</th>
+                  <th className="px-2 py-3 font-medium sm:px-3">Gain</th>
+                  <th className="px-2 py-3 font-medium sm:px-3">Harian</th>
+                  <th className="px-2 py-3 font-medium sm:px-3">DD saldo</th>
+                  <th className="px-2 py-3 font-medium sm:px-3">DD equity</th>
+                  <th className="px-2 py-3 font-medium sm:px-3">Saldo</th>
+                  <th className="px-2 py-3 font-medium sm:px-3">Net PnL</th>
+                  <th className="px-2 py-3 font-medium sm:px-3">Aktivitas</th>
+                  <th className="px-2 py-3 text-right font-medium sm:px-3">Aksi</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {bundle.rows.map((r) => (
+                  <tr
+                    key={`${r.publisherUserId}-${r.mtLogin}`}
+                    className="border-b border-broker-border/40 last:border-0"
+                  >
+                    <td className="px-2 py-2.5 sm:px-3">
+                      <p className="font-medium text-broker-accent/90">{r.displayName}</p>
+                      <p className="text-xs text-broker-muted">
+                        {r.publisherName ?? "Member"}{" "}
+                        {r.publisherSlug ? (
+                          <Link
+                            href={`/${r.publisherSlug}`}
+                            className="text-broker-accent hover:underline"
+                          >
+                            @{r.publisherSlug}
+                          </Link>
+                        ) : null}
+                      </p>
+                      <p className="font-mono text-[10px] text-broker-muted">MT {r.mtLogin}</p>
+                    </td>
+                    <td className="px-2 py-2.5 text-broker-muted sm:px-3">{r.platformLabel}</td>
+                    <td className="px-2 py-2.5 text-broker-muted sm:px-3">{r.modeLabel}</td>
+                    <td className="px-2 py-2.5 text-broker-muted sm:px-3">{r.methodLabel}</td>
+                    <td className="px-2 py-2.5 font-mono text-xs text-white sm:px-3">{r.scoreLabel}</td>
+                    <td
+                      className={clsx(
+                        "px-2 py-2.5 font-mono text-xs sm:px-3",
+                        toneClass(r.gainTone)
+                      )}
+                    >
+                      {r.gainLabel}
+                    </td>
+                    <td
+                      className={clsx(
+                        "px-2 py-2.5 font-mono text-xs sm:px-3",
+                        toneClass(r.dailyTone)
+                      )}
+                    >
+                      {r.dailyLabel}
+                    </td>
+                    <td className="px-2 py-2.5 font-mono text-xs text-broker-danger/85 sm:px-3">
+                      {r.ddBalLabel}
+                    </td>
+                    <td className="px-2 py-2.5 font-mono text-xs text-broker-danger/85 sm:px-3">
+                      {r.ddEqLabel}
+                    </td>
+                    <td className="px-2 py-2.5 font-mono text-xs text-white sm:px-3">
+                      {r.balanceLabel}
+                      {r.currency ? (
+                        <span className="ml-1 text-[10px] text-broker-muted">{r.currency}</span>
+                      ) : null}
+                    </td>
+                    <td
+                      className={clsx(
+                        "px-2 py-2.5 font-mono text-xs sm:px-3",
+                        toneClass(r.pnlTone)
+                      )}
+                    >
+                      {r.pnlLabel}
+                      {r.currency ? (
+                        <span className="ml-1 text-[10px] text-broker-muted">{r.currency}</span>
+                      ) : null}
+                    </td>
+                    <td className="max-w-[7rem] px-2 py-2.5 text-xs text-broker-muted sm:px-3">
+                      {r.activityLabel}
+                    </td>
+                    <td className="px-2 py-2.5 text-right align-top sm:px-3">
+                      <div className="flex flex-col items-end gap-2 sm:flex-row sm:justify-end">
+                        <button
+                          type="button"
+                          disabled
+                          title="Perbandingan beberapa akun akan ditambahkan kemudian"
+                          className="cursor-not-allowed rounded-lg border border-broker-border/50 px-2 py-1 text-[10px] font-medium text-broker-muted sm:text-xs"
+                        >
+                          Bandingkan
+                        </button>
+                        {viewerId ? (
+                          <CommunityCopyFollowButton
+                            publisherUserId={r.publisherUserId}
+                            mtLogin={r.mtLogin}
+                            copyFree={r.copyFree}
+                            copyPriceIdr={r.copyPriceIdr}
+                            alreadyFollowing={r.alreadyFollowing}
+                          />
+                        ) : (
+                          <Link
+                            href={`/login?callbackUrl=/profil/portfolio/community/accounts`}
+                            className="inline-block rounded-lg border border-broker-accent/40 px-2 py-1 text-[10px] font-semibold text-broker-accent hover:bg-broker-accent/10 sm:text-xs"
+                          >
+                            Login untuk Copy
+                          </Link>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {bundle.totalPages > 1 ? (
+            <nav
+              className="flex flex-wrap items-center justify-end gap-3 text-xs text-broker-muted"
+              aria-label="Paginasi akun komunitas"
+            >
+              {bundle.page > 1 ? (
+                <Link
+                  href={`${basePath}?page=${bundle.page - 1}`}
+                  className="rounded-lg border border-broker-border/70 px-3 py-1.5 font-medium text-broker-accent hover:bg-broker-surface/60"
+                >
+                  ← Sebelumnya
+                </Link>
+              ) : (
+                <span className="rounded-lg border border-broker-border/30 px-3 py-1.5 opacity-40">
+                  ← Sebelumnya
+                </span>
+              )}
+              <span className="font-mono text-white">
+                {bundle.page} / {bundle.totalPages}
+              </span>
+              {bundle.page < bundle.totalPages ? (
+                <Link
+                  href={`${basePath}?page=${bundle.page + 1}`}
+                  className="rounded-lg border border-broker-border/70 px-3 py-1.5 font-medium text-broker-accent hover:bg-broker-surface/60"
+                >
+                  Berikutnya →
+                </Link>
+              ) : (
+                <span className="rounded-lg border border-broker-border/30 px-3 py-1.5 opacity-40">
+                  Berikutnya →
+                </span>
+              )}
+            </nav>
+          ) : null}
+        </>
       )}
 
       <p className="text-xs text-broker-muted">
-        <strong className="text-broker-muted">Copy</strong> menyimpan relasi di situs (gratis atau potong wallet).
-        Eksekusi order mirror di terminal Anda masih memerlukan EA copy terpisah yang membaca konfigurasi dari
-        server — langkah itu bisa ditambahkan kemudian.
+        <strong className="text-broker-muted">Skor</strong> adalah ringkasan internal (bukan rating pihak ketiga).
+        Metrik gain/harian/drawdown mengikuti agregasi yang sama dengan dashboard portofolio (zona waktu UTC untuk
+        periode harian). <strong className="text-broker-muted">Copy</strong> menyimpan relasi di situs; mirror order
+        di terminal tetap lewat EA terpisah jika Anda tambahkan nanti.
       </p>
     </div>
   );
