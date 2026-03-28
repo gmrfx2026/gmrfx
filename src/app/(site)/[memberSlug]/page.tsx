@@ -370,14 +370,6 @@ export default async function MemberBySlugPage({
             followerCount={followerCount}
             followingCount={followingCount}
           />
-          {!isSelf && viewerId && (
-            <MemberFollowButton
-              memberId={member.id}
-              followState={followState}
-              targetRequiresApproval={member.followApprovalMode === "APPROVAL_REQUIRED"}
-            />
-          )}
-          {!isSelf && !viewerId && <MemberFollowLoginLink loginCallbackUrl={profileHrefCurrent} />}
           <MemberSocialLinks
             tiktokUrl={member.socialTiktokUrl}
             instagramUrl={member.socialInstagramUrl}
@@ -386,6 +378,20 @@ export default async function MemberBySlugPage({
             youtubeUrl={member.socialYoutubeUrl}
             className="mt-2"
           />
+          {!isSelf && viewerId && (
+            <div className="mt-3">
+              <MemberFollowButton
+                memberId={member.id}
+                followState={followState}
+                targetRequiresApproval={member.followApprovalMode === "APPROVAL_REQUIRED"}
+              />
+            </div>
+          )}
+          {!isSelf && !viewerId && (
+            <div className="mt-3">
+              <MemberFollowLoginLink loginCallbackUrl={profileHrefCurrent} />
+            </div>
+          )}
           {hasStatuses && (
             <MemberRatingWidget
               memberId={member.id}

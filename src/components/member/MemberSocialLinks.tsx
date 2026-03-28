@@ -38,10 +38,10 @@ function IconYoutube({ className }: { className?: string }) {
   );
 }
 
-const iconClass = "h-5 w-5";
+const iconClass = "h-3.5 w-3.5 sm:h-4 sm:w-4";
 
 const linkBase =
-  "inline-flex rounded-lg border border-broker-border/60 bg-broker-bg/30 p-2 text-broker-muted transition hover:border-broker-accent/40 hover:bg-broker-surface/50 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-broker-accent";
+  "inline-flex rounded-md border border-broker-border/60 bg-broker-bg/30 p-1 text-broker-muted transition hover:border-broker-accent/40 hover:bg-broker-surface/50 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-broker-accent";
 
 export type MemberSocialLinksProps = {
   tiktokUrl?: string | null;
@@ -106,7 +106,7 @@ export function MemberSocialLinks({
   if (items.length === 0) return null;
 
   return (
-    <div className={`flex flex-wrap items-center gap-2 ${className}`}>
+    <div className={`flex flex-wrap items-center gap-1.5 ${className}`}>
       {items.map(({ href, label, Icon, hoverClass }) => (
         <a
           key={label}
