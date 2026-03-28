@@ -21,6 +21,25 @@ body {
 }
 
 /**
+ * Panel admin memakai latar terang; tanpa ini, input sering mewarisi warna dari body (gelap) atau
+ * color-scheme gelap sehingga teks sulit dibaca.
+ */
+.admin-app {
+  color-scheme: light;
+}
+
+.admin-app input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+.admin-app textarea,
+.admin-app select {
+  @apply bg-white text-gray-900;
+}
+
+.admin-app input::placeholder,
+.admin-app textarea::placeholder {
+  @apply text-gray-400;
+}
+
+/**
  * Native <select> di tema gelap: di Chrome/Edge (Windows) daftar opsi sering pakai latar terang
  * sambil mewarisi `color: white` → teks tak terbaca; user mengira dropdown rusak.
  */

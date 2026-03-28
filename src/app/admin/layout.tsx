@@ -19,7 +19,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (session.user.role !== "ADMIN") redirect("/");
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900">
+    <div className="admin-app min-h-screen bg-gray-100 text-gray-900">
       <nav className="border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-3">
           <span className="font-bold text-primary-700 text-green-700">GMR FX Admin</span>
