@@ -58,8 +58,11 @@ export function MemberProfileShare({
   shareUrl: string;
   shareTitle: string;
   className?: string;
-  /** `toolbar`: baris atas sejajar breadcrumb (tanpa margin atas, rata kanan). */
-  variant?: "belowProfile" | "toolbar";
+  /**
+   * `toolbar`: baris atas sejajar breadcrumb (rata kanan).
+   * `belowFollow`: bawah tombol Ikuti / login, tengah, jarak atas proporsional.
+   */
+  variant?: "belowProfile" | "toolbar" | "belowFollow";
 }) {
   const { show } = useToast();
   const [copied, setCopied] = useState(false);
@@ -109,16 +112,18 @@ export function MemberProfileShare({
   return (
     <div
       className={clsx(
-        variant === "toolbar" ? "min-w-0 shrink" : "mt-3 w-full",
+        variant === "toolbar" && "min-w-0 shrink",
+        variant === "belowFollow" && "mt-5 w-full sm:mt-6",
+        variant === "belowProfile" && "mt-3 w-full",
         className,
       )}
     >
       <div
         className={clsx(
           "flex flex-wrap items-center gap-1.5",
-          variant === "toolbar"
-            ? "w-full justify-end"
-            : "justify-center md:justify-start",
+          variant === "toolbar" && "w-full justify-end",
+          variant === "belowFollow" && "w-full justify-center",
+          variant === "belowProfile" && "justify-center md:justify-start",
         )}
       >
         <button
