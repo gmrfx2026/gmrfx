@@ -27,7 +27,7 @@ function num(v: unknown): number {
   return Number.isFinite(x) ? x : 0;
 }
 
-export function dealNet(d: MtDealRow): number {
+export function dealNet(d: { profit: unknown; commission: unknown; swap: unknown }): number {
   return num(d.profit) + num(d.commission) + num(d.swap);
 }
 
