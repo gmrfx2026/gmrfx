@@ -23,6 +23,8 @@ export type MtSnapshotRow = {
   currency?: unknown;
   brokerName?: unknown;
   brokerServer?: unknown;
+  /** ACCOUNT_NAME / tradeAccountName dari EA; snapshot terakhir yang terisi dipakai di UI. */
+  tradeAccountName?: unknown;
 };
 
 function num(v: unknown): number {
@@ -130,6 +132,8 @@ export type SymbolAggRow = {
 
 export type PortfolioStatsModel = {
   mtLogin: string;
+  /** Nama akun di terminal (ACCOUNT_NAME), dari snapshot terakhir yang punya nilai. */
+  tradeAccountName: string | null;
   /** Kode mata uang deposit akun MT dari snapshot terakhir yang punya nilai (mis. USD, IDR). */
   accountCurrency: string | null;
   /** Nama broker (ACCOUNT_COMPANY) dari snapshot terakhir yang punya nilai. */
@@ -219,9 +223,14 @@ export function buildPortfolioStatsModel(
   let accountCurrency: string | null = null;
   let brokerName: string | null = null;
   let brokerServer: string | null = null;
+  let tradeAccountName: string | null = null;
   for (let i = sortedSnaps.length - 1; i >= 0; i--) {
     const s = sortedSnaps[i];
     if (!s) continue;
+    if (tradeAccountName === null) {
+      const raw = s.tradeAccountName;
+      if (typeof raw === "string" && raw.trim()) tradeAccountName = raw.trim();
+    }
     if (accountCurrency === null) {
       const raw = s.currency;
       if (typeof raw === "string" && raw.trim()) accountCurrency = raw.trim().toUpperCase();
@@ -234,7 +243,13 @@ export function buildPortfolioStatsModel(
       const raw = s.brokerServer;
       if (typeof raw === "string" && raw.trim()) brokerServer = raw.trim();
     }
-    if (accountCurrency !== null && brokerName !== null && brokerServer !== null) break;
+    if (
+      accountCurrency !== null &&
+      brokerName !== null &&
+      brokerServer !== null &&
+      tradeAccountName !== null
+    )
+      break;
   }
 
   const closing = sortedDeals.filter(isClosingDeal);
@@ -449,6 +464,7 @@ export function buildPortfolioStatsModel(
 
   return {
     mtLogin,
+    tradeAccountName,
     accountCurrency,
     brokerName,
     brokerServer,

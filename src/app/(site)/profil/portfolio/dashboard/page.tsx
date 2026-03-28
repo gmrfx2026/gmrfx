@@ -1,4 +1,5 @@
 import Link from "next/link";
+import clsx from "clsx";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -67,6 +68,18 @@ export default async function PortfolioDashboardPage({
   }
 
   if (!mtLoginParam) {
+    const snapHints = await prisma.mtAccountSnapshot.findMany({
+      where: { userId, mtLogin: { in: logins } },
+      orderBy: { recordedAt: "desc" },
+      select: { mtLogin: true, tradeAccountName: true },
+    });
+    const tradeNameByLogin = new Map<string, string>();
+    for (const s of snapHints) {
+      if (tradeNameByLogin.has(s.mtLogin)) continue;
+      const n = s.tradeAccountName?.trim();
+      if (n) tradeNameByLogin.set(s.mtLogin, n);
+    }
+
     return (
       <div className="space-y-6">
         <header>
@@ -76,17 +89,33 @@ export default async function PortfolioDashboardPage({
           </p>
         </header>
         <div className="grid gap-3 sm:grid-cols-2">
-          {logins.map((login) => (
-            <Link
-              key={login}
-              href={`/profil/portfolio/dashboard?mtLogin=${encodeURIComponent(login)}`}
-              className="rounded-2xl border border-broker-border/80 bg-broker-surface/50 p-4 shadow-md transition hover:border-broker-accent/40 hover:bg-broker-surface/70"
-            >
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-muted">Login MT</p>
-              <p className="mt-2 font-mono text-lg font-semibold text-broker-accent">{login}</p>
-              <p className="mt-2 text-xs text-broker-muted">Buka statistik &amp; grafik →</p>
-            </Link>
-          ))}
+          {logins.map((login) => {
+            const tradeLabel = tradeNameByLogin.get(login);
+            return (
+              <Link
+                key={login}
+                href={`/profil/portfolio/dashboard?mtLogin=${encodeURIComponent(login)}`}
+                className="rounded-2xl border border-broker-border/80 bg-broker-surface/50 p-4 shadow-md transition hover:border-broker-accent/40 hover:bg-broker-surface/70"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-muted">Akun MT</p>
+                {tradeLabel ? (
+                  <p className="mt-2 truncate text-lg font-semibold text-broker-accent" title={tradeLabel}>
+                    {tradeLabel}
+                  </p>
+                ) : null}
+                <p
+                  className={clsx(
+                    "font-mono text-sm font-semibold text-white/90",
+                    tradeLabel ? "mt-1" : "mt-2 text-lg text-broker-accent"
+                  )}
+                  title="Nomor login MetaTrader"
+                >
+                  {login}
+                </p>
+                <p className="mt-2 text-xs text-broker-muted">Buka statistik &amp; grafik →</p>
+              </Link>
+            );
+          })}
         </div>
       </div>
     );
@@ -120,6 +149,7 @@ export default async function PortfolioDashboardPage({
         currency: true,
         brokerName: true,
         brokerServer: true,
+        tradeAccountName: true,
       },
     }),
   ]);

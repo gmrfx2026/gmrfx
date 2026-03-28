@@ -202,6 +202,7 @@ export async function fetchCommunityPublishedAccounts(
       currency: s.currency ?? undefined,
       brokerName: s.brokerName ?? undefined,
       brokerServer: s.brokerServer ?? undefined,
+      tradeAccountName: s.tradeAccountName ?? undefined,
     }));
 
     const model = buildPortfolioStatsModel(dealsByKey.get(k) ?? [], snapRowsForModel, row.mtLogin, now);

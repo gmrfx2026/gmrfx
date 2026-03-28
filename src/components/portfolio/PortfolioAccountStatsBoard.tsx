@@ -155,10 +155,14 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation }: Pro
           <h2
             className={clsx(
               "mt-1 text-xl font-bold text-white sm:text-2xl",
-              isCommunity ? "font-semibold tracking-tight" : "font-mono"
+              isCommunity || Boolean(model.tradeAccountName?.trim())
+                ? "font-semibold tracking-tight"
+                : "font-mono"
             )}
           >
-            {isCommunity ? cp.accountTitle : model.mtLogin}
+            {isCommunity
+              ? cp.accountTitle
+              : model.tradeAccountName?.trim() || model.mtLogin}
           </h2>
           {isCommunity ? (
             <p className="mt-1 text-xs text-broker-muted">
@@ -170,6 +174,10 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation }: Pro
               ) : (
                 <span className="text-white/90">{cp.ownerName ?? "—"}</span>
               )}
+            </p>
+          ) : model.tradeAccountName?.trim() ? (
+            <p className="mt-1 font-mono text-[11px] text-broker-muted sm:text-xs">
+              Login MT <span className="text-white/85">{model.mtLogin}</span>
             </p>
           ) : null}
           <PortfolioAccountBrokerLine

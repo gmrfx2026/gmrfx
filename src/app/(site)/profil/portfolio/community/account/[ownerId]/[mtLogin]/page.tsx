@@ -31,7 +31,7 @@ export default async function CommunityPublishedAccountSummaryPage({
 
   if (!pub) notFound();
 
-  const [deals, snaps, nameSnap] = await Promise.all([
+  const [deals, snaps] = await Promise.all([
     prisma.mtDeal.findMany({
       where: { userId: ownerId, mtLogin },
       orderBy: { dealTime: "asc" },
@@ -57,18 +57,14 @@ export default async function CommunityPublishedAccountSummaryPage({
         currency: true,
         brokerName: true,
         brokerServer: true,
+        tradeAccountName: true,
       },
-    }),
-    prisma.mtAccountSnapshot.findFirst({
-      where: { userId: ownerId, mtLogin },
-      orderBy: { recordedAt: "desc" },
-      select: { tradeAccountName: true },
     }),
   ]);
 
   const model = buildPortfolioStatsModel(deals, snaps, mtLogin);
 
-  const tradeName = nameSnap?.tradeAccountName?.trim() ?? "";
+  const tradeName = model.tradeAccountName?.trim() ?? "";
   const ownerNm = pub.user.name?.trim() ?? null;
   const accountTitle =
     tradeName.length > 0 ? tradeName : ownerNm && ownerNm.length > 0 ? ownerNm : "Akun trading";
