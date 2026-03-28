@@ -136,21 +136,7 @@ export default async function PortfolioTradeLogPage({
         ) : null}
       </header>
 
-      {total === 0 ? (
-        <div className="rounded-2xl border border-broker-border/80 bg-broker-surface/40 p-6 text-sm leading-relaxed text-broker-muted">
-          <p className="font-medium text-white">Belum ada deal di database</p>
-          <p className="mt-2">
-            Jika EA sudah aktif, periksa: (1) migrasi DB sudah jalan{" "}
-            <code className="rounded bg-broker-bg/60 px-1 text-xs">npx prisma migrate deploy</code>; (2) di MT5,
-            URL situs diizinkan untuk WebRequest; (3) token di EA sama dengan token di halaman{" "}
-            <Link href="/profil/portfolio/summary" className="text-broker-accent hover:underline">
-              Ringkasan
-            </Link>
-            ; (4) di terminal MT5 tab <strong className="text-white">Experts</strong> / log — ada pesan sukses
-            atau error HTTP.
-          </p>
-        </div>
-      ) : (
+      {total === 0 ? null : (
         <>
           <div className="overflow-x-auto rounded-2xl border border-broker-border/80 bg-broker-surface/40 shadow-inner shadow-black/20">
             <table className="w-full min-w-[960px] border-collapse text-left text-xs sm:text-sm">

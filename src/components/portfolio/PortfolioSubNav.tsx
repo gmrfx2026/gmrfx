@@ -121,9 +121,6 @@ export function PortfolioNavEmbedded() {
     <div className="mt-3 border-t border-broker-border/50 pt-3">
       <div className="px-2 pb-2">
         <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-accent">Portofolio MT</p>
-        <p className="mt-0.5 text-[10px] leading-snug text-broker-muted">
-          Jurnal, trade log, komunitas — data dari EA menyusul.
-        </p>
       </div>
 
       <nav className="space-y-0.5" aria-label="Submenu portofolio">
