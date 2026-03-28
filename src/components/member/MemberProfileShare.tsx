@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import clsx from "clsx";
 import { useToast } from "@/components/ToastProvider";
 
@@ -63,11 +63,6 @@ export function MemberProfileShare({
 }) {
   const { show } = useToast();
   const [copied, setCopied] = useState(false);
-  const [showNativeShare, setShowNativeShare] = useState(false);
-
-  useEffect(() => {
-    setShowNativeShare(typeof navigator.share === "function");
-  }, []);
 
   const encodedUrl = encodeURIComponent(shareUrl);
   const text = `${shareTitle} — GMR FX`;
@@ -83,20 +78,6 @@ export function MemberProfileShare({
       show("Gagal menyalin. Salin manual dari bilah alamat.", "err");
     }
   }, [shareUrl, show]);
-
-  const nativeShare = useCallback(async () => {
-    if (!navigator.share) return;
-    try {
-      await navigator.share({
-        title: shareTitle,
-        text,
-        url: shareUrl,
-      });
-    } catch (e) {
-      if ((e as Error).name === "AbortError") return;
-      show("Berbagi dibatalkan atau tidak tersedia.", "err");
-    }
-  }, [shareTitle, text, shareUrl, show]);
 
   const links = [
     {
@@ -136,20 +117,10 @@ export function MemberProfileShare({
         className={clsx(
           "flex flex-wrap items-center gap-1.5",
           variant === "toolbar"
-            ? "justify-end"
+            ? "w-full justify-start sm:w-auto sm:justify-end"
             : "justify-center md:justify-start",
         )}
       >
-        {showNativeShare ? (
-          <button
-            type="button"
-            onClick={() => void nativeShare()}
-            className={`${btnClass} px-2 py-1 text-xs font-semibold text-broker-accent hover:text-broker-accent`}
-            aria-label="Bagikan"
-          >
-            Bagikan…
-          </button>
-        ) : null}
         <button
           type="button"
           onClick={() => void copyLink()}
