@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { playChatIncomingBeep, readChatBeepPreference } from "@/lib/chatBeep";
 import { PortfolioNavEmbedded } from "@/components/portfolio/PortfolioSubNav";
 import type { MemberMenuResolvedItem } from "@/lib/memberMenu";
+import type { PortfolioNavConfig } from "@/lib/portfolioMenu";
 import clsx from "clsx";
 
 function getActiveTab(pathname: string, tab: string | null): string {
@@ -46,7 +47,13 @@ function NavLinkRow({
   );
 }
 
-export function MemberSidebar({ items }: { items: MemberMenuResolvedItem[] }) {
+export function MemberSidebar({
+  items,
+  portfolioMenu,
+}: {
+  items: MemberMenuResolvedItem[];
+  portfolioMenu: PortfolioNavConfig;
+}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab");
@@ -182,7 +189,7 @@ export function MemberSidebar({ items }: { items: MemberMenuResolvedItem[] }) {
               })}
             </nav>
 
-            <PortfolioNavEmbedded />
+            <PortfolioNavEmbedded menu={portfolioMenu} />
           </div>
 
           {toast && (

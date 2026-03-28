@@ -6,6 +6,7 @@ const links = [
   { href: "/admin", label: "Ringkasan" },
   { href: "/admin/members", label: "Member" },
   { href: "/admin/member-menu", label: "Menu member" },
+  { href: "/admin/portfolio-menu", label: "Menu portofolio" },
   { href: "/admin/transfers", label: "Transfer wallet" },
   { href: "/admin/articles", label: "Artikel" },
   { href: "/admin/comments", label: "Komentar" },

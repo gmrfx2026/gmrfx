@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
+import type { PortfolioNavConfig } from "@/lib/portfolioMenu";
 
 function SubNavLink({
   href,
@@ -63,13 +64,48 @@ function SectionToggle({
   );
 }
 
+const COMM_KEYS = ["community_accounts", "community_following", "community_publish"] as const;
+const MID_KEYS = ["journal", "trade_log", "playbook"] as const;
+
+type CommKey = (typeof COMM_KEYS)[number];
+type MidKey = (typeof MID_KEYS)[number];
+
+function hrefForPortfolioKey(
+  key: "dashboard" | "summary" | MidKey | CommKey
+): string {
+  switch (key) {
+    case "dashboard":
+      return "/profil/portfolio/dashboard";
+    case "summary":
+      return "/profil/portfolio/summary";
+    case "journal":
+      return "/profil/portfolio/journal";
+    case "trade_log":
+      return "/profil/portfolio/trade-log";
+    case "playbook":
+      return "/profil/portfolio/playbook";
+    case "community_accounts":
+      return "/profil/portfolio/community/accounts";
+    case "community_following":
+      return "/profil/portfolio/community/following";
+    case "community_publish":
+      return "/profil/portfolio/community/publish";
+    default:
+      return "/profil/portfolio/dashboard";
+  }
+}
+
 /** Sub-menu portofolio di dalam kartu Member menu (desktop). */
-export function PortfolioNavEmbedded() {
+export function PortfolioNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const selectedMtLogin = (searchParams.get("mtLogin") ?? "").trim();
 
   const [mtLogins, setMtLogins] = useState<string[] | null>(null);
+
+  const showPortfolioBlock = menu.summary.enabled || menu.mt_linked_logins.enabled;
+  const commEnabled = COMM_KEYS.filter((k) => menu[k].enabled);
+  const showCommunityBlock = commEnabled.length > 0;
 
   const [portfolioOpen, setPortfolioOpen] = useState(() =>
     pathname.startsWith("/profil/portfolio/summary")
@@ -88,6 +124,22 @@ export function PortfolioNavEmbedded() {
   const commAccountsActive = pathname.startsWith("/profil/portfolio/community/accounts");
   const commFollowingActive = pathname.startsWith("/profil/portfolio/community/following");
   const commPublishActive = pathname.startsWith("/profil/portfolio/community/publish");
+
+  const midSorted = useMemo(
+    () =>
+      MID_KEYS.filter((k) => menu[k].enabled).sort(
+        (a, b) => menu[a].sortOrder - menu[b].sortOrder || a.localeCompare(b)
+      ),
+    [menu]
+  );
+
+  const commSorted = useMemo(
+    () =>
+      COMM_KEYS.filter((k) => menu[k].enabled).sort(
+        (a, b) => menu[a].sortOrder - menu[b].sortOrder || a.localeCompare(b)
+      ),
+    [menu]
+  );
 
   useEffect(() => {
     if (!pathname.startsWith("/profil/portfolio")) {
@@ -117,6 +169,18 @@ export function PortfolioNavEmbedded() {
 
   if (!inPortfolio) return null;
 
+  function isMidActive(k: MidKey): boolean {
+    if (k === "journal") return journalActive;
+    if (k === "trade_log") return tradeLogAllActive;
+    return playbookActive;
+  }
+
+  function isCommActive(k: CommKey): boolean {
+    if (k === "community_accounts") return commAccountsActive;
+    if (k === "community_following") return commFollowingActive;
+    return commPublishActive;
+  }
+
   return (
     <div className="mt-3 border-t border-broker-border/50 pt-3">
       <div className="px-2 pb-2">
@@ -124,125 +188,140 @@ export function PortfolioNavEmbedded() {
       </div>
 
       <nav className="space-y-0.5" aria-label="Submenu portofolio">
-        <SubNavLink
-          href="/profil/portfolio/dashboard"
-          label="Dashboard"
-          isActive={dashActive}
-          compact
-        />
-
-        <div className="pt-0.5">
-          <SectionToggle
-            open={portfolioOpen}
-            onToggle={() => setPortfolioOpen((o) => !o)}
-            label="Portofolio"
+        {menu.dashboard.enabled ? (
+          <SubNavLink
+            href={hrefForPortfolioKey("dashboard")}
+            label={menu.dashboard.label}
+            isActive={dashActive}
             compact
           />
-          {portfolioOpen && (
-            <div className="mt-0.5 space-y-0.5 border-l border-broker-border/40 pl-1.5">
-              <p className="px-2.5 py-0.5 text-[9px] uppercase tracking-wide text-broker-muted/70">
-                Akun MT (EA)
-              </p>
-              <SubNavLink
-                href="/profil/portfolio/summary"
-                label="Ringkasan"
-                indent
-                isActive={summaryActive}
-                compact
-              />
-              {mtLogins === null ? (
-                <p className="px-2.5 pt-0.5 text-[9px] leading-tight text-broker-muted/55">
-                  Memuat daftar akun…
-                </p>
-              ) : mtLogins.length === 0 ? (
-                <p className="px-2.5 pt-0.5 text-[9px] leading-tight text-broker-muted/55">
-                  Nomor akun muncul setelah EA terhubung.
-                </p>
-              ) : (
-                <div className="mt-0.5 space-y-0.5">
-                  <p className="px-2.5 py-0.5 text-[9px] uppercase tracking-wide text-broker-muted/70">
-                    Login MT terhubung
-                  </p>
-                  {mtLogins.map((login) => (
+        ) : null}
+
+        {showPortfolioBlock ? (
+          <div className="pt-0.5">
+            <SectionToggle
+              open={portfolioOpen}
+              onToggle={() => setPortfolioOpen((o) => !o)}
+              label="Portofolio"
+              compact
+            />
+            {portfolioOpen && (
+              <div className="mt-0.5 space-y-0.5 border-l border-broker-border/40 pl-1.5">
+                {menu.summary.enabled ? (
+                  <>
+                    <p className="px-2.5 py-0.5 text-[9px] uppercase tracking-wide text-broker-muted/70">
+                      Akun MT (EA)
+                    </p>
                     <SubNavLink
-                      key={login}
-                      href={`/profil/portfolio/dashboard?mtLogin=${encodeURIComponent(login)}`}
-                      label={login}
+                      href={hrefForPortfolioKey("summary")}
+                      label={menu.summary.label}
                       indent
-                      isActive={
-                        pathname.startsWith("/profil/portfolio/dashboard") && selectedMtLogin === login
-                      }
+                      isActive={summaryActive}
                       compact
                     />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+                  </>
+                ) : menu.mt_linked_logins.enabled ? (
+                  <p className="px-2.5 py-0.5 text-[9px] uppercase tracking-wide text-broker-muted/70">
+                    Akun MT
+                  </p>
+                ) : null}
+                {menu.mt_linked_logins.enabled ? (
+                  mtLogins === null ? (
+                    <p className="px-2.5 pt-0.5 text-[9px] leading-tight text-broker-muted/55">
+                      Memuat daftar akun…
+                    </p>
+                  ) : mtLogins.length === 0 ? (
+                    <p className="px-2.5 pt-0.5 text-[9px] leading-tight text-broker-muted/55">
+                      Nomor akun muncul setelah EA terhubung.
+                    </p>
+                  ) : (
+                    <div className="mt-0.5 space-y-0.5">
+                      <p className="px-2.5 py-0.5 text-[9px] uppercase tracking-wide text-broker-muted/70">
+                        {menu.mt_linked_logins.label}
+                      </p>
+                      {mtLogins.map((login) => (
+                        <SubNavLink
+                          key={login}
+                          href={`/profil/portfolio/dashboard?mtLogin=${encodeURIComponent(login)}`}
+                          label={login}
+                          indent
+                          isActive={
+                            pathname.startsWith("/profil/portfolio/dashboard") && selectedMtLogin === login
+                          }
+                          compact
+                        />
+                      ))}
+                    </div>
+                  )
+                ) : null}
+              </div>
+            )}
+          </div>
+        ) : null}
 
-        <SubNavLink href="/profil/portfolio/journal" label="Jurnal" isActive={journalActive} compact />
-        <SubNavLink
-          href="/profil/portfolio/trade-log"
-          label="Trade log"
-          isActive={tradeLogAllActive}
-          compact
-        />
-        <SubNavLink href="/profil/portfolio/playbook" label="Playbook" isActive={playbookActive} compact />
-
-        <div className="pt-0.5">
-          <SectionToggle
-            open={communityOpen}
-            onToggle={() => setCommunityOpen((o) => !o)}
-            label="Komunitas"
+        {midSorted.map((k) => (
+          <SubNavLink
+            key={k}
+            href={hrefForPortfolioKey(k)}
+            label={menu[k].label}
+            isActive={isMidActive(k)}
             compact
           />
-          {communityOpen && (
-            <div className="mt-0.5 space-y-0.5 border-l border-broker-border/40 pl-1.5">
-              <SubNavLink
-                href="/profil/portfolio/community/accounts"
-                label="Akun"
-                indent
-                isActive={commAccountsActive}
-                compact
-              />
-              <SubNavLink
-                href="/profil/portfolio/community/following"
-                label="Mengikuti (copy)"
-                indent
-                isActive={commFollowingActive}
-                compact
-              />
-              <SubNavLink
-                href="/profil/portfolio/community/publish"
-                label="Publikasi copy"
-                indent
-                isActive={commPublishActive}
-                compact
-              />
-            </div>
-          )}
-        </div>
+        ))}
+
+        {showCommunityBlock ? (
+          <div className="pt-0.5">
+            <SectionToggle
+              open={communityOpen}
+              onToggle={() => setCommunityOpen((o) => !o)}
+              label="Komunitas"
+              compact
+            />
+            {communityOpen && (
+              <div className="mt-0.5 space-y-0.5 border-l border-broker-border/40 pl-1.5">
+                {commSorted.map((k) => (
+                  <SubNavLink
+                    key={k}
+                    href={hrefForPortfolioKey(k)}
+                    label={menu[k].label}
+                    indent
+                    isActive={isCommActive(k)}
+                    compact
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
       </nav>
     </div>
   );
 }
 
-const MOBILE_LINKS: { href: string; label: string }[] = [
-  { href: "/profil/portfolio/dashboard", label: "Dashboard" },
-  { href: "/profil/portfolio/summary", label: "Ringkasan" },
-  { href: "/profil/portfolio/journal", label: "Jurnal" },
-  { href: "/profil/portfolio/trade-log", label: "Trade log" },
-  { href: "/profil/portfolio/playbook", label: "Playbook" },
-  { href: "/profil/portfolio/community/accounts", label: "Akun" },
-  { href: "/profil/portfolio/community/following", label: "Mengikuti" },
-  { href: "/profil/portfolio/community/publish", label: "Publikasi" },
-];
-
-/** Strip navigasi horizontal untuk layar sempit (sub-menu tidak ada di dock bawah). */
-export function PortfolioNavMobileStrip() {
+/** Strip navigasi horizontal untuk layar sempit. */
+export function PortfolioNavMobileStrip({ menu }: { menu: PortfolioNavConfig }) {
   const pathname = usePathname();
   if (!pathname.startsWith("/profil/portfolio")) return null;
+
+  const links: { href: string; label: string }[] = [];
+  if (menu.dashboard.enabled) {
+    links.push({ href: hrefForPortfolioKey("dashboard"), label: menu.dashboard.label });
+  }
+  if (menu.summary.enabled) {
+    links.push({ href: hrefForPortfolioKey("summary"), label: menu.summary.label });
+  }
+  for (const k of MID_KEYS.filter((x) => menu[x].enabled).sort(
+    (a, b) => menu[a].sortOrder - menu[b].sortOrder
+  )) {
+    links.push({ href: hrefForPortfolioKey(k), label: menu[k].label });
+  }
+  for (const k of COMM_KEYS.filter((x) => menu[x].enabled).sort(
+    (a, b) => menu[a].sortOrder - menu[b].sortOrder
+  )) {
+    links.push({ href: hrefForPortfolioKey(k), label: menu[k].label });
+  }
+
+  if (links.length === 0) return null;
 
   return (
     <div className="rounded-xl border border-broker-border/70 bg-broker-surface/90 p-2 shadow-md shadow-black/30 backdrop-blur-sm">
@@ -254,7 +333,7 @@ export function PortfolioNavMobileStrip() {
         role="navigation"
         aria-label="Submenu portofolio"
       >
-        {MOBILE_LINKS.map(({ href, label }) => {
+        {links.map(({ href, label }) => {
           const active =
             href === "/profil/portfolio/dashboard"
               ? pathname === "/profil/portfolio" || pathname === href

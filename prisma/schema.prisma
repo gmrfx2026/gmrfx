@@ -527,6 +527,16 @@ model MemberMenuItem {
   updatedAt DateTime @updatedAt
 }
 
+/// Sub-menu portofolio MT (/profil/portfolio/…). tabKey di-whitelist di `portfolioMenu.ts`.
+model PortfolioMenuItem {
+  id        String   @id @default(cuid())
+  tabKey    String   @unique
+  label     String
+  sortOrder Int      @default(0)
+  enabled   Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+}
+
 model ChatConversation {
   id        String   @id @default(cuid())
   userAId   String
