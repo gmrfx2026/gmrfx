@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ArticleStatus, CommentTarget } from "@prisma/client";
 import { articleProseTypographyClass } from "@/lib/articleProseClassName";
@@ -36,9 +35,6 @@ export default async function ArtikelDetailPage({
   params: { slug: string };
   searchParams: { cPage?: string };
 }) {
-  const session = await auth();
-  const viewerId = session?.user?.id ?? null;
-
   const article = await prisma.article.findFirst({
     where: { slug: params.slug, status: ArticleStatus.PUBLISHED },
     include: {
@@ -76,9 +72,6 @@ export default async function ArtikelDetailPage({
     include: { user: { select: { name: true } } },
   });
 
-  const EDIT_WINDOW_MS = 15 * 60 * 1000;
-  const now = Date.now();
-
   const safeHtml = sanitizeArticleHtml(article.contentHtml);
   const ratingCount = article.ratings.length;
   const avg =
@@ -107,18 +100,13 @@ export default async function ArtikelDetailPage({
         commentPageSize={pageSize}
         commentTotal={commentTotal}
         commentTotalPages={totalPages}
-        initialComments={comments.map((c) => {
-          const own = viewerId != null && c.userId === viewerId;
-          const within = now - new Date(c.createdAt).getTime() <= EDIT_WINDOW_MS;
-          return {
-            id: c.id,
-            userId: c.userId,
-            content: c.content,
-            createdAt: c.createdAt.toISOString(),
-            user: { name: c.user.name },
-            canEditOrDelete: own && within,
-          };
-        })}
+        initialComments={comments.map((c) => ({
+          id: c.id,
+          userId: c.userId,
+          content: c.content,
+          createdAt: c.createdAt.toISOString(),
+          user: { name: c.user.name },
+        }))}
       />
     </article>
   );

@@ -7,14 +7,28 @@ import { ArticleCommentPaginationNav } from "@/components/ArticleCommentPaginati
 import { buildArtikelCommentLastPageHref } from "@/lib/articleCommentPagination";
 import { useToast } from "@/components/ToastProvider";
 
-type C = {
+const COMMENT_EDIT_WINDOW_MS = 15 * 60 * 1000;
+
+type InitialComment = {
   id: string;
   userId: string;
   content: string;
   createdAt: string;
   user: { name: string | null };
-  canEditOrDelete: boolean;
 };
+
+type C = InitialComment & { canEditOrDelete: boolean };
+
+function applyEditFlags(comments: InitialComment[], viewerId: string | null): C[] {
+  const now = Date.now();
+  return comments.map((c) => ({
+    ...c,
+    canEditOrDelete:
+      viewerId != null &&
+      c.userId === viewerId &&
+      now - new Date(c.createdAt).getTime() <= COMMENT_EDIT_WINDOW_MS,
+  }));
+}
 
 export function ArticleInteractions({
   articleSlug,
@@ -33,7 +47,7 @@ export function ArticleInteractions({
   commentPageSize: number;
   commentTotal: number;
   commentTotalPages: number;
-  initialComments: C[];
+  initialComments: InitialComment[];
 }) {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -43,11 +57,12 @@ export function ArticleInteractions({
   const [hover, setHover] = useState<number | null>(null);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
-  const [rows, setRows] = useState(initialComments);
+  const viewerId = session?.user?.id ?? null;
+  const [rows, setRows] = useState<C[]>(() => applyEditFlags(initialComments, null));
 
   useEffect(() => {
-    setRows(initialComments);
-  }, [initialComments]);
+    setRows(applyEditFlags(initialComments, viewerId));
+  }, [initialComments, viewerId]);
 
   const isAuthor = session?.user?.id === articleAuthorId;
 
