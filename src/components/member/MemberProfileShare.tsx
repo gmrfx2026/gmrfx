@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import clsx from "clsx";
 import { useToast } from "@/components/ToastProvider";
 
 function IconLink({ className }: { className?: string }) {
@@ -52,10 +53,13 @@ export function MemberProfileShare({
   shareUrl,
   shareTitle,
   className = "",
+  variant = "belowProfile",
 }: {
   shareUrl: string;
   shareTitle: string;
   className?: string;
+  /** `toolbar`: baris atas sejajar breadcrumb (tanpa margin atas, rata kanan). */
+  variant?: "belowProfile" | "toolbar";
 }) {
   const { show } = useToast();
   const [copied, setCopied] = useState(false);
@@ -122,8 +126,20 @@ export function MemberProfileShare({
   ];
 
   return (
-    <div className={`mt-3 w-full ${className}`}>
-      <div className="flex flex-wrap items-center justify-center gap-1.5 md:justify-start">
+    <div
+      className={clsx(
+        variant === "toolbar" ? "min-w-0 shrink" : "mt-3 w-full",
+        className,
+      )}
+    >
+      <div
+        className={clsx(
+          "flex flex-wrap items-center gap-1.5",
+          variant === "toolbar"
+            ? "justify-end"
+            : "justify-center md:justify-start",
+        )}
+      >
         {showNativeShare ? (
           <button
             type="button"

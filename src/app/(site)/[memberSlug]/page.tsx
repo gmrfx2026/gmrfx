@@ -308,15 +308,22 @@ export default async function MemberBySlugPage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 pb-10 pt-6 sm:px-5 sm:pb-12 sm:pt-8 md:px-6 md:pt-10">
-      <nav className="flex items-center gap-2 text-xs text-broker-muted" aria-label="Breadcrumb">
-        <Link href="/" className="text-broker-accent transition hover:underline">
-          ← Home
-        </Link>
-        <span className="text-broker-muted/60" aria-hidden>
-          /
-        </span>
-        <span className="truncate">Member</span>
-      </nav>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-x-4">
+        <nav className="flex min-w-0 items-center gap-2 text-xs text-broker-muted" aria-label="Breadcrumb">
+          <Link href="/" className="shrink-0 text-broker-accent transition hover:underline">
+            ← Home
+          </Link>
+          <span className="shrink-0 text-broker-muted/60" aria-hidden>
+            /
+          </span>
+          <span className="truncate">Member</span>
+        </nav>
+        <MemberProfileShare
+          variant="toolbar"
+          shareUrl={shareProfileUrl}
+          shareTitle={member.name ?? "Member GMR FX"}
+        />
+      </div>
 
       <div className="mt-6 flex flex-col gap-6 sm:mt-8 md:flex-row md:items-start md:gap-8">
         <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-start md:flex-col md:items-center">
@@ -378,11 +385,6 @@ export default async function MemberBySlugPage({
               <MemberFollowLoginLink loginCallbackUrl={profileHrefCurrent} />
             </div>
           )}
-          <MemberProfileShare
-            shareUrl={shareProfileUrl}
-            shareTitle={member.name ?? "Member GMR FX"}
-            className="flex w-full flex-col items-center md:items-start"
-          />
         </div>
       </div>
 
