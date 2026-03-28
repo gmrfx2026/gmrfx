@@ -21,17 +21,18 @@ function fmtDt(d: Date): string {
   }).format(d);
 }
 
-function tradeLogPageHref(pageNum: number, mtLogin: string | null) {
+function tradeLogPageHref(pageNum: number, mtLogin: string | null, ticket: string | null) {
   const q = new URLSearchParams();
   q.set("page", String(pageNum));
   if (mtLogin) q.set("mtLogin", mtLogin);
+  if (ticket) q.set("ticket", ticket);
   return `/profil/portfolio/trade-log?${q.toString()}`;
 }
 
 export default async function PortfolioTradeLogPage({
   searchParams,
 }: {
-  searchParams: { page?: string; mtLogin?: string };
+  searchParams: { page?: string; mtLogin?: string; ticket?: string };
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login?callbackUrl=/profil/portfolio/trade-log");
@@ -43,9 +44,14 @@ export default async function PortfolioTradeLogPage({
   const mtLoginFilter =
     typeof mtLoginRaw === "string" && mtLoginRaw.trim().length > 0 ? mtLoginRaw.trim() : null;
 
+  const ticketRaw = searchParams?.ticket;
+  const ticketFilter =
+    typeof ticketRaw === "string" && ticketRaw.trim().length > 0 ? ticketRaw.trim() : null;
+
   const dealWhere = {
     userId: session.user.id,
     ...(mtLoginFilter ? { mtLogin: mtLoginFilter } : {}),
+    ...(ticketFilter ? { ticket: ticketFilter } : {}),
   };
 
   const [total, deals] = await Promise.all([
@@ -71,9 +77,21 @@ export default async function PortfolioTradeLogPage({
             <>
               {" "}
               untuk login <span className="font-mono font-semibold text-white">{mtLoginFilter}</span>
+              {ticketFilter ? (
+                <>
+                  , ticket <span className="font-mono font-semibold text-white">{ticketFilter}</span>
+                </>
+              ) : null}
               {" — "}
-              <Link href="/profil/portfolio/trade-log" className="text-broker-accent hover:underline">
-                lihat semua akun
+              <Link
+                href={
+                  ticketFilter && mtLoginFilter
+                    ? `/profil/portfolio/trade-log?mtLogin=${encodeURIComponent(mtLoginFilter)}`
+                    : "/profil/portfolio/trade-log"
+                }
+                className="text-broker-accent hover:underline"
+              >
+                {ticketFilter ? "hapus filter ticket" : "lihat semua akun"}
               </Link>
               .
             </>
@@ -157,7 +175,7 @@ export default async function PortfolioTradeLogPage({
             <nav className="flex flex-wrap items-center gap-2 text-sm">
               {page > 1 ? (
                 <Link
-                  href={tradeLogPageHref(page - 1, mtLoginFilter)}
+                  href={tradeLogPageHref(page - 1, mtLoginFilter, ticketFilter)}
                   className="rounded-lg border border-broker-border px-3 py-1.5 text-broker-accent hover:bg-broker-surface/50"
                 >
                   ← Sebelumnya
@@ -168,7 +186,7 @@ export default async function PortfolioTradeLogPage({
               </span>
               {page < totalPages ? (
                 <Link
-                  href={tradeLogPageHref(page + 1, mtLoginFilter)}
+                  href={tradeLogPageHref(page + 1, mtLoginFilter, ticketFilter)}
                   className="rounded-lg border border-broker-border px-3 py-1.5 text-broker-accent hover:bg-broker-surface/50"
                 >
                   Berikutnya →
