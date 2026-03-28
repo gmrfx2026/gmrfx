@@ -63,6 +63,7 @@ export default async function MemberBySlugPage({
       socialInstagramUrl: true,
       socialFacebookUrl: true,
       socialTelegramUrl: true,
+      socialYoutubeUrl: true,
     },
   });
 
@@ -85,6 +86,7 @@ export default async function MemberBySlugPage({
         socialInstagramUrl: true,
         socialFacebookUrl: true,
         socialTelegramUrl: true,
+        socialYoutubeUrl: true,
       },
     });
   }
@@ -381,6 +383,7 @@ export default async function MemberBySlugPage({
             instagramUrl={member.socialInstagramUrl}
             facebookUrl={member.socialFacebookUrl}
             telegramUrl={member.socialTelegramUrl}
+            youtubeUrl={member.socialYoutubeUrl}
             className="mt-2"
           />
           {hasStatuses && (

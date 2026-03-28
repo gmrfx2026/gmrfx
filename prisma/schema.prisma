@@ -97,6 +97,7 @@ model User {
   socialInstagramUrl  String?
   socialFacebookUrl   String?
   socialTelegramUrl   String?
+  socialYoutubeUrl    String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -12,11 +12,13 @@ export function ProfilSocialLinksForm({
   initialInstagram,
   initialFacebook,
   initialTelegram,
+  initialYoutube,
 }: {
   initialTiktok: string;
   initialInstagram: string;
   initialFacebook: string;
   initialTelegram: string;
+  initialYoutube: string;
 }) {
   const router = useRouter();
   const { show } = useToast();
@@ -24,6 +26,7 @@ export function ProfilSocialLinksForm({
   const [instagram, setInstagram] = useState(initialInstagram);
   const [facebook, setFacebook] = useState(initialFacebook);
   const [telegram, setTelegram] = useState(initialTelegram);
+  const [youtube, setYoutube] = useState(initialYoutube);
   const [saving, setSaving] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -38,6 +41,7 @@ export function ProfilSocialLinksForm({
           socialInstagramUrl: instagram,
           socialFacebookUrl: facebook,
           socialTelegramUrl: telegram,
+          socialYoutubeUrl: youtube,
         }),
       });
       const j = await res.json().catch(() => ({}));
@@ -106,6 +110,19 @@ export function ProfilSocialLinksForm({
             value={telegram}
             onChange={(e) => setTelegram(e.target.value)}
             placeholder="https://t.me/..."
+            className={inputClass}
+            disabled={saving}
+            autoComplete="off"
+          />
+        </label>
+        <label className="block text-sm text-broker-muted">
+          <span className="font-medium text-white/90">YouTube</span>
+          <input
+            type="url"
+            name="socialYoutubeUrl"
+            value={youtube}
+            onChange={(e) => setYoutube(e.target.value)}
+            placeholder="https://www.youtube.com/@..."
             className={inputClass}
             disabled={saving}
             autoComplete="off"

@@ -381,6 +381,7 @@ export default async function ProfilPage({
             initialInstagram={normalizeSocialLinkForForm(user.socialInstagramUrl)}
             initialFacebook={normalizeSocialLinkForForm(user.socialFacebookUrl)}
             initialTelegram={normalizeSocialLinkForForm(user.socialTelegramUrl)}
+            initialYoutube={normalizeSocialLinkForForm(user.socialYoutubeUrl)}
           />
           <ProfilSecurityForms />
         </section>

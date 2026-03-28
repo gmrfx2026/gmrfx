@@ -30,6 +30,14 @@ function IconTelegram({ className }: { className?: string }) {
   );
 }
 
+function IconYoutube({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M23.5 6.2a3.02 3.02 0 0 0-2.12-2.14C19.88 3.5 12 3.5 12 3.5s-7.88 0-9.38.56A3.02 3.02 0 0 0 .5 6.2 31.4 31.4 0 0 0 0 12a31.4 31.4 0 0 0 .5 5.8 3.02 3.02 0 0 0 2.12 2.14c1.5.56 9.38.56 9.38.56s7.88 0 9.38-.56a3.02 3.02 0 0 0 2.12-2.14 31.4 31.4 0 0 0 .5-5.8 31.4 31.4 0 0 0-.5-5.8zM9.75 15.02V8.98L15.5 12l-5.75 3.02z" />
+    </svg>
+  );
+}
+
 const iconClass = "h-5 w-5";
 
 const linkBase =
@@ -40,6 +48,7 @@ export type MemberSocialLinksProps = {
   instagramUrl?: string | null;
   facebookUrl?: string | null;
   telegramUrl?: string | null;
+  youtubeUrl?: string | null;
   className?: string;
 };
 
@@ -48,6 +57,7 @@ export function MemberSocialLinks({
   instagramUrl,
   facebookUrl,
   telegramUrl,
+  youtubeUrl,
   className = "",
 }: MemberSocialLinksProps) {
   const items: { href: string; label: string; Icon: typeof IconTikTok; hoverClass: string }[] = [];
@@ -82,6 +92,14 @@ export function MemberSocialLinks({
       label: "Telegram",
       Icon: IconTelegram,
       hoverClass: "hover:text-sky-300",
+    });
+  }
+  if (youtubeUrl?.trim()) {
+    items.push({
+      href: youtubeUrl.trim(),
+      label: "YouTube",
+      Icon: IconYoutube,
+      hoverClass: "hover:text-red-500",
     });
   }
 

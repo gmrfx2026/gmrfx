@@ -11,6 +11,7 @@ const patchSchema = z.object({
   socialInstagramUrl: linkField,
   socialFacebookUrl: linkField,
   socialTelegramUrl: linkField,
+  socialYoutubeUrl: linkField,
 });
 
 function toStored(raw: string | undefined): { value: string | null } | "invalid" | "skip" {
@@ -41,6 +42,7 @@ export async function PATCH(req: Request) {
     ["socialInstagramUrl", "socialInstagramUrl"],
     ["socialFacebookUrl", "socialFacebookUrl"],
     ["socialTelegramUrl", "socialTelegramUrl"],
+    ["socialYoutubeUrl", "socialYoutubeUrl"],
   ];
 
   for (const [key, col] of map) {
