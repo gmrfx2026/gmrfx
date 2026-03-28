@@ -26,6 +26,24 @@ const dealSchema = z.object({
   profit: z.number().optional(),
   magic: z.number().int().optional(),
   comment: z.string().max(512).optional(),
+  positionId: z
+    .union([z.string(), z.number(), z.null(), z.undefined()])
+    .optional()
+    .transform((v) => {
+      if (v == null) return null;
+      const s = String(v).trim();
+      if (!s || s === "0") return null;
+      return s.length > 32 ? s.slice(0, 32) : s;
+    }),
+  positionOpenTime: z
+    .union([z.number(), z.string(), z.null(), z.undefined()])
+    .optional()
+    .transform((v) => {
+      if (v == null || v === "") return undefined;
+      const n = typeof v === "number" ? v : Number(v);
+      if (!Number.isFinite(n) || n <= 0) return undefined;
+      return Math.trunc(n);
+    }),
 });
 
 const bodySchema = z.object({
@@ -102,6 +120,12 @@ export async function POST(req: Request) {
           const dealTime = new Date(d.dealTime * 1000);
           if (Number.isNaN(dealTime.getTime())) continue;
 
+          let positionOpenAt: Date | null = null;
+          if (d.positionOpenTime != null && d.positionOpenTime > 0) {
+            const t = new Date(d.positionOpenTime * 1000);
+            positionOpenAt = Number.isNaN(t.getTime()) ? null : t;
+          }
+
           await tx.mtDeal.upsert({
             where: {
               userId_mtLogin_ticket: {
@@ -125,6 +149,8 @@ export async function POST(req: Request) {
               profit: new Prisma.Decimal(d.profit ?? 0),
               magic: d.magic ?? 0,
               comment: d.comment ?? "",
+              positionId: d.positionId ?? null,
+              positionOpenTime: positionOpenAt,
             },
             update: {
               dealTime,
@@ -138,6 +164,8 @@ export async function POST(req: Request) {
               profit: new Prisma.Decimal(d.profit ?? 0),
               magic: d.magic ?? 0,
               comment: d.comment ?? "",
+              positionId: d.positionId ?? null,
+              positionOpenTime: positionOpenAt,
             },
           });
         }

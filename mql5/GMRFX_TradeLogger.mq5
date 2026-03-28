@@ -5,8 +5,48 @@
 //+------------------------------------------------------------------+
 #property copyright "GMR FX"
 #property link      "https://github.com/"
-#property version   "1.00"
+#property version   "1.01"
 #property strict
+
+ulong  g_gmrfx_pos_ids[];
+long   g_gmrfx_pos_times[];
+int    g_gmrfx_pos_n = 0;
+
+void GmrfxPosClear()
+{
+   g_gmrfx_pos_n = 0;
+   ArrayResize(g_gmrfx_pos_ids, 0);
+   ArrayResize(g_gmrfx_pos_times, 0);
+}
+
+void GmrfxPosRemember(const ulong pid, const long t)
+{
+   if(pid == 0)
+      return;
+   for(int j = 0; j < g_gmrfx_pos_n; j++)
+   {
+      if(g_gmrfx_pos_ids[j] == pid)
+         return;
+   }
+   int n = g_gmrfx_pos_n + 1;
+   ArrayResize(g_gmrfx_pos_ids, n);
+   ArrayResize(g_gmrfx_pos_times, n);
+   g_gmrfx_pos_ids[g_gmrfx_pos_n] = pid;
+   g_gmrfx_pos_times[g_gmrfx_pos_n] = t;
+   g_gmrfx_pos_n++;
+}
+
+long GmrfxPosOpenTime(const ulong pid)
+{
+   if(pid == 0)
+      return 0;
+   for(int j = 0; j < g_gmrfx_pos_n; j++)
+   {
+      if(g_gmrfx_pos_ids[j] == pid)
+         return g_gmrfx_pos_times[j];
+   }
+   return 0;
+}
 
 input string InpApiBase    = "https://your-domain.com"; // URL situs (tanpa slash akhir)
 input string InpApiToken   = "";                        // Token dari dashboard (Bearer)
@@ -33,11 +73,32 @@ string BuildJsonBody()
    datetime to   = TimeCurrent() + 120;
    bool ok = HistorySelect(from, to);
 
-   bool first = true;
-   if(ok)
+   GmrfxPosClear();
+   int nDeals = ok ? HistoryDealsTotal() : 0;
+
+   if(ok && nDeals > 0)
    {
-      int n = HistoryDealsTotal();
-      for(int i = 0; i < n; i++)
+      for(int i = 0; i < nDeals; i++)
+      {
+         ulong ticket = HistoryDealGetTicket(i);
+         if(ticket == 0)
+            continue;
+         int dtype0 = (int)HistoryDealGetInteger(ticket, DEAL_TYPE);
+         int entry0 = (int)HistoryDealGetInteger(ticket, DEAL_ENTRY);
+         if(dtype0 > 1)
+            continue;
+         if(entry0 != DEAL_ENTRY_IN)
+            continue;
+         ulong pid0 = (ulong)HistoryDealGetInteger(ticket, DEAL_POSITION_ID);
+         long t0 = (long)HistoryDealGetInteger(ticket, DEAL_TIME);
+         GmrfxPosRemember(pid0, t0);
+      }
+   }
+
+   bool first = true;
+   if(ok && nDeals > 0)
+   {
+      for(int i = 0; i < nDeals; i++)
       {
          ulong ticket = HistoryDealGetTicket(i);
          if(ticket == 0)
@@ -60,6 +121,7 @@ string BuildJsonBody()
          double swap = HistoryDealGetDouble(ticket, DEAL_SWAP);
          double prof = HistoryDealGetDouble(ticket, DEAL_PROFIT);
          int magic = (int)HistoryDealGetInteger(ticket, DEAL_MAGIC);
+         ulong pos_id = (ulong)HistoryDealGetInteger(ticket, DEAL_POSITION_ID);
          string cmt = HistoryDealGetString(ticket, DEAL_COMMENT);
          StringReplace(cmt, "\\", "\\\\");
          StringReplace(cmt, "\"", "'");
@@ -83,6 +145,16 @@ string BuildJsonBody()
          json += "\"profit\":" + DoubleToString(prof, 8) + ",";
          json += "\"magic\":" + IntegerToString(magic) + ",";
          json += "\"comment\":\"" + cmt + "\"";
+         if(pos_id > 0)
+         {
+            json += ",\"positionId\":\"" + StringFormat("%I64u", pos_id) + "\"";
+            if((dtype <= 1) && (entry == DEAL_ENTRY_OUT || entry == DEAL_ENTRY_OUT_BY))
+            {
+               long ot = GmrfxPosOpenTime(pos_id);
+               if(ot > 0)
+                  json += ",\"positionOpenTime\":" + StringFormat("%I64d", ot);
+            }
+         }
          json += "}";
       }
    }

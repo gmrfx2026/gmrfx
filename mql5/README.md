@@ -5,6 +5,10 @@ File **`GMRFX_TradeLogger.mq5`** mengirim:
 - snapshot **balance / equity / margin** akun;
 - semua **deal** dalam rentang histori (default 14 hari) ke endpoint `POST /api/mt5/ingest`.
 
+Per deal trading (buy/sell), EA juga mengirim **`positionId`** (MT5 `DEAL_POSITION_ID`) dan, untuk kaki **penutupan** (OUT / OUT_BY), **`positionOpenTime`** (Unix detik dari deal **masuk** pertama posisi itu) agar backend bisa menghitung **durasi posisi** tanpa UI tambahan di EA.
+
+Setelah migrasi DB terbaru, jalankan `npx prisma migrate deploy` agar kolom `positionId` dan `positionOpenTime` ada di tabel `MtDeal`.
+
 ## Langkah singkat
 
 1. Di website: login → **Profil → Portofolio → Ringkasan** → **Buat token baru** → salin token (hanya muncul sekali).
