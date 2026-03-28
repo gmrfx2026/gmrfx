@@ -4,7 +4,12 @@ import { hashMt5ApiToken } from "@/lib/mt5Token";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
+/** Vercel: ingest bisa lama jika banyak deal; hindari batas default ~5s. */
+export const maxDuration = 60;
+
 const MAX_DEALS = 2500;
+/** Satu transaksi DB terlalu lama di Neon/pgBouncer + serverless → "Transaction not found". */
+const DEAL_UPSERT_CHUNK = 32;
 
 /** String opsional dari EA: trim, rapatkan spasi, buang kontrol, batasi panjang. */
 function optionalAccountMetaString(maxLen: number) {
@@ -85,6 +90,62 @@ const bodySchema = z.object({
     .optional(),
 });
 
+type ParsedDeal = z.infer<typeof dealSchema>;
+
+function mtDealUpsertOp(d: ParsedDeal, userId: string, mtLogin: string) {
+  const dealTime = new Date(d.dealTime * 1000);
+  if (Number.isNaN(dealTime.getTime())) return null;
+
+  let positionOpenAt: Date | null = null;
+  if (d.positionOpenTime != null && d.positionOpenTime > 0) {
+    const t = new Date(d.positionOpenTime * 1000);
+    positionOpenAt = Number.isNaN(t.getTime()) ? null : t;
+  }
+
+  return prisma.mtDeal.upsert({
+    where: {
+      userId_mtLogin_ticket: {
+        userId,
+        mtLogin,
+        ticket: d.ticket,
+      },
+    },
+    create: {
+      userId,
+      mtLogin,
+      ticket: d.ticket,
+      dealTime,
+      symbol: d.symbol,
+      dealType: d.dealType,
+      entryType: d.entryType,
+      volume: new Prisma.Decimal(d.volume),
+      price: new Prisma.Decimal(d.price),
+      commission: new Prisma.Decimal(d.commission ?? 0),
+      swap: new Prisma.Decimal(d.swap ?? 0),
+      profit: new Prisma.Decimal(d.profit ?? 0),
+      magic: d.magic ?? 0,
+      comment: d.comment ?? "",
+      positionId: d.positionId ?? null,
+      positionOpenTime: positionOpenAt,
+    },
+    update: {
+      dealTime,
+      symbol: d.symbol,
+      dealType: d.dealType,
+      entryType: d.entryType,
+      volume: new Prisma.Decimal(d.volume),
+      price: new Prisma.Decimal(d.price),
+      commission: new Prisma.Decimal(d.commission ?? 0),
+      swap: new Prisma.Decimal(d.swap ?? 0),
+      profit: new Prisma.Decimal(d.profit ?? 0),
+      magic: d.magic ?? 0,
+      comment: d.comment ?? "",
+      positionId: d.positionId ?? null,
+      positionOpenTime: positionOpenAt,
+    },
+  });
+}
+
 function authToken(req: Request): string | null {
   const h = req.headers.get("authorization");
   if (h?.startsWith("Bearer ")) return h.slice(7).trim();
@@ -123,83 +184,41 @@ export async function POST(req: Request) {
   const mtLogin = String(login);
 
   try {
-    await prisma.$transaction(async (tx) => {
-      await tx.mtLinkToken.update({
-        where: { id: link.id },
-        data: { lastUsedAt: new Date() },
-      });
-
-      if (account) {
-        await tx.mtAccountSnapshot.create({
-          data: {
-            userId: link.userId,
-            mtLogin,
-            balance: new Prisma.Decimal(account.balance),
-            equity: new Prisma.Decimal(account.equity),
-            margin: new Prisma.Decimal(account.margin ?? 0),
-            currency: account.currency ?? null,
-            brokerName: account.brokerName ?? null,
-            brokerServer: account.brokerServer ?? null,
-          },
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.mtLinkToken.update({
+          where: { id: link.id },
+          data: { lastUsedAt: new Date() },
         });
-      }
 
-      if (deals && deals.length > 0) {
-        for (const d of deals) {
-          const dealTime = new Date(d.dealTime * 1000);
-          if (Number.isNaN(dealTime.getTime())) continue;
-
-          let positionOpenAt: Date | null = null;
-          if (d.positionOpenTime != null && d.positionOpenTime > 0) {
-            const t = new Date(d.positionOpenTime * 1000);
-            positionOpenAt = Number.isNaN(t.getTime()) ? null : t;
-          }
-
-          await tx.mtDeal.upsert({
-            where: {
-              userId_mtLogin_ticket: {
-                userId: link.userId,
-                mtLogin,
-                ticket: d.ticket,
-              },
-            },
-            create: {
+        if (account) {
+          await tx.mtAccountSnapshot.create({
+            data: {
               userId: link.userId,
               mtLogin,
-              ticket: d.ticket,
-              dealTime,
-              symbol: d.symbol,
-              dealType: d.dealType,
-              entryType: d.entryType,
-              volume: new Prisma.Decimal(d.volume),
-              price: new Prisma.Decimal(d.price),
-              commission: new Prisma.Decimal(d.commission ?? 0),
-              swap: new Prisma.Decimal(d.swap ?? 0),
-              profit: new Prisma.Decimal(d.profit ?? 0),
-              magic: d.magic ?? 0,
-              comment: d.comment ?? "",
-              positionId: d.positionId ?? null,
-              positionOpenTime: positionOpenAt,
-            },
-            update: {
-              dealTime,
-              symbol: d.symbol,
-              dealType: d.dealType,
-              entryType: d.entryType,
-              volume: new Prisma.Decimal(d.volume),
-              price: new Prisma.Decimal(d.price),
-              commission: new Prisma.Decimal(d.commission ?? 0),
-              swap: new Prisma.Decimal(d.swap ?? 0),
-              profit: new Prisma.Decimal(d.profit ?? 0),
-              magic: d.magic ?? 0,
-              comment: d.comment ?? "",
-              positionId: d.positionId ?? null,
-              positionOpenTime: positionOpenAt,
+              balance: new Prisma.Decimal(account.balance),
+              equity: new Prisma.Decimal(account.equity),
+              margin: new Prisma.Decimal(account.margin ?? 0),
+              currency: account.currency ?? null,
+              brokerName: account.brokerName ?? null,
+              brokerServer: account.brokerServer ?? null,
             },
           });
         }
+      },
+      { maxWait: 10_000, timeout: 15_000 }
+    );
+
+    if (deals && deals.length > 0) {
+      for (let i = 0; i < deals.length; i += DEAL_UPSERT_CHUNK) {
+        const slice = deals.slice(i, i + DEAL_UPSERT_CHUNK);
+        const ops = slice
+          .map((d) => mtDealUpsertOp(d, link.userId, mtLogin))
+          .filter((op): op is NonNullable<typeof op> => op != null);
+        if (ops.length === 0) continue;
+        await prisma.$transaction(ops);
       }
-    });
+    }
 
     return NextResponse.json({
       ok: true,
