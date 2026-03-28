@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { chatDbErrorMessage } from "@/lib/chatDbErrorMessage";
+import { memberEmailForViewer } from "@/lib/memberEmailDisplay";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -16,12 +17,15 @@ export async function GET() {
       include: { sender: { select: { name: true, email: true } } },
     });
 
+    const viewerId = session.user.id;
     return NextResponse.json({
       messages: rows.map((m) => ({
         id: m.id,
         body: m.body,
         senderId: m.senderId,
-        senderName: m.sender.name ?? m.sender.email,
+        senderName:
+          m.sender.name ??
+          memberEmailForViewer(m.sender.email, m.senderId, viewerId),
         createdAt: m.createdAt.toISOString(),
       })),
     });

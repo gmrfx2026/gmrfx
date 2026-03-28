@@ -23,6 +23,7 @@ import { ProfilArticlesSection } from "@/components/ProfilArticlesSection";
 import { MemberFollowStatsLinks } from "@/components/member/MemberFollowStatsLinks";
 import { parsePrefixedListQuery, resolvePagedWindow } from "@/lib/adminListParams";
 import { listablePublicMemberWhere } from "@/lib/memberFollowListable";
+import { maskEmail } from "@/lib/memberEmailDisplay";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,9 @@ export default async function ProfilPage({
   const tabRaw = String(searchParams?.tab ?? "home").toLowerCase();
   if (tabRaw === "mail") {
     redirect("/profil");
+  }
+  if (tabRaw === "portfolio") {
+    redirect("/profil/portfolio");
   }
   const tab = tabRaw;
   const requestedPeerId = searchParams?.peerId ? String(searchParams.peerId) : null;
@@ -166,7 +170,13 @@ export default async function ProfilPage({
                   select: { id: true, name: true, email: true },
                 });
 
-          return users.map((u) => ({ ...u, online: onlinePeerIdSet.has(u.id) }));
+          return users.map((u) => ({
+            id: u.id,
+            name: u.name,
+            /** Selalu disamarkan: daftar peer chat tidak memuat diri sendiri. */
+            email: u.email ? maskEmail(u.email) : null,
+            online: onlinePeerIdSet.has(u.id),
+          }));
         })()
       : Promise.resolve([]),
     showWalletTransfer
@@ -250,7 +260,8 @@ export default async function ProfilPage({
             amount: Number(t.amount),
             note: t.note,
             createdAt: t.createdAt.toISOString(),
-            counterpartyLabel: cp.name ?? cp.email,
+            counterpartyLabel:
+              cp.name ?? (cp.email ? maskEmail(cp.email) : "—"),
             counterpartyWallet: cp.walletAddress,
           };
         })

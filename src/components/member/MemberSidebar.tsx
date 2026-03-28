@@ -8,6 +8,7 @@ import { playChatIncomingBeep, readChatBeepPreference } from "@/lib/chatBeep";
 import type { MemberMenuResolvedItem } from "@/lib/memberMenu";
 
 function getActiveTab(pathname: string, tab: string | null): string {
+  if (pathname.startsWith("/profil/portfolio")) return "portfolio";
   if (pathname.startsWith("/profil/artikel/baru")) return "artikel";
   return tab ?? "home";
 }

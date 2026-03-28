@@ -386,7 +386,7 @@ model SystemSetting {
   value String
 }
 
-/// Item menu sidebar member (/profil?tab=…). Hanya tabKey yang di-whitelist di aplikasi.
+/// Item menu sidebar member (/profil?tab=… atau /profil/portfolio untuk Portofolio). tabKey di-whitelist di aplikasi.
 model MemberMenuItem {
   id        String   @id @default(cuid())
   tabKey    String   @unique
