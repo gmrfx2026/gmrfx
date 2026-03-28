@@ -55,6 +55,16 @@ const bodySchema = z.object({
       balance: z.number(),
       equity: z.number(),
       margin: z.number().optional(),
+      currency: z
+        .union([z.string(), z.null(), z.undefined()])
+        .optional()
+        .transform((v) => {
+          if (v == null) return undefined;
+          const s = String(v).trim().toUpperCase();
+          if (s.length < 2 || s.length > 12) return undefined;
+          if (!/^[A-Z0-9]+$/.test(s)) return undefined;
+          return s;
+        }),
     })
     .optional(),
 });
@@ -111,6 +121,7 @@ export async function POST(req: Request) {
             balance: new Prisma.Decimal(account.balance),
             equity: new Prisma.Decimal(account.equity),
             margin: new Prisma.Decimal(account.margin ?? 0),
+            currency: account.currency ?? null,
           },
         });
       }

@@ -104,31 +104,43 @@ export default async function PortfolioJournalPage({
 
   const { start, end } = jakartaMonthUtcRange(year, month);
 
-  const raw = await prisma.mtDeal.findMany({
-    where: {
-      userId,
-      mtLogin,
-      dealTime: { gte: start, lte: end },
-      dealType: { in: [0, 1] },
-      entryType: { in: [1, 3] },
-    },
-    orderBy: { dealTime: "asc" },
-    select: {
-      id: true,
-      ticket: true,
-      dealTime: true,
-      symbol: true,
-      dealType: true,
-      entryType: true,
-      volume: true,
-      commission: true,
-      swap: true,
-      profit: true,
-      price: true,
-      magic: true,
-      comment: true,
-    },
-  });
+  const [currencySnap, raw] = await Promise.all([
+    prisma.mtAccountSnapshot.findFirst({
+      where: { userId, mtLogin },
+      orderBy: { recordedAt: "desc" },
+      select: { currency: true },
+    }),
+    prisma.mtDeal.findMany({
+      where: {
+        userId,
+        mtLogin,
+        dealTime: { gte: start, lte: end },
+        dealType: { in: [0, 1] },
+        entryType: { in: [1, 3] },
+      },
+      orderBy: { dealTime: "asc" },
+      select: {
+        id: true,
+        ticket: true,
+        dealTime: true,
+        symbol: true,
+        dealType: true,
+        entryType: true,
+        volume: true,
+        commission: true,
+        swap: true,
+        profit: true,
+        price: true,
+        magic: true,
+        comment: true,
+      },
+    }),
+  ]);
+
+  const accountCurrency =
+    currencySnap?.currency && String(currencySnap.currency).trim()
+      ? String(currencySnap.currency).trim().toUpperCase()
+      : null;
 
   const deals: JournalDealRow[] = raw
     .filter(isClosingDeal)
@@ -177,6 +189,14 @@ export default async function PortfolioJournalPage({
         </div>
         <p className="font-mono text-xs text-broker-muted">
           Akun <span className="text-broker-accent">{mtLogin}</span>
+          {accountCurrency ? (
+            <>
+              <span className="mx-2 text-broker-border">·</span>
+              <span>
+                Nominal <span className="font-semibold text-white">{accountCurrency}</span>
+              </span>
+            </>
+          ) : null}
         </p>
       </header>
 

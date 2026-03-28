@@ -113,7 +113,7 @@ export default async function PortfolioDashboardPage({
     prisma.mtAccountSnapshot.findMany({
       where: { userId, mtLogin },
       orderBy: { recordedAt: "asc" },
-      select: { recordedAt: true, balance: true, equity: true },
+      select: { recordedAt: true, balance: true, equity: true, currency: true },
     }),
   ]);
 

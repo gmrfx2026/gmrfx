@@ -155,7 +155,7 @@ export default async function PortfolioSummaryPage({
     prisma.mtAccountSnapshot.findFirst({
       where: { userId, mtLogin, recordedAt: { lte: end } },
       orderBy: { recordedAt: "desc" },
-      select: { balance: true, equity: true, recordedAt: true },
+      select: { balance: true, equity: true, recordedAt: true, currency: true },
     }),
     prisma.mtDeal.findFirst({
       where: { userId, mtLogin, dealTime: { lte: end } },
@@ -167,6 +167,10 @@ export default async function PortfolioSummaryPage({
   const metrics = computeRangeSummary(rawDeals);
   const balance = lastSnap ? Number(lastSnap.balance) : null;
   const equity = lastSnap ? Number(lastSnap.equity) : null;
+  const accountCurrency =
+    lastSnap?.currency && String(lastSnap.currency).trim()
+      ? String(lastSnap.currency).trim().toUpperCase()
+      : null;
 
   const tSnap = lastSnap?.recordedAt?.getTime() ?? 0;
   const tDeal = lastDeal?.dealTime?.getTime() ?? 0;
@@ -236,6 +240,7 @@ export default async function PortfolioSummaryPage({
         metrics={metrics}
         balance={balance}
         equity={equity}
+        accountCurrency={accountCurrency}
       />
 
       <div className="flex flex-wrap gap-3 text-sm">

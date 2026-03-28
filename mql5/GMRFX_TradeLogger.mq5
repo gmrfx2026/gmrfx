@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "GMR FX"
 #property link      "https://github.com/"
-#property version   "1.01"
+#property version   "1.02"
 #property strict
 
 ulong  g_gmrfx_pos_ids[];
@@ -59,13 +59,19 @@ string BuildJsonBody()
    double bal = AccountInfoDouble(ACCOUNT_BALANCE);
    double eq  = AccountInfoDouble(ACCOUNT_EQUITY);
    double mg  = AccountInfoDouble(ACCOUNT_MARGIN);
+   string cur = AccountInfoString(ACCOUNT_CURRENCY);
+   StringTrimLeft(cur);
+   StringTrimRight(cur);
+   StringReplace(cur, "\\", "");
+   StringReplace(cur, "\"", "'");
 
    string json = "{";
    json += "\"login\":" + IntegerToString(login) + ",";
    json += "\"account\":{";
    json += "\"balance\":" + DoubleToString(bal, 8) + ",";
    json += "\"equity\":" + DoubleToString(eq, 8) + ",";
-   json += "\"margin\":" + DoubleToString(mg, 8);
+   json += "\"margin\":" + DoubleToString(mg, 8) + ",";
+   json += "\"currency\":\"" + cur + "\"";
    json += "},";
    json += "\"deals\":[";
 

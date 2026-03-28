@@ -139,7 +139,16 @@ export function PortfolioAccountStatsBoard({ model }: Props) {
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-accent">Akun MT</p>
           <h2 className="mt-1 font-mono text-xl font-bold text-white sm:text-2xl">{model.mtLogin}</h2>
-          <p className="mt-1 text-xs text-broker-muted">{model.sidebar.noteTz}</p>
+          <p className="mt-1 text-xs text-broker-muted">
+            {model.accountCurrency ? (
+              <>
+                Mata uang akun MT (nominal profit/saldo):{" "}
+                <span className="font-semibold text-white">{model.accountCurrency}</span>
+                <span className="text-broker-border"> · </span>
+              </>
+            ) : null}
+            {model.sidebar.noteTz}
+          </p>
         </div>
         <Link
           href={`/profil/portfolio/trade-log?mtLogin=${encodeURIComponent(model.mtLogin)}`}

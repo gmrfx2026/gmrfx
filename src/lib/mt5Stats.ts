@@ -20,6 +20,7 @@ export type MtSnapshotRow = {
   recordedAt: Date;
   balance: unknown;
   equity: unknown;
+  currency?: unknown;
 };
 
 function num(v: unknown): number {
@@ -127,6 +128,8 @@ export type SymbolAggRow = {
 
 export type PortfolioStatsModel = {
   mtLogin: string;
+  /** Kode mata uang deposit akun MT dari snapshot terakhir yang punya nilai (mis. USD, IDR). */
+  accountCurrency: string | null;
   summary: {
     balance: number | null;
     equity: number | null;
@@ -206,6 +209,15 @@ export function buildPortfolioStatsModel(
 ): PortfolioStatsModel {
   const sortedDeals = [...deals].sort((a, b) => a.dealTime.getTime() - b.dealTime.getTime());
   const sortedSnaps = [...snaps].sort((a, b) => a.recordedAt.getTime() - b.recordedAt.getTime());
+
+  let accountCurrency: string | null = null;
+  for (let i = sortedSnaps.length - 1; i >= 0; i--) {
+    const raw = sortedSnaps[i]?.currency;
+    if (typeof raw === "string" && raw.trim()) {
+      accountCurrency = raw.trim().toUpperCase();
+      break;
+    }
+  }
 
   const closing = sortedDeals.filter(isClosingDeal);
   const closingNets = closing.map(dealNet);
@@ -419,6 +431,7 @@ export function buildPortfolioStatsModel(
 
   return {
     mtLogin,
+    accountCurrency,
     summary: {
       balance,
       equity,

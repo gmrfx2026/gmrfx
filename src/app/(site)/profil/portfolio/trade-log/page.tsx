@@ -54,7 +54,7 @@ export default async function PortfolioTradeLogPage({
     ...(ticketFilter ? { ticket: ticketFilter } : {}),
   };
 
-  const [total, deals] = await Promise.all([
+  const [total, deals, currencySnap] = await Promise.all([
     prisma.mtDeal.count({ where: dealWhere }),
     prisma.mtDeal.findMany({
       where: dealWhere,
@@ -62,7 +62,19 @@ export default async function PortfolioTradeLogPage({
       skip,
       take: PAGE_SIZE,
     }),
+    mtLoginFilter
+      ? prisma.mtAccountSnapshot.findFirst({
+          where: { userId: session.user.id, mtLogin: mtLoginFilter },
+          orderBy: { recordedAt: "desc" },
+          select: { currency: true },
+        })
+      : Promise.resolve(null),
   ]);
+
+  const accountCurrency =
+    currencySnap?.currency && String(currencySnap.currency).trim()
+      ? String(currencySnap.currency).trim().toUpperCase()
+      : null;
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -71,12 +83,18 @@ export default async function PortfolioTradeLogPage({
       <header>
         <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Trade log</h1>
         <p className="mt-1 text-sm text-broker-muted">
-          Data dari EA (MetaTrader 5). Total{" "}
+          Data dari EA (MetaTrader). Total{" "}
           <span className="font-semibold text-white">{total}</span> deal tersimpan
           {mtLoginFilter ? (
             <>
               {" "}
               untuk login <span className="font-mono font-semibold text-white">{mtLoginFilter}</span>
+              {accountCurrency ? (
+                <>
+                  {" "}
+                  (nominal <span className="font-semibold text-white">{accountCurrency}</span>)
+                </>
+              ) : null}
               {ticketFilter ? (
                 <>
                   , ticket <span className="font-mono font-semibold text-white">{ticketFilter}</span>

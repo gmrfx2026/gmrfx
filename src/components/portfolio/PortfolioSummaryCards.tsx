@@ -64,9 +64,11 @@ type Props = {
   metrics: RangeSummaryMetrics;
   balance: number | null;
   equity: number | null;
+  /** Kode mata uang deposit dari MetaTrader (snapshot). */
+  accountCurrency?: string | null;
 };
 
-export function PortfolioSummaryCards({ rangeLabel, metrics, balance, equity }: Props) {
+export function PortfolioSummaryCards({ rangeLabel, metrics, balance, equity, accountCurrency }: Props) {
   const pf =
     metrics.profitFactor != null
       ? metrics.profitFactor.toLocaleString("id-ID", { maximumFractionDigits: 2 })
@@ -162,6 +164,19 @@ export function PortfolioSummaryCards({ rangeLabel, metrics, balance, equity }: 
         <span className="font-medium text-broker-muted">Saldo &amp; equity:</span> nilai dari{" "}
         <strong className="text-broker-muted">snapshot terakhir</strong> yang tercatat pada atau sebelum akhir rentang
         periode (zona WIB).
+        {accountCurrency ? (
+          <>
+            {" "}
+            <span className="font-medium text-broker-muted">Nominal</span> profit, komisi, swap, dan saldo mengikuti
+            mata uang akun MT: <strong className="text-white">{accountCurrency}</strong>.
+          </>
+        ) : (
+          <>
+            {" "}
+            Untuk menampilkan kode mata uang (mis. USD/IDR), gunakan EA terbaru yang mengirim{" "}
+            <span className="font-mono text-[10px] text-broker-muted">account.currency</span>.
+          </>
+        )}
       </p>
     </div>
   );
