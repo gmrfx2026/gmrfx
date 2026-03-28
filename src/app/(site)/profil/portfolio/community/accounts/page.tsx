@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import { fetchCommunityPublishedAccounts, type MetricTone } from "@/lib/communityCopyAccounts";
+import {
+  fetchCommunityPublishedAccounts,
+  type CommunityPublishedAccountView,
+  type MetricTone,
+} from "@/lib/communityCopyAccounts";
 import { CommunityCopyFollowButton } from "@/components/portfolio/CommunityCopyFollowButton";
 import clsx from "clsx";
 
@@ -17,6 +21,37 @@ function toneClass(t: MetricTone): string {
     default:
       return "text-broker-muted";
   }
+}
+
+function AccountNameCell({ row: r }: { row: CommunityPublishedAccountView }) {
+  const nameMatch =
+    (r.publisherName?.trim().toLowerCase() ?? "") === r.displayName.trim().toLowerCase();
+  const titleParts = [r.displayName];
+  if (r.publisherSlug) titleParts.push(`@${r.publisherSlug}`);
+  else if (!nameMatch && r.publisherName) titleParts.push(r.publisherName);
+  titleParts.push(`MT ${r.mtLogin}`);
+  const title = titleParts.join(" · ");
+
+  return (
+    <p className="truncate text-sm leading-snug text-white/90" title={title}>
+      <span className="font-medium text-broker-accent">{r.displayName}</span>
+      {r.publisherSlug ? (
+        <>
+          <span className="text-broker-border"> · </span>
+          <Link href={`/${r.publisherSlug}`} className="text-broker-accent hover:underline">
+            @{r.publisherSlug}
+          </Link>
+        </>
+      ) : !nameMatch && r.publisherName ? (
+        <>
+          <span className="text-broker-border"> · </span>
+          <span>{r.publisherName}</span>
+        </>
+      ) : null}
+      <span className="text-broker-border"> · </span>
+      <span className="font-mono text-[11px] text-broker-muted sm:text-xs">MT {r.mtLogin}</span>
+    </p>
+  );
 }
 
 export default async function PortfolioCommunityAccountsPage({
@@ -92,20 +127,8 @@ export default async function PortfolioCommunityAccountsPage({
                     key={`${r.publisherUserId}-${r.mtLogin}`}
                     className="border-b border-broker-border/40 last:border-0"
                   >
-                    <td className="px-2 py-2.5 sm:px-3">
-                      <p className="font-medium text-broker-accent/90">{r.displayName}</p>
-                      <p className="text-xs text-broker-muted">
-                        {r.publisherName ?? "Member"}{" "}
-                        {r.publisherSlug ? (
-                          <Link
-                            href={`/${r.publisherSlug}`}
-                            className="text-broker-accent hover:underline"
-                          >
-                            @{r.publisherSlug}
-                          </Link>
-                        ) : null}
-                      </p>
-                      <p className="font-mono text-[10px] text-broker-muted">MT {r.mtLogin}</p>
+                    <td className="max-w-[11rem] min-w-[7rem] px-2 py-2.5 sm:max-w-[22rem] sm:px-3">
+                      <AccountNameCell row={r} />
                     </td>
                     <td className="px-2 py-2.5 text-broker-muted sm:px-3">{r.platformLabel}</td>
                     <td className="px-2 py-2.5 text-broker-muted sm:px-3">{r.modeLabel}</td>
