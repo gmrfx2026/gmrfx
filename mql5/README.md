@@ -4,7 +4,7 @@ Untuk **MetaTrader 4**, gunakan folder **`mql4/`** (`GMRFX_TradeLogger.mq4` → 
 
 File **`GMRFX_TradeLogger.mq5`** mengirim:
 
-- snapshot **balance / equity / margin** akun dan kode **mata uang deposit** (`account.currency`, dari `ACCOUNT_CURRENCY` terminal);
+- snapshot **balance / equity / margin** akun, **mata uang deposit** (`account.currency` / `ACCOUNT_CURRENCY`), **nama broker** (`account.brokerName` / `ACCOUNT_COMPANY`), dan **server** (`account.brokerServer` / `ACCOUNT_SERVER`);
 - semua **deal** dalam rentang histori (default 14 hari) ke endpoint `POST /api/mt5/ingest`.
 
 Per deal trading (buy/sell), EA juga mengirim **`positionId`** (MT5 `DEAL_POSITION_ID`) dan, untuk kaki **penutupan** (OUT / OUT_BY), **`positionOpenTime`** (Unix detik dari deal **masuk** pertama posisi itu) agar backend bisa menghitung **durasi posisi** tanpa UI tambahan di EA.

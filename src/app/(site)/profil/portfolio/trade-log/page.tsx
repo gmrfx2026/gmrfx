@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { PortfolioAccountBrokerLine } from "@/components/portfolio/PortfolioAccountBrokerLine";
 import { mt5DealEntryLabel, mt5DealTypeLabel } from "@/lib/mt5DealLabels";
 import { redirect } from "next/navigation";
 
@@ -66,7 +67,7 @@ export default async function PortfolioTradeLogPage({
       ? prisma.mtAccountSnapshot.findFirst({
           where: { userId: session.user.id, mtLogin: mtLoginFilter },
           orderBy: { recordedAt: "desc" },
-          select: { currency: true },
+          select: { currency: true, brokerName: true, brokerServer: true },
         })
       : Promise.resolve(null),
   ]);
@@ -74,6 +75,14 @@ export default async function PortfolioTradeLogPage({
   const accountCurrency =
     currencySnap?.currency && String(currencySnap.currency).trim()
       ? String(currencySnap.currency).trim().toUpperCase()
+      : null;
+  const brokerName =
+    currencySnap?.brokerName && String(currencySnap.brokerName).trim()
+      ? String(currencySnap.brokerName).trim()
+      : null;
+  const brokerServer =
+    currencySnap?.brokerServer && String(currencySnap.brokerServer).trim()
+      ? String(currencySnap.brokerServer).trim()
       : null;
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -117,6 +126,9 @@ export default async function PortfolioTradeLogPage({
             "."
           )}
         </p>
+        {mtLoginFilter ? (
+          <PortfolioAccountBrokerLine brokerName={brokerName} brokerServer={brokerServer} className="mt-2" />
+        ) : null}
       </header>
 
       {total === 0 ? (

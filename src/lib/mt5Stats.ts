@@ -21,6 +21,8 @@ export type MtSnapshotRow = {
   balance: unknown;
   equity: unknown;
   currency?: unknown;
+  brokerName?: unknown;
+  brokerServer?: unknown;
 };
 
 function num(v: unknown): number {
@@ -130,6 +132,10 @@ export type PortfolioStatsModel = {
   mtLogin: string;
   /** Kode mata uang deposit akun MT dari snapshot terakhir yang punya nilai (mis. USD, IDR). */
   accountCurrency: string | null;
+  /** Nama broker (ACCOUNT_COMPANY) dari snapshot terakhir yang punya nilai. */
+  brokerName: string | null;
+  /** Server trading (ACCOUNT_SERVER) dari snapshot terakhir yang punya nilai. */
+  brokerServer: string | null;
   summary: {
     balance: number | null;
     equity: number | null;
@@ -211,12 +217,24 @@ export function buildPortfolioStatsModel(
   const sortedSnaps = [...snaps].sort((a, b) => a.recordedAt.getTime() - b.recordedAt.getTime());
 
   let accountCurrency: string | null = null;
+  let brokerName: string | null = null;
+  let brokerServer: string | null = null;
   for (let i = sortedSnaps.length - 1; i >= 0; i--) {
-    const raw = sortedSnaps[i]?.currency;
-    if (typeof raw === "string" && raw.trim()) {
-      accountCurrency = raw.trim().toUpperCase();
-      break;
+    const s = sortedSnaps[i];
+    if (!s) continue;
+    if (accountCurrency === null) {
+      const raw = s.currency;
+      if (typeof raw === "string" && raw.trim()) accountCurrency = raw.trim().toUpperCase();
     }
+    if (brokerName === null) {
+      const raw = s.brokerName;
+      if (typeof raw === "string" && raw.trim()) brokerName = raw.trim();
+    }
+    if (brokerServer === null) {
+      const raw = s.brokerServer;
+      if (typeof raw === "string" && raw.trim()) brokerServer = raw.trim();
+    }
+    if (accountCurrency !== null && brokerName !== null && brokerServer !== null) break;
   }
 
   const closing = sortedDeals.filter(isClosingDeal);
@@ -432,6 +450,8 @@ export function buildPortfolioStatsModel(
   return {
     mtLogin,
     accountCurrency,
+    brokerName,
+    brokerServer,
     summary: {
       balance,
       equity,

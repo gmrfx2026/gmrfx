@@ -188,6 +188,10 @@ model MtAccountSnapshot {
   margin     Decimal  @default(0) @db.Decimal(18, 8)
   /// Kode mata uang akun (deposit), dari EA: ACCOUNT_CURRENCY / AccountCurrency().
   currency   String?  @db.VarChar(12)
+  /// Nama perusahaan/broker (ACCOUNT_COMPANY / AccountCompany).
+  brokerName   String?  @db.VarChar(128)
+  /// Nama server trading (ACCOUNT_SERVER / AccountServer).
+  brokerServer String?  @db.VarChar(128)
   recordedAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

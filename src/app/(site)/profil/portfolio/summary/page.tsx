@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Mt5TokenPanel } from "@/components/portfolio/Mt5TokenPanel";
 import { PortfolioSummaryCards } from "@/components/portfolio/PortfolioSummaryCards";
+import { PortfolioAccountBrokerLine } from "@/components/portfolio/PortfolioAccountBrokerLine";
 import { SummaryDateRangeForm } from "@/components/portfolio/SummaryDateRangeForm";
 import {
   jakartaRangeUtcBounds,
@@ -155,7 +156,14 @@ export default async function PortfolioSummaryPage({
     prisma.mtAccountSnapshot.findFirst({
       where: { userId, mtLogin, recordedAt: { lte: end } },
       orderBy: { recordedAt: "desc" },
-      select: { balance: true, equity: true, recordedAt: true, currency: true },
+      select: {
+        balance: true,
+        equity: true,
+        recordedAt: true,
+        currency: true,
+        brokerName: true,
+        brokerServer: true,
+      },
     }),
     prisma.mtDeal.findFirst({
       where: { userId, mtLogin, dealTime: { lte: end } },
@@ -170,6 +178,14 @@ export default async function PortfolioSummaryPage({
   const accountCurrency =
     lastSnap?.currency && String(lastSnap.currency).trim()
       ? String(lastSnap.currency).trim().toUpperCase()
+      : null;
+  const brokerName =
+    lastSnap?.brokerName && String(lastSnap.brokerName).trim()
+      ? String(lastSnap.brokerName).trim()
+      : null;
+  const brokerServer =
+    lastSnap?.brokerServer && String(lastSnap.brokerServer).trim()
+      ? String(lastSnap.brokerServer).trim()
       : null;
 
   const tSnap = lastSnap?.recordedAt?.getTime() ?? 0;
@@ -201,11 +217,14 @@ export default async function PortfolioSummaryPage({
             ) : null}
           </p>
         </div>
-        <p className="font-mono text-xs text-broker-muted">
-          <span className="text-broker-accent">{mtLogin}</span>
-          <span className="mx-2 text-broker-border">·</span>
-          <span>Update: {lastUpdatedStr}</span>
-        </p>
+        <div className="text-right">
+          <p className="font-mono text-xs text-broker-muted">
+            <span className="text-broker-accent">{mtLogin}</span>
+            <span className="mx-2 text-broker-border">·</span>
+            <span>Update: {lastUpdatedStr}</span>
+          </p>
+          <PortfolioAccountBrokerLine brokerName={brokerName} brokerServer={brokerServer} className="mt-2 text-right" />
+        </div>
       </header>
 
       <Mt5TokenPanel ingestPath={ingestPath} />
@@ -241,6 +260,8 @@ export default async function PortfolioSummaryPage({
         balance={balance}
         equity={equity}
         accountCurrency={accountCurrency}
+        brokerName={brokerName}
+        brokerServer={brokerServer}
       />
 
       <div className="flex flex-wrap gap-3 text-sm">

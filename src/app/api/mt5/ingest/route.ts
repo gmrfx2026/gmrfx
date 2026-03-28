@@ -6,6 +6,20 @@ import { z } from "zod";
 
 const MAX_DEALS = 2500;
 
+/** String opsional dari EA: trim, rapatkan spasi, buang kontrol, batasi panjang. */
+function optionalAccountMetaString(maxLen: number) {
+  return z
+    .union([z.string(), z.null(), z.undefined()])
+    .optional()
+    .transform((v) => {
+      if (v == null) return undefined;
+      let s = String(v).trim().replace(/\r?\n/g, " ").replace(/\s+/g, " ");
+      s = s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "");
+      if (s.length > maxLen) s = s.slice(0, maxLen);
+      return s.length > 0 ? s : undefined;
+    });
+}
+
 const dealSchema = z.object({
   ticket: z.string().min(1).max(32),
   dealTime: z.coerce.number().int(),
@@ -65,6 +79,8 @@ const bodySchema = z.object({
           if (!/^[A-Z0-9]+$/.test(s)) return undefined;
           return s;
         }),
+      brokerName: optionalAccountMetaString(128),
+      brokerServer: optionalAccountMetaString(128),
     })
     .optional(),
 });
@@ -122,6 +138,8 @@ export async function POST(req: Request) {
             equity: new Prisma.Decimal(account.equity),
             margin: new Prisma.Decimal(account.margin ?? 0),
             currency: account.currency ?? null,
+            brokerName: account.brokerName ?? null,
+            brokerServer: account.brokerServer ?? null,
           },
         });
       }

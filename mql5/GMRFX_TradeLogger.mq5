@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "GMR FX"
 #property link      "https://github.com/"
-#property version   "1.02"
+#property version   "1.03"
 #property strict
 
 ulong  g_gmrfx_pos_ids[];
@@ -64,6 +64,20 @@ string BuildJsonBody()
    StringTrimRight(cur);
    StringReplace(cur, "\\", "");
    StringReplace(cur, "\"", "'");
+   string brk = AccountInfoString(ACCOUNT_COMPANY);
+   StringTrimLeft(brk);
+   StringTrimRight(brk);
+   StringReplace(brk, "\\", "");
+   StringReplace(brk, "\"", "'");
+   StringReplace(brk, "\r", " ");
+   StringReplace(brk, "\n", " ");
+   string srv = AccountInfoString(ACCOUNT_SERVER);
+   StringTrimLeft(srv);
+   StringTrimRight(srv);
+   StringReplace(srv, "\\", "");
+   StringReplace(srv, "\"", "'");
+   StringReplace(srv, "\r", " ");
+   StringReplace(srv, "\n", " ");
 
    string json = "{";
    json += "\"login\":" + IntegerToString(login) + ",";
@@ -71,7 +85,9 @@ string BuildJsonBody()
    json += "\"balance\":" + DoubleToString(bal, 8) + ",";
    json += "\"equity\":" + DoubleToString(eq, 8) + ",";
    json += "\"margin\":" + DoubleToString(mg, 8) + ",";
-   json += "\"currency\":\"" + cur + "\"";
+   json += "\"currency\":\"" + cur + "\",";
+   json += "\"brokerName\":\"" + brk + "\",";
+   json += "\"brokerServer\":\"" + srv + "\"";
    json += "},";
    json += "\"deals\":[";
 

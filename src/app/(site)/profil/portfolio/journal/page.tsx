@@ -10,6 +10,7 @@ import {
   jakartaTodayParts,
 } from "@/lib/mt5Journal";
 import { PortfolioJournalClient, type JournalDealRow } from "@/components/portfolio/PortfolioJournalClient";
+import { PortfolioAccountBrokerLine } from "@/components/portfolio/PortfolioAccountBrokerLine";
 
 export const dynamic = "force-dynamic";
 
@@ -108,7 +109,7 @@ export default async function PortfolioJournalPage({
     prisma.mtAccountSnapshot.findFirst({
       where: { userId, mtLogin },
       orderBy: { recordedAt: "desc" },
-      select: { currency: true },
+      select: { currency: true, brokerName: true, brokerServer: true },
     }),
     prisma.mtDeal.findMany({
       where: {
@@ -140,6 +141,14 @@ export default async function PortfolioJournalPage({
   const accountCurrency =
     currencySnap?.currency && String(currencySnap.currency).trim()
       ? String(currencySnap.currency).trim().toUpperCase()
+      : null;
+  const brokerName =
+    currencySnap?.brokerName && String(currencySnap.brokerName).trim()
+      ? String(currencySnap.brokerName).trim()
+      : null;
+  const brokerServer =
+    currencySnap?.brokerServer && String(currencySnap.brokerServer).trim()
+      ? String(currencySnap.brokerServer).trim()
       : null;
 
   const deals: JournalDealRow[] = raw
@@ -187,17 +196,20 @@ export default async function PortfolioJournalPage({
             ) : null}
           </p>
         </div>
-        <p className="font-mono text-xs text-broker-muted">
-          Akun <span className="text-broker-accent">{mtLogin}</span>
-          {accountCurrency ? (
-            <>
-              <span className="mx-2 text-broker-border">·</span>
-              <span>
-                Nominal <span className="font-semibold text-white">{accountCurrency}</span>
-              </span>
-            </>
-          ) : null}
-        </p>
+        <div className="text-right">
+          <p className="font-mono text-xs text-broker-muted">
+            Akun <span className="text-broker-accent">{mtLogin}</span>
+            {accountCurrency ? (
+              <>
+                <span className="mx-2 text-broker-border">·</span>
+                <span>
+                  Nominal <span className="font-semibold text-white">{accountCurrency}</span>
+                </span>
+              </>
+            ) : null}
+          </p>
+          <PortfolioAccountBrokerLine brokerName={brokerName} brokerServer={brokerServer} className="mt-2 text-right" />
+        </div>
       </header>
 
       <PortfolioJournalClient mtLogin={mtLogin} year={year} month={month} day={day} deals={deals} />

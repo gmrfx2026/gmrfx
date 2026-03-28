@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import type { RangeSummaryMetrics } from "@/lib/mt5SummaryRange";
+import { PortfolioAccountBrokerLine } from "@/components/portfolio/PortfolioAccountBrokerLine";
 
 function fmtNum(n: number | null | undefined, maxFrac = 2): string {
   if (n == null || !Number.isFinite(n)) return "—";
@@ -66,9 +67,19 @@ type Props = {
   equity: number | null;
   /** Kode mata uang deposit dari MetaTrader (snapshot). */
   accountCurrency?: string | null;
+  brokerName?: string | null;
+  brokerServer?: string | null;
 };
 
-export function PortfolioSummaryCards({ rangeLabel, metrics, balance, equity, accountCurrency }: Props) {
+export function PortfolioSummaryCards({
+  rangeLabel,
+  metrics,
+  balance,
+  equity,
+  accountCurrency,
+  brokerName,
+  brokerServer,
+}: Props) {
   const pf =
     metrics.profitFactor != null
       ? metrics.profitFactor.toLocaleString("id-ID", { maximumFractionDigits: 2 })
@@ -81,6 +92,7 @@ export function PortfolioSummaryCards({ rangeLabel, metrics, balance, equity, ac
       <p className="text-xs text-broker-muted">
         Periode: <span className="font-medium text-white">{rangeLabel}</span>
       </p>
+      <PortfolioAccountBrokerLine brokerName={brokerName} brokerServer={brokerServer} className="mt-1" />
 
       {/* minmax: lebar kartu cukup untuk angka panjang; baris bertambah otomatis */}
       <div
