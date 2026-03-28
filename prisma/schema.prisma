@@ -92,6 +92,12 @@ model User {
   /// Pengikut baru langsung aktif, atau menunggu persetujuan Anda.
   followApprovalMode FollowApprovalMode @default(AUTO)
 
+  /// Tautan profil publik (opsional, ditampilkan sebagai ikon di halaman member).
+  socialTiktokUrl     String?
+  socialInstagramUrl  String?
+  socialFacebookUrl   String?
+  socialTelegramUrl   String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

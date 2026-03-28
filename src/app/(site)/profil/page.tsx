@@ -16,6 +16,7 @@ import {
 import { ProfilStatusBlock } from "@/components/ProfilStatusBlock";
 import { ProfilChatBox } from "@/components/ProfilChatBox";
 import { ProfilFollowSettings } from "@/components/ProfilFollowSettings";
+import { ProfilSocialLinksForm } from "@/components/ProfilSocialLinksForm";
 import { ProfilNotificationsPanel } from "@/components/ProfilNotificationsPanel";
 import { ProfilSecurityForms } from "@/components/ProfilSecurityForms";
 import { ProfilAvatarUpload } from "@/components/ProfilAvatarUpload";
@@ -24,6 +25,7 @@ import { MemberFollowStatsLinks } from "@/components/member/MemberFollowStatsLin
 import { parsePrefixedListQuery, resolvePagedWindow } from "@/lib/adminListParams";
 import { listablePublicMemberWhere } from "@/lib/memberFollowListable";
 import { maskEmail } from "@/lib/memberEmailDisplay";
+import { normalizeSocialLinkForForm } from "@/lib/socialLinks";
 
 export const dynamic = "force-dynamic";
 
@@ -374,6 +376,12 @@ export default async function ProfilPage({
       {showSecurity && (
         <section className="border-t border-broker-border pt-10 space-y-8">
           <ProfilFollowSettings initialMode={user.followApprovalMode} />
+          <ProfilSocialLinksForm
+            initialTiktok={normalizeSocialLinkForForm(user.socialTiktokUrl)}
+            initialInstagram={normalizeSocialLinkForForm(user.socialInstagramUrl)}
+            initialFacebook={normalizeSocialLinkForForm(user.socialFacebookUrl)}
+            initialTelegram={normalizeSocialLinkForForm(user.socialTelegramUrl)}
+          />
           <ProfilSecurityForms />
         </section>
       )}

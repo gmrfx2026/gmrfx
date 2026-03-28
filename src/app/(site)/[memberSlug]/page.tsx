@@ -11,6 +11,7 @@ import { MemberStatusActions } from "@/components/MemberStatusActions";
 import { MemberStatusComposer } from "@/components/MemberStatusComposer";
 import { MemberFollowButton, MemberFollowLoginLink } from "@/components/member/MemberFollowButton";
 import { MemberFollowStatsLinks } from "@/components/member/MemberFollowStatsLinks";
+import { MemberSocialLinks } from "@/components/member/MemberSocialLinks";
 import { MemberRatingWidget } from "@/components/member/MemberRatingWidget";
 import { unstable_noStore as noStore } from "next/cache";
 import {
@@ -58,6 +59,10 @@ export default async function MemberBySlugPage({
       image: true,
       memberSlug: true,
       followApprovalMode: true,
+      socialTiktokUrl: true,
+      socialInstagramUrl: true,
+      socialFacebookUrl: true,
+      socialTelegramUrl: true,
     },
   });
 
@@ -76,6 +81,10 @@ export default async function MemberBySlugPage({
         image: true,
         memberSlug: true,
         followApprovalMode: true,
+        socialTiktokUrl: true,
+        socialInstagramUrl: true,
+        socialFacebookUrl: true,
+        socialTelegramUrl: true,
       },
     });
   }
@@ -338,10 +347,10 @@ export default async function MemberBySlugPage({
           </div>
 
           {!isSelf && (
-            <div className="w-full min-w-[9rem] sm:w-auto md:w-full">
+            <div className="flex w-full justify-center sm:justify-start md:w-full md:justify-center">
               <Link
                 href={chatHref ?? "/"}
-                className="block w-full rounded-xl bg-broker-accent/15 px-4 py-2.5 text-center text-sm font-semibold text-broker-accent transition hover:bg-broker-accent/25"
+                className="inline-flex rounded-lg bg-broker-accent/15 px-3 py-1.5 text-center text-xs font-semibold text-broker-accent transition hover:bg-broker-accent/25"
               >
                 Chat
               </Link>
@@ -367,6 +376,13 @@ export default async function MemberBySlugPage({
             />
           )}
           {!isSelf && !viewerId && <MemberFollowLoginLink loginCallbackUrl={profileHrefCurrent} />}
+          <MemberSocialLinks
+            tiktokUrl={member.socialTiktokUrl}
+            instagramUrl={member.socialInstagramUrl}
+            facebookUrl={member.socialFacebookUrl}
+            telegramUrl={member.socialTelegramUrl}
+            className="mt-2"
+          />
           {hasStatuses && (
             <MemberRatingWidget
               memberId={member.id}
