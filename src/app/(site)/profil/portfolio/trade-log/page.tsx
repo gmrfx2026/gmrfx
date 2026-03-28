@@ -127,7 +127,12 @@ export default async function PortfolioTradeLogPage({
           )}
         </p>
         {mtLoginFilter ? (
-          <PortfolioAccountBrokerLine brokerName={brokerName} brokerServer={brokerServer} className="mt-2" />
+          <PortfolioAccountBrokerLine
+            brokerName={brokerName}
+            brokerServer={brokerServer}
+            explainIfMissing
+            className="mt-2"
+          />
         ) : null}
       </header>
 

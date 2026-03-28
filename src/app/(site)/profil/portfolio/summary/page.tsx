@@ -223,7 +223,12 @@ export default async function PortfolioSummaryPage({
             <span className="mx-2 text-broker-border">·</span>
             <span>Update: {lastUpdatedStr}</span>
           </p>
-          <PortfolioAccountBrokerLine brokerName={brokerName} brokerServer={brokerServer} className="mt-2 text-right" />
+          <PortfolioAccountBrokerLine
+            brokerName={brokerName}
+            brokerServer={brokerServer}
+            explainIfMissing
+            className="mt-2 text-right"
+          />
         </div>
       </header>
 

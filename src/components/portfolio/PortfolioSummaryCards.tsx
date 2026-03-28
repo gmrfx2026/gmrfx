@@ -92,7 +92,12 @@ export function PortfolioSummaryCards({
       <p className="text-xs text-broker-muted">
         Periode: <span className="font-medium text-white">{rangeLabel}</span>
       </p>
-      <PortfolioAccountBrokerLine brokerName={brokerName} brokerServer={brokerServer} className="mt-1" />
+      <PortfolioAccountBrokerLine
+        brokerName={brokerName}
+        brokerServer={brokerServer}
+        explainIfMissing
+        className="mt-1"
+      />
 
       {/* minmax: lebar kartu cukup untuk angka panjang; baris bertambah otomatis */}
       <div

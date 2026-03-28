@@ -208,7 +208,12 @@ export default async function PortfolioJournalPage({
               </>
             ) : null}
           </p>
-          <PortfolioAccountBrokerLine brokerName={brokerName} brokerServer={brokerServer} className="mt-2 text-right" />
+          <PortfolioAccountBrokerLine
+            brokerName={brokerName}
+            brokerServer={brokerServer}
+            explainIfMissing
+            className="mt-2 text-right"
+          />
         </div>
       </header>
 

@@ -140,7 +140,12 @@ export function PortfolioAccountStatsBoard({ model }: Props) {
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-accent">Akun MT</p>
           <h2 className="mt-1 font-mono text-xl font-bold text-white sm:text-2xl">{model.mtLogin}</h2>
-          <PortfolioAccountBrokerLine brokerName={model.brokerName} brokerServer={model.brokerServer} className="mt-1" />
+          <PortfolioAccountBrokerLine
+            brokerName={model.brokerName}
+            brokerServer={model.brokerServer}
+            explainIfMissing
+            className="mt-1"
+          />
           <p className="mt-1 text-xs text-broker-muted">
             {model.accountCurrency ? (
               <>
