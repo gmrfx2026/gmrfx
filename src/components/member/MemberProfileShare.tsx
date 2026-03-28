@@ -122,7 +122,7 @@ export function MemberProfileShare({
         className={clsx(
           "flex flex-wrap items-center gap-1.5",
           variant === "toolbar" && "w-full justify-end",
-          variant === "belowFollow" && "w-full justify-center",
+          variant === "belowFollow" && "w-full justify-center md:justify-start",
           variant === "belowProfile" && "justify-center md:justify-start",
         )}
       >
