@@ -45,6 +45,10 @@ string BuildJsonBody()
 
          long dealTime = (long)HistoryDealGetInteger(ticket, DEAL_TIME); // detik Unix
          string sym = HistoryDealGetString(ticket, DEAL_SYMBOL);
+         StringTrimLeft(sym);
+         StringTrimRight(sym);
+         if(StringLen(sym) == 0)
+            sym = "(internal)";
          StringReplace(sym, "\\", "");
          StringReplace(sym, "\"", "'");
 

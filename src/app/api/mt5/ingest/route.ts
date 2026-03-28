@@ -9,7 +9,14 @@ const MAX_DEALS = 2500;
 const dealSchema = z.object({
   ticket: z.string().min(1).max(32),
   dealTime: z.coerce.number().int(),
-  symbol: z.string().min(1).max(64),
+  // MT5: deal saldo/kredit/internal sering symbol kosong — tanpa ini payload ditolak (HTTP 400).
+  symbol: z.preprocess(
+    (v) => (typeof v === "string" ? v : ""),
+    z
+      .string()
+      .max(64)
+      .transform((s) => (s.trim().length > 0 ? s.trim() : "(internal)")),
+  ),
   dealType: z.number().int(),
   entryType: z.number().int(),
   volume: z.number(),
@@ -24,7 +31,7 @@ const dealSchema = z.object({
 const bodySchema = z.object({
   login: z.union([z.string().min(1).max(32), z.number()]),
   server: z.string().max(256).optional(),
-  deals: z.array(dealSchema).max(MAX_DEALS).optional(),
+  deals: z.array(dealSchema).max(MAX_DEALS).nullish(),
   account: z
     .object({
       balance: z.number(),
