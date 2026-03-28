@@ -65,7 +65,26 @@ string GmrfxJsonEscape(const string s)
    return o;
 }
 
-// Posisi terbuka (MODE_TRADES) → JSON array untuk panel Aktivitas di website.
+// Komisi posisi: POSITION_COMMISSION sudah deprecated/dihapus dari enum — jumlahkan DEAL_COMMISSION di histori posisi.
+double GmrfxCommissionForPositionId(const ulong position_identifier)
+{
+   if(position_identifier == 0)
+      return 0.0;
+   if(!HistorySelectByPosition(position_identifier))
+      return 0.0;
+   double sum = 0.0;
+   int total = HistoryDealsTotal();
+   for(int i = 0; i < total; i++)
+   {
+      ulong dealTicket = HistoryDealGetTicket(i);
+      if(dealTicket == 0)
+         continue;
+      sum += HistoryDealGetDouble(dealTicket, DEAL_COMMISSION);
+   }
+   return sum;
+}
+
+// Posisi terbuka (PositionsTotal / PositionSelectByTicket — API MQL5).
 string GmrfxOpenPositionsJson()
 {
    string out = "[";
@@ -79,8 +98,12 @@ string GmrfxOpenPositionsJson()
       if(!PositionSelectByTicket(ticket))
          continue;
 
-      string sym = PositionGetString(POSITION_SYMBOL);
-      sym = GmrfxJsonEscape(sym);
+      string symRaw = PositionGetString(POSITION_SYMBOL);
+      StringTrimLeft(symRaw);
+      StringTrimRight(symRaw);
+      if(StringLen(symRaw) == 0)
+         symRaw = "(internal)";
+      string symJson = GmrfxJsonEscape(symRaw);
       long ptype = (long)PositionGetInteger(POSITION_TYPE);
       double vol = PositionGetDouble(POSITION_VOLUME);
       double priceOpen = PositionGetDouble(POSITION_PRICE_OPEN);
@@ -89,10 +112,11 @@ string GmrfxOpenPositionsJson()
       double tp = PositionGetDouble(POSITION_TP);
       double profit = PositionGetDouble(POSITION_PROFIT);
       double swap = PositionGetDouble(POSITION_SWAP);
-      double comm = PositionGetDouble(POSITION_COMMISSION);
+      ulong posIdentifier = (ulong)PositionGetInteger(POSITION_IDENTIFIER);
+      double comm = GmrfxCommissionForPositionId(posIdentifier);
       long openTime = (long)PositionGetInteger(POSITION_TIME);
 
-      double point = SymbolInfoDouble(sym, SYMBOL_POINT);
+      double point = SymbolInfoDouble(symRaw, SYMBOL_POINT);
       if(point <= 0.0)
          point = _Point;
       double pts = 0.0;
@@ -107,7 +131,7 @@ string GmrfxOpenPositionsJson()
 
       out += "{";
       out += "\"ticket\":\"" + StringFormat("%I64u", ticket) + "\",";
-      out += "\"symbol\":\"" + sym + "\",";
+      out += "\"symbol\":\"" + symJson + "\",";
       out += "\"side\":" + IntegerToString((int)ptype) + ",";
       out += "\"volume\":" + DoubleToString(vol, 8) + ",";
       out += "\"priceOpen\":" + DoubleToString(priceOpen, 8) + ",";
@@ -133,7 +157,7 @@ string GmrfxOpenPositionsJson()
    return out;
 }
 
-// Order tertunda (bukan buy/sell market).
+// Order tertunda — MQL5: OrderGetTicket(i) + OrderSelect(ticket), bukan sintaks MQL4.
 string GmrfxPendingOrdersJson()
 {
    string out = "[";
@@ -141,15 +165,20 @@ string GmrfxPendingOrdersJson()
    int m = OrdersTotal();
    for(int j = 0; j < m; j++)
    {
-      if(!OrderSelect(j, SELECT_BY_POS, MODE_TRADES))
+      ulong ticket = OrderGetTicket(j);
+      if(ticket == 0)
+         continue;
+      if(!OrderSelect(ticket))
          continue;
       ENUM_ORDER_TYPE otype = (ENUM_ORDER_TYPE)OrderGetInteger(ORDER_TYPE);
       if(otype == ORDER_TYPE_BUY || otype == ORDER_TYPE_SELL)
          continue;
-
-      ulong ticket = (ulong)OrderGetInteger(ORDER_TICKET);
-      string sym = OrderGetString(ORDER_SYMBOL);
-      sym = GmrfxJsonEscape(sym);
+      string symRaw = OrderGetString(ORDER_SYMBOL);
+      StringTrimLeft(symRaw);
+      StringTrimRight(symRaw);
+      if(StringLen(symRaw) == 0)
+         symRaw = "(internal)";
+      string symJson = GmrfxJsonEscape(symRaw);
       double vol = OrderGetDouble(ORDER_VOLUME_INITIAL);
       double price = OrderGetDouble(ORDER_PRICE_OPEN);
       double sl = OrderGetDouble(ORDER_SL);
@@ -162,7 +191,7 @@ string GmrfxPendingOrdersJson()
 
       out += "{";
       out += "\"ticket\":\"" + StringFormat("%I64u", ticket) + "\",";
-      out += "\"symbol\":\"" + sym + "\",";
+      out += "\"symbol\":\"" + symJson + "\",";
       out += "\"orderType\":" + IntegerToString((int)otype) + ",";
       out += "\"volume\":" + DoubleToString(vol, 8) + ",";
       out += "\"priceOrder\":" + DoubleToString(price, 8) + ",";
