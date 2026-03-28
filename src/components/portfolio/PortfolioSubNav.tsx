@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import clsx from "clsx";
 
 function SubNavLink({
@@ -66,6 +66,11 @@ function SectionToggle({
 /** Sub-menu portofolio di dalam kartu Member menu (desktop). */
 export function PortfolioNavEmbedded() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const selectedMtLogin = (searchParams.get("mtLogin") ?? "").trim();
+
+  const [mtLogins, setMtLogins] = useState<string[] | null>(null);
+
   const [portfolioOpen, setPortfolioOpen] = useState(() =>
     pathname.startsWith("/profil/portfolio/summary")
   );
@@ -78,9 +83,36 @@ export function PortfolioNavEmbedded() {
   const summaryActive = pathname.startsWith("/profil/portfolio/summary");
   const journalActive = pathname.startsWith("/profil/portfolio/journal");
   const tradeLogActive = pathname.startsWith("/profil/portfolio/trade-log");
+  const tradeLogAllActive = tradeLogActive && selectedMtLogin.length === 0;
   const playbookActive = pathname.startsWith("/profil/portfolio/playbook");
   const commAccountsActive = pathname.startsWith("/profil/portfolio/community/accounts");
   const commFollowingActive = pathname.startsWith("/profil/portfolio/community/following");
+
+  useEffect(() => {
+    if (!pathname.startsWith("/profil/portfolio")) {
+      setMtLogins(null);
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const r = await fetch("/api/profile/mt5-linked-accounts", { cache: "no-store" });
+        if (!r.ok) {
+          if (!cancelled) setMtLogins([]);
+          return;
+        }
+        const j = (await r.json()) as { mtLogins?: string[] };
+        if (!cancelled) setMtLogins(Array.isArray(j.mtLogins) ? j.mtLogins : []);
+      } catch {
+        if (!cancelled) setMtLogins([]);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
 
   if (!inPortfolio) return null;
 
@@ -120,15 +152,42 @@ export function PortfolioNavEmbedded() {
                 isActive={summaryActive}
                 compact
               />
-              <p className="px-2.5 pt-0.5 text-[9px] leading-tight text-broker-muted/55">
-                Nomor akun muncul setelah EA terhubung.
-              </p>
+              {mtLogins === null ? (
+                <p className="px-2.5 pt-0.5 text-[9px] leading-tight text-broker-muted/55">
+                  Memuat daftar akun…
+                </p>
+              ) : mtLogins.length === 0 ? (
+                <p className="px-2.5 pt-0.5 text-[9px] leading-tight text-broker-muted/55">
+                  Nomor akun muncul setelah EA terhubung.
+                </p>
+              ) : (
+                <div className="mt-0.5 space-y-0.5">
+                  <p className="px-2.5 py-0.5 text-[9px] uppercase tracking-wide text-broker-muted/70">
+                    Login MT terhubung
+                  </p>
+                  {mtLogins.map((login) => (
+                    <SubNavLink
+                      key={login}
+                      href={`/profil/portfolio/trade-log?mtLogin=${encodeURIComponent(login)}`}
+                      label={login}
+                      indent
+                      isActive={tradeLogActive && selectedMtLogin === login}
+                      compact
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
 
         <SubNavLink href="/profil/portfolio/journal" label="Jurnal" isActive={journalActive} compact />
-        <SubNavLink href="/profil/portfolio/trade-log" label="Trade log" isActive={tradeLogActive} compact />
+        <SubNavLink
+          href="/profil/portfolio/trade-log"
+          label="Trade log"
+          isActive={tradeLogAllActive}
+          compact
+        />
         <SubNavLink href="/profil/portfolio/playbook" label="Playbook" isActive={playbookActive} compact />
 
         <div className="pt-0.5">

@@ -21,10 +21,17 @@ function fmtDt(d: Date): string {
   }).format(d);
 }
 
+function tradeLogPageHref(pageNum: number, mtLogin: string | null) {
+  const q = new URLSearchParams();
+  q.set("page", String(pageNum));
+  if (mtLogin) q.set("mtLogin", mtLogin);
+  return `/profil/portfolio/trade-log?${q.toString()}`;
+}
+
 export default async function PortfolioTradeLogPage({
   searchParams,
 }: {
-  searchParams: { page?: string };
+  searchParams: { page?: string; mtLogin?: string };
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login?callbackUrl=/profil/portfolio/trade-log");
@@ -32,10 +39,19 @@ export default async function PortfolioTradeLogPage({
   const page = Math.max(1, Number.parseInt(String(searchParams?.page ?? "1"), 10) || 1);
   const skip = (page - 1) * PAGE_SIZE;
 
+  const mtLoginRaw = searchParams?.mtLogin;
+  const mtLoginFilter =
+    typeof mtLoginRaw === "string" && mtLoginRaw.trim().length > 0 ? mtLoginRaw.trim() : null;
+
+  const dealWhere = {
+    userId: session.user.id,
+    ...(mtLoginFilter ? { mtLogin: mtLoginFilter } : {}),
+  };
+
   const [total, deals] = await Promise.all([
-    prisma.mtDeal.count({ where: { userId: session.user.id } }),
+    prisma.mtDeal.count({ where: dealWhere }),
     prisma.mtDeal.findMany({
-      where: { userId: session.user.id },
+      where: dealWhere,
       orderBy: { dealTime: "desc" },
       skip,
       take: PAGE_SIZE,
@@ -49,8 +65,21 @@ export default async function PortfolioTradeLogPage({
       <header>
         <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Trade log</h1>
         <p className="mt-1 text-sm text-broker-muted">
-          Data dari EA (MetaTrader 5). Total <span className="font-semibold text-white">{total}</span> deal
-          tersimpan.
+          Data dari EA (MetaTrader 5). Total{" "}
+          <span className="font-semibold text-white">{total}</span> deal tersimpan
+          {mtLoginFilter ? (
+            <>
+              {" "}
+              untuk login <span className="font-mono font-semibold text-white">{mtLoginFilter}</span>
+              {" — "}
+              <Link href="/profil/portfolio/trade-log" className="text-broker-accent hover:underline">
+                lihat semua akun
+              </Link>
+              .
+            </>
+          ) : (
+            "."
+          )}
         </p>
       </header>
 
@@ -128,7 +157,7 @@ export default async function PortfolioTradeLogPage({
             <nav className="flex flex-wrap items-center gap-2 text-sm">
               {page > 1 ? (
                 <Link
-                  href={`/profil/portfolio/trade-log?page=${page - 1}`}
+                  href={tradeLogPageHref(page - 1, mtLoginFilter)}
                   className="rounded-lg border border-broker-border px-3 py-1.5 text-broker-accent hover:bg-broker-surface/50"
                 >
                   ← Sebelumnya
@@ -139,7 +168,7 @@ export default async function PortfolioTradeLogPage({
               </span>
               {page < totalPages ? (
                 <Link
-                  href={`/profil/portfolio/trade-log?page=${page + 1}`}
+                  href={tradeLogPageHref(page + 1, mtLoginFilter)}
                   className="rounded-lg border border-broker-border px-3 py-1.5 text-broker-accent hover:bg-broker-surface/50"
                 >
                   Berikutnya →
