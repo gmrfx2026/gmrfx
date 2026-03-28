@@ -1,11 +1,13 @@
 import type { ReactNode } from "react";
-import { PortfolioSubNav } from "@/components/portfolio/PortfolioSubNav";
+import { PortfolioNavMobileStrip } from "@/components/portfolio/PortfolioSubNav";
 
 export default function PortfolioLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-      <PortfolioSubNav />
-      <div className="min-w-0 flex-1 space-y-6">{children}</div>
+    <div className="space-y-5 md:space-y-6">
+      <div className="md:hidden">
+        <PortfolioNavMobileStrip />
+      </div>
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }

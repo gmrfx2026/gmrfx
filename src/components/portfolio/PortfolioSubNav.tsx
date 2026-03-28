@@ -5,23 +5,26 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import clsx from "clsx";
 
-function NavLink({
+function SubNavLink({
   href,
   label,
   indent,
   isActive,
+  compact,
 }: {
   href: string;
   label: string;
   indent?: boolean;
   isActive: boolean;
+  compact?: boolean;
 }) {
   return (
     <Link
       href={href}
       className={clsx(
-        "block rounded-lg px-3 py-2 text-sm transition",
-        indent && "pl-6",
+        "block rounded-lg transition",
+        compact ? "px-2.5 py-1.5 text-[13px] leading-snug" : "px-3 py-2 text-sm",
+        indent && (compact ? "pl-5" : "pl-6"),
         isActive
           ? "bg-broker-accent/15 font-medium text-broker-accent ring-1 ring-broker-accent/35"
           : "text-broker-muted hover:bg-broker-bg/50 hover:text-white"
@@ -36,16 +39,21 @@ function SectionToggle({
   open,
   onToggle,
   label,
+  compact,
 }: {
   open: boolean;
   onToggle: () => void;
   label: string;
+  compact?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onToggle}
-      className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-broker-muted transition hover:bg-broker-bg/40 hover:text-white"
+      className={clsx(
+        "flex w-full items-center justify-between rounded-lg text-left font-semibold uppercase tracking-wider text-broker-muted transition hover:bg-broker-bg/40 hover:text-white",
+        compact ? "px-2.5 py-1.5 text-[10px]" : "px-3 py-2 text-xs"
+      )}
     >
       <span>{label}</span>
       <span className="text-broker-muted/80" aria-hidden>
@@ -55,13 +63,17 @@ function SectionToggle({
   );
 }
 
-export function PortfolioSubNav() {
+/** Sub-menu portofolio di dalam kartu Member menu (desktop). */
+export function PortfolioNavEmbedded() {
   const pathname = usePathname();
-  const [portfolioOpen, setPortfolioOpen] = useState(
-    () => pathname.startsWith("/profil/portfolio/summary")
+  const [portfolioOpen, setPortfolioOpen] = useState(() =>
+    pathname.startsWith("/profil/portfolio/summary")
   );
-  const [communityOpen, setCommunityOpen] = useState(() => pathname.startsWith("/profil/portfolio/community"));
+  const [communityOpen, setCommunityOpen] = useState(() =>
+    pathname.startsWith("/profil/portfolio/community")
+  );
 
+  const inPortfolio = pathname.startsWith("/profil/portfolio");
   const dashActive = pathname === "/profil/portfolio" || pathname === "/profil/portfolio/dashboard";
   const summaryActive = pathname.startsWith("/profil/portfolio/summary");
   const journalActive = pathname.startsWith("/profil/portfolio/journal");
@@ -70,67 +82,132 @@ export function PortfolioSubNav() {
   const commAccountsActive = pathname.startsWith("/profil/portfolio/community/accounts");
   const commFollowingActive = pathname.startsWith("/profil/portfolio/community/following");
 
+  if (!inPortfolio) return null;
+
   return (
-    <aside className="w-full shrink-0 lg:sticky lg:top-24 lg:w-56 xl:w-60">
-      <div className="rounded-2xl border border-broker-border/80 bg-broker-surface/95 p-3 shadow-xl shadow-black/40 ring-1 ring-white/5 backdrop-blur-sm">
-        <div className="px-2 py-2">
-          <p className="text-xs font-semibold uppercase tracking-widest text-broker-accent">Portofolio MT</p>
-          <p className="mt-1 text-[11px] leading-snug text-broker-muted">
-            Jurnal trading, log transaksi, dan komunitas — alur mirip referensi, tema GMR FX.
-          </p>
+    <div className="mt-3 border-t border-broker-border/50 pt-3">
+      <div className="px-2 pb-2">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-accent">Portofolio MT</p>
+        <p className="mt-0.5 text-[10px] leading-snug text-broker-muted">
+          Jurnal, trade log, komunitas — data dari EA menyusul.
+        </p>
+      </div>
+
+      <nav className="space-y-0.5" aria-label="Submenu portofolio">
+        <SubNavLink
+          href="/profil/portfolio/dashboard"
+          label="Dashboard"
+          isActive={dashActive}
+          compact
+        />
+
+        <div className="pt-0.5">
+          <SectionToggle
+            open={portfolioOpen}
+            onToggle={() => setPortfolioOpen((o) => !o)}
+            label="Portofolio"
+            compact
+          />
+          {portfolioOpen && (
+            <div className="mt-0.5 space-y-0.5 border-l border-broker-border/40 pl-1.5">
+              <p className="px-2.5 py-0.5 text-[9px] uppercase tracking-wide text-broker-muted/70">
+                Akun MT (EA)
+              </p>
+              <SubNavLink
+                href="/profil/portfolio/summary"
+                label="Ringkasan"
+                indent
+                isActive={summaryActive}
+                compact
+              />
+              <p className="px-2.5 pt-0.5 text-[9px] leading-tight text-broker-muted/55">
+                Nomor akun muncul setelah EA terhubung.
+              </p>
+            </div>
+          )}
         </div>
 
-        <nav className="mt-2 space-y-0.5 border-t border-broker-border/50 pt-3" aria-label="Menu portofolio">
-          <NavLink href="/profil/portfolio/dashboard" label="Dashboard" isActive={dashActive} />
+        <SubNavLink href="/profil/portfolio/journal" label="Jurnal" isActive={journalActive} compact />
+        <SubNavLink href="/profil/portfolio/trade-log" label="Trade log" isActive={tradeLogActive} compact />
+        <SubNavLink href="/profil/portfolio/playbook" label="Playbook" isActive={playbookActive} compact />
 
-          <div className="pt-1">
-            <SectionToggle
-              open={portfolioOpen}
-              onToggle={() => setPortfolioOpen((o) => !o)}
-              label="Portofolio"
-            />
-            {portfolioOpen && (
-              <div className="mt-1 space-y-0.5 border-l border-broker-border/40 pl-2">
-                <p className="px-3 py-1 text-[10px] uppercase tracking-wide text-broker-muted/70">
-                  Akun MT (EA)
-                </p>
-                <NavLink href="/profil/portfolio/summary" label="Ringkasan" indent isActive={summaryActive} />
-                <p className="px-3 pt-1 text-[10px] text-broker-muted/60">
-                  Setelah EA terhubung, nomor akun akan muncul di sini.
-                </p>
-              </div>
-            )}
-          </div>
+        <div className="pt-0.5">
+          <SectionToggle
+            open={communityOpen}
+            onToggle={() => setCommunityOpen((o) => !o)}
+            label="Komunitas"
+            compact
+          />
+          {communityOpen && (
+            <div className="mt-0.5 space-y-0.5 border-l border-broker-border/40 pl-1.5">
+              <SubNavLink
+                href="/profil/portfolio/community/accounts"
+                label="Akun"
+                indent
+                isActive={commAccountsActive}
+                compact
+              />
+              <SubNavLink
+                href="/profil/portfolio/community/following"
+                label="Mengikuti (copy)"
+                indent
+                isActive={commFollowingActive}
+                compact
+              />
+            </div>
+          )}
+        </div>
+      </nav>
+    </div>
+  );
+}
 
-          <NavLink href="/profil/portfolio/journal" label="Jurnal" isActive={journalActive} />
-          <NavLink href="/profil/portfolio/trade-log" label="Trade log" isActive={tradeLogActive} />
-          <NavLink href="/profil/portfolio/playbook" label="Playbook" isActive={playbookActive} />
+const MOBILE_LINKS: { href: string; label: string }[] = [
+  { href: "/profil/portfolio/dashboard", label: "Dashboard" },
+  { href: "/profil/portfolio/summary", label: "Ringkasan" },
+  { href: "/profil/portfolio/journal", label: "Jurnal" },
+  { href: "/profil/portfolio/trade-log", label: "Trade log" },
+  { href: "/profil/portfolio/playbook", label: "Playbook" },
+  { href: "/profil/portfolio/community/accounts", label: "Akun" },
+  { href: "/profil/portfolio/community/following", label: "Mengikuti" },
+];
 
-          <div className="pt-1">
-            <SectionToggle
-              open={communityOpen}
-              onToggle={() => setCommunityOpen((o) => !o)}
-              label="Komunitas"
-            />
-            {communityOpen && (
-              <div className="mt-1 space-y-0.5 border-l border-broker-border/40 pl-2">
-                <NavLink
-                  href="/profil/portfolio/community/accounts"
-                  label="Akun"
-                  indent
-                  isActive={commAccountsActive}
-                />
-                <NavLink
-                  href="/profil/portfolio/community/following"
-                  label="Mengikuti (copy)"
-                  indent
-                  isActive={commFollowingActive}
-                />
-              </div>
-            )}
-          </div>
-        </nav>
+/** Strip navigasi horizontal untuk layar sempit (sub-menu tidak ada di dock bawah). */
+export function PortfolioNavMobileStrip() {
+  const pathname = usePathname();
+  if (!pathname.startsWith("/profil/portfolio")) return null;
+
+  return (
+    <div className="rounded-xl border border-broker-border/70 bg-broker-surface/90 p-2 shadow-md shadow-black/30 backdrop-blur-sm">
+      <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-widest text-broker-accent">
+        Portofolio MT
+      </p>
+      <div
+        className="flex gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        role="navigation"
+        aria-label="Submenu portofolio"
+      >
+        {MOBILE_LINKS.map(({ href, label }) => {
+          const active =
+            href === "/profil/portfolio/dashboard"
+              ? pathname === "/profil/portfolio" || pathname === href
+              : pathname === href || pathname.startsWith(href + "/");
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={clsx(
+                "shrink-0 rounded-lg px-3 py-2 text-xs font-medium whitespace-nowrap transition",
+                active
+                  ? "bg-broker-accent/15 text-broker-accent ring-1 ring-broker-accent/35"
+                  : "border border-broker-border/50 bg-broker-bg/40 text-broker-muted hover:text-white"
+              )}
+            >
+              {label}
+            </Link>
+          );
+        })}
       </div>
-    </aside>
+    </div>
   );
 }

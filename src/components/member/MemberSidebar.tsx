@@ -5,7 +5,9 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { playChatIncomingBeep, readChatBeepPreference } from "@/lib/chatBeep";
+import { PortfolioNavEmbedded } from "@/components/portfolio/PortfolioSubNav";
 import type { MemberMenuResolvedItem } from "@/lib/memberMenu";
+import clsx from "clsx";
 
 function getActiveTab(pathname: string, tab: string | null): string {
   if (pathname.startsWith("/profil/portfolio")) return "portfolio";
@@ -158,7 +160,12 @@ export function MemberSidebar({ items }: { items: MemberMenuResolvedItem[] }) {
     <>
       {mobileDock}
 
-      <div className="hidden w-64 shrink-0 md:block">
+      <div
+        className={clsx(
+          "hidden shrink-0 md:block",
+          pathname.startsWith("/profil/portfolio") ? "w-[17.5rem]" : "w-64"
+        )}
+      >
         <aside className="sticky top-24 w-full">
           <div className="rounded-2xl border border-broker-border/80 bg-broker-surface/95 p-3 shadow-2xl shadow-black/40 ring-1 ring-white/5 backdrop-blur-sm">
             <div className="px-2 py-2">
@@ -174,6 +181,8 @@ export function MemberSidebar({ items }: { items: MemberMenuResolvedItem[] }) {
                 return <NavLinkRow key={it.key} it={it} active={active} badge={badge} />;
               })}
             </nav>
+
+            <PortfolioNavEmbedded />
           </div>
 
           {toast && (
@@ -182,10 +191,12 @@ export function MemberSidebar({ items }: { items: MemberMenuResolvedItem[] }) {
             </div>
           )}
 
-          <div className="mt-3 rounded-2xl border border-broker-border/60 bg-broker-surface/40 p-3 text-xs leading-relaxed text-broker-muted shadow-md">
-            Menu ini khusus member. Anda bisa kembangkan nanti jadi toko indikator, transaksi marketplace, dan
-            riwayat transaksi.
-          </div>
+          {!pathname.startsWith("/profil/portfolio") && (
+            <div className="mt-3 rounded-2xl border border-broker-border/60 bg-broker-surface/40 p-3 text-xs leading-relaxed text-broker-muted shadow-md">
+              Menu ini khusus member. Anda bisa kembangkan nanti jadi toko indikator, transaksi marketplace, dan
+              riwayat transaksi.
+            </div>
+          )}
         </aside>
       </div>
     </>
