@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 type Row = {
   id: string;
@@ -167,7 +168,10 @@ export function Mt5TokenPanel({ ingestPath }: { ingestPath: string }) {
                   {t.label ? ` · ${t.label}` : ""}
                   <span className="mt-0.5 block text-xs text-broker-muted/70">
                     {t.lastUsedAt
-                      ? `Terakhir dipakai: ${new Date(t.lastUsedAt).toLocaleString("id-ID")}`
+                      ? `Terakhir dipakai: ${formatJakarta(t.lastUsedAt, {
+                          dateStyle: "short",
+                          timeStyle: "short",
+                        })}`
                       : "Belum pernah dipakai"}
                   </span>
                 </span>

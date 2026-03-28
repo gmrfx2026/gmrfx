@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { ArticleCommentPaginationNav } from "@/components/ArticleCommentPaginationNav";
 import { buildArtikelCommentLastPageHref } from "@/lib/articleCommentPagination";
 import { useToast } from "@/components/ToastProvider";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 const COMMENT_EDIT_WINDOW_MS = 15 * 60 * 1000;
 
@@ -306,7 +307,7 @@ function ArticleCommentRow({
         <p className="mt-1 text-broker-muted">{c.content}</p>
       )}
       <p className="mt-2 text-xs text-broker-muted/70">
-        {new Intl.DateTimeFormat("id-ID", { dateStyle: "short", timeStyle: "short" }).format(new Date(c.createdAt))}
+        {formatJakarta(c.createdAt, { dateStyle: "short", timeStyle: "short" })}
       </p>
       {c.canEditOrDelete && !editing && (
         <div className="mt-2 flex gap-2">

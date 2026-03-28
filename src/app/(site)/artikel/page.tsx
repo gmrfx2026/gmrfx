@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { ArticleStatus } from "@prisma/client";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 export const metadata: Metadata = {
   title: "Artikel — GMR FX",
@@ -35,9 +36,7 @@ export default async function ArtikelListPage() {
               {a.excerpt && <p className="mt-2 text-sm text-broker-muted">{a.excerpt}</p>}
               <p className="mt-3 text-xs text-broker-muted">
                 {a.author.name ?? "Anonim"} ·{" "}
-                {a.publishedAt
-                  ? new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(a.publishedAt)
-                  : ""}
+                {a.publishedAt ? formatJakarta(a.publishedAt, { dateStyle: "long" }) : ""}
               </p>
             </Link>
           </li>

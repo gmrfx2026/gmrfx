@@ -18,6 +18,7 @@ import type { PortfolioStatsModel } from "@/lib/mt5Stats";
 import type { TradingActivityView } from "@/lib/mtTradingActivity";
 import { mtPendingOrderTypeLabel } from "@/lib/mtTradingActivity";
 import { PortfolioAccountBrokerLine } from "@/components/portfolio/PortfolioAccountBrokerLine";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 function fmtNum(n: number | null | undefined, maxFrac = 2): string {
   if (n == null || !Number.isFinite(n)) return "—";
@@ -476,9 +477,7 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation, activ
               k="Update terakhir"
               v={
                 model.sidebar.lastUpdate
-                  ? new Intl.DateTimeFormat("id-ID", { dateStyle: "short", timeStyle: "short" }).format(
-                      new Date(model.sidebar.lastUpdate)
-                    )
+                  ? formatJakarta(model.sidebar.lastUpdate, { dateStyle: "short", timeStyle: "short" })
                   : "—"
               }
             />
@@ -666,9 +665,7 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation, activ
             <p className="text-[10px] text-broker-muted sm:text-xs">
               Terakhir dari EA:{" "}
               <span className="font-mono text-white/85">
-                {new Intl.DateTimeFormat("id-ID", { dateStyle: "short", timeStyle: "short" }).format(
-                  new Date(merged.recordedAt)
-                )}
+                {formatJakarta(merged.recordedAt, { dateStyle: "short", timeStyle: "short" })}
               </span>
             </p>
           ) : activityPoll?.url ? (
@@ -725,10 +722,10 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation, activ
                       act.positions.map((p) => (
                         <tr key={p.ticket} className="border-b border-broker-border/30">
                           <td className="py-2 pr-2 font-mono text-white/90">
-                            {new Intl.DateTimeFormat("id-ID", {
+                            {formatJakarta(p.openTime * 1000, {
                               dateStyle: "short",
                               timeStyle: "short",
-                            }).format(new Date(p.openTime * 1000))}
+                            })}
                           </td>
                           <td className="py-2 pr-2 text-broker-muted">
                             {formatDurationFromOpen(p.openTime, durationRef)}
@@ -795,10 +792,10 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation, activ
                       act.pendingOrders.map((o) => (
                         <tr key={o.ticket} className="border-b border-broker-border/30">
                           <td className="py-2 pr-2 font-mono text-white/90">
-                            {new Intl.DateTimeFormat("id-ID", {
+                            {formatJakarta(o.setupTime * 1000, {
                               dateStyle: "short",
                               timeStyle: "short",
-                            }).format(new Date(o.setupTime * 1000))}
+                            })}
                           </td>
                           <td className="py-2 pr-2 font-medium text-broker-accent">{o.symbol}</td>
                           <td className="py-2 pr-2 text-white/90">{mtPendingOrderTypeLabel(o.orderType)}</td>

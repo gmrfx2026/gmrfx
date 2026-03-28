@@ -13,6 +13,7 @@ import {
   prevMonth,
   JOURNAL_TIMEZONE,
 } from "@/lib/mt5Journal";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 export type JournalDealRow = {
   id: string;
@@ -159,9 +160,10 @@ export function PortfolioJournalClient({ mtLogin, year, month, day, deals }: Pro
             ‹
           </Link>
           <p className="text-center text-sm font-semibold text-white">
-            {new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric", timeZone: JOURNAL_TIMEZONE }).format(
-              new Date(`${year}-${String(month).padStart(2, "0")}-15T12:00:00+07:00`)
-            )}
+            {formatJakarta(`${year}-${String(month).padStart(2, "0")}-15T12:00:00+07:00`, {
+              month: "long",
+              year: "numeric",
+            })}
           </p>
           <Link
             href={journalHref(mtLogin, ny, nm, clampDay(ny, nm, day))}
@@ -294,11 +296,10 @@ export function PortfolioJournalClient({ mtLogin, year, month, day, deals }: Pro
               ) : (
                 selectedRows.map((r) => {
                   const isBuy = r.dealType === 0;
-                  const closeStr = new Intl.DateTimeFormat("id-ID", {
+                  const closeStr = formatJakarta(r.dealTimeIso, {
                     dateStyle: "short",
                     timeStyle: "medium",
-                    timeZone: JOURNAL_TIMEZONE,
-                  }).format(new Date(r.dealTimeIso));
+                  });
                   return (
                     <tr key={r.id} className="border-b border-broker-border/30 text-broker-muted">
                       <td className="px-2 py-2 font-medium text-broker-accent">{r.symbol}</td>

@@ -24,6 +24,7 @@ import {
   type PageSearchParams,
 } from "@/lib/memberStatusPagination";
 import { listablePublicMemberWhere } from "@/lib/memberFollowListable";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -428,10 +429,10 @@ export default async function MemberBySlugPage({
                         dateTime={s.createdAt.toISOString()}
                         className="text-xs text-broker-muted"
                       >
-                        {new Intl.DateTimeFormat("id-ID", {
+                        {formatJakarta(s.createdAt, {
                           dateStyle: "medium",
                           timeStyle: "short",
-                        }).format(new Date(s.createdAt))}
+                        })}
                       </time>
                       {isSelf && viewerId && <DeleteStatusButton statusId={s.id} />}
                     </div>
@@ -488,10 +489,10 @@ export default async function MemberBySlugPage({
                               </div>
                               <p className="mt-0.5 text-broker-muted">{c.content}</p>
                               <p className="mt-1 text-[11px] text-broker-muted/60">
-                                {new Intl.DateTimeFormat("id-ID", {
+                                {formatJakarta(c.createdAt, {
                                   dateStyle: "short",
                                   timeStyle: "short",
-                                }).format(new Date(c.createdAt))}
+                                })}
                               </p>
                             </div>
                           </li>

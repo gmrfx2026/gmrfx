@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { CommentTarget } from "@prisma/client";
 import { AdminCommentModerationToggle } from "@/components/admin/AdminCommentModerationToggle";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 export const dynamic = "force-dynamic";
 
@@ -78,9 +79,7 @@ export default async function AdminCommentsPage() {
               return (
                 <tr key={c.id} className={c.hidden ? "bg-amber-50/80" : ""}>
                   <td className="whitespace-nowrap px-3 py-2 text-xs text-gray-500">
-                    {new Intl.DateTimeFormat("id-ID", { dateStyle: "short", timeStyle: "short" }).format(
-                      c.createdAt
-                    )}
+                    {formatJakarta(c.createdAt, { dateStyle: "short", timeStyle: "short" })}
                   </td>
                   <td className="px-3 py-2 text-xs">{target}</td>
                   <td className="px-3 py-2 text-xs text-gray-700">

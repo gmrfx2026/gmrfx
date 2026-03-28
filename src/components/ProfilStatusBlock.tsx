@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 type C = { id: string; content: string; createdAt: string; author: string };
 
@@ -80,9 +81,7 @@ export function ProfilStatusBlock({
             <p className="text-broker-accent">{c.author}</p>
             <p className="text-broker-muted">{c.content}</p>
             <p className="mt-1 text-xs text-broker-muted/60">
-              {new Intl.DateTimeFormat("id-ID", { dateStyle: "short", timeStyle: "short" }).format(
-                new Date(c.createdAt)
-              )}
+              {formatJakarta(c.createdAt, { dateStyle: "short", timeStyle: "short" })}
             </p>
           </li>
         ))}

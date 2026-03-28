@@ -7,6 +7,7 @@ import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { ArticleInteractions } from "@/components/ArticleInteractions";
 import { ArticleRatingSummary } from "@/components/ArticleRatingSummary";
 import { getArticleCommentsPerPage } from "@/lib/articleCommentPagination";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 export const dynamic = "force-dynamic";
 
@@ -83,9 +84,7 @@ export default async function ArtikelDetailPage({
       <h1 className="mt-2 text-3xl font-bold text-white md:text-4xl">{article.title}</h1>
       <p className="mt-3 text-sm text-broker-muted">
         {article.author.name ?? "Redaksi"} ·{" "}
-        {article.publishedAt
-          ? new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(article.publishedAt)
-          : ""}
+        {article.publishedAt ? formatJakarta(article.publishedAt, { dateStyle: "long" }) : ""}
         <ArticleRatingSummary avg={avg} count={ratingCount} />
       </p>
       <div

@@ -5,6 +5,7 @@ import {
   normalizeDateRange,
   parseWalletHistoryListParams,
 } from "@/lib/walletTransferFilters";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 export const dynamic = "force-dynamic";
 
@@ -159,9 +160,7 @@ export default async function AdminTransfersPage({
             {transfers.map((t) => (
               <tr key={t.id} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="whitespace-nowrap px-4 py-2 text-gray-600">
-                  {new Intl.DateTimeFormat("id-ID", { dateStyle: "short", timeStyle: "short" }).format(
-                    t.createdAt
-                  )}
+                  {formatJakarta(t.createdAt, { dateStyle: "short", timeStyle: "short" })}
                 </td>
                 <td className="px-4 py-2 font-mono text-xs text-gray-700">{t.transactionId}</td>
                 <td className="px-4 py-2">

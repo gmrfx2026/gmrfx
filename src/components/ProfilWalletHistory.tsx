@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 export type WalletHistoryRow = {
   id: string;
@@ -151,10 +152,10 @@ export function ProfilWalletHistory({
               {rows.map((r) => (
                 <tr key={r.id} className="border-b border-broker-border/60 hover:bg-broker-surface/30">
                   <td className="whitespace-nowrap px-3 py-2 text-broker-muted">
-                    {new Intl.DateTimeFormat("id-ID", {
+                    {formatJakarta(r.createdAt, {
                       dateStyle: "short",
                       timeStyle: "short",
-                    }).format(new Date(r.createdAt))}
+                    })}
                   </td>
                   <td className="px-3 py-2">
                     <span

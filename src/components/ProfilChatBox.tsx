@@ -7,6 +7,7 @@ import {
   readChatBeepPreference,
 } from "@/lib/chatBeep";
 import { useToast } from "@/components/ToastProvider";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 type Peer = { id: string; name: string | null; email: string | null; online?: boolean };
 
@@ -447,9 +448,7 @@ export function ProfilChatBox({
                 )}
                 {m.body}
                 <span className="mt-1 block text-[10px] text-broker-muted/70">
-                  {new Intl.DateTimeFormat("id-ID", { dateStyle: "short", timeStyle: "short" }).format(
-                    new Date(m.createdAt)
-                  )}
+                  {formatJakarta(m.createdAt, { dateStyle: "short", timeStyle: "short" })}
                 </span>
               </span>
             </div>

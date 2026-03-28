@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { ProfilFollowRequestList } from "@/components/ProfilFollowRequestList";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 type Row = {
   id: string;
@@ -91,7 +92,10 @@ export function ProfilNotificationsPanel() {
                   <p className="font-medium text-white">{n.title}</p>
                   {n.body && <p className="mt-0.5 text-sm text-broker-muted">{n.body}</p>}
                   <p className="mt-1 text-[11px] text-broker-muted/70">
-                    {new Date(n.createdAt).toLocaleString("id-ID")}
+                    {formatJakarta(n.createdAt, {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    })}
                   </p>
                 </>
               );

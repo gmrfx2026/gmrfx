@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { CommentTarget } from "@prisma/client";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +49,7 @@ export default async function AdminHomePage() {
             {recentComments.map((c) => (
               <li key={c.id} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
                 <p className="text-xs text-gray-500">
-                  {new Intl.DateTimeFormat("id-ID", { dateStyle: "short", timeStyle: "short" }).format(c.createdAt)}
+                  {formatJakarta(c.createdAt, { dateStyle: "short", timeStyle: "short" })}
                   {c.hidden ? (
                     <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-amber-800">disembunyikan</span>
                   ) : null}
@@ -83,7 +84,7 @@ export default async function AdminHomePage() {
                   <p className="text-xs text-gray-500">{u.email}</p>
                 </div>
                 <span className="text-xs text-gray-400">
-                  {new Intl.DateTimeFormat("id-ID", { dateStyle: "short" }).format(u.createdAt)}
+                  {formatJakarta(u.createdAt, { dateStyle: "short" })}
                 </span>
               </li>
             ))}

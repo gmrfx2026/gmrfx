@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { ArticleStatus } from "@prisma/client";
 import { MemberTicker } from "@/components/MemberTicker";
 import { HOME_MEMBER_TICKER_VISIBLE_KEY, isHomeMemberTickerVisible } from "@/lib/homePageSettings";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 /** Konten beranda (data + JSX). Dipakai dari `app/page.tsx` di luar layout `(site)`. */
 export async function HomePageContent() {
@@ -83,9 +84,7 @@ export async function HomePageContent() {
               )}
               <p className="mt-auto pt-4 text-xs text-broker-muted">
                 {a.author.name ?? "Redaksi"} ·{" "}
-                {a.publishedAt
-                  ? new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(a.publishedAt)
-                  : ""}
+                {a.publishedAt ? formatJakarta(a.publishedAt, { dateStyle: "medium" }) : ""}
               </p>
             </Link>
           ))}

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { PortfolioAccountBrokerLine } from "@/components/portfolio/PortfolioAccountBrokerLine";
 import { mt5DealEntryLabel, mt5DealTypeLabel } from "@/lib/mt5DealLabels";
 import { redirect } from "next/navigation";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 export const dynamic = "force-dynamic";
 
@@ -16,10 +17,10 @@ function fmtNum(n: unknown, maxFrac = 5): string {
 }
 
 function fmtDt(d: Date): string {
-  return new Intl.DateTimeFormat("id-ID", {
+  return formatJakarta(d, {
     dateStyle: "short",
     timeStyle: "medium",
-  }).format(d);
+  });
 }
 
 function tradeLogPageHref(pageNum: number, mtLogin: string | null, ticket: string | null) {

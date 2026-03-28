@@ -17,6 +17,7 @@ import {
   computeRangeSummary,
   formatSummaryRangeLabel,
 } from "@/lib/mt5SummaryRange";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 export const dynamic = "force-dynamic";
 
@@ -192,9 +193,7 @@ export default async function PortfolioSummaryPage({
   const tDeal = lastDeal?.dealTime?.getTime() ?? 0;
   const lastTs = Math.max(tSnap, tDeal);
   const lastUpdatedStr =
-    lastTs > 0
-      ? new Intl.DateTimeFormat("id-ID", { dateStyle: "short", timeStyle: "short" }).format(new Date(lastTs))
-      : "—";
+    lastTs > 0 ? formatJakarta(lastTs, { dateStyle: "short", timeStyle: "short" }) : "—";
 
   return (
     <div className="space-y-6">

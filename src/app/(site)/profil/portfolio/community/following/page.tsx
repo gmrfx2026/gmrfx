@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 export const dynamic = "force-dynamic";
 
@@ -67,9 +68,7 @@ export default async function PortfolioCommunityFollowingPage() {
                     ? `Dibayar: Rp ${Number(f.paidAmountIdr).toLocaleString("id-ID")} (wallet)`
                     : "Gratis"}
                   {" · "}
-                  {new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(
-                    f.createdAt
-                  )}
+                  {formatJakarta(f.createdAt, { dateStyle: "medium", timeStyle: "short" })}
                 </p>
               </div>
               <Link
