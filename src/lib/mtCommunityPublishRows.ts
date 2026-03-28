@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 export type MtCommunityPublishRow = {
   mtLogin: string;
   tradeAccountName: string | null;
+  /** Nama di profil website; dipakai tampilan jika tradeAccountName dari broker kosong. */
+  ownerWebsiteName: string | null;
   sourcePlatform: string | null;
   brokerName: string | null;
   brokerServer: string | null;
@@ -25,6 +27,12 @@ export async function loadMtCommunityPublishRows(userId: string): Promise<MtComm
   const mtLogins = Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 
   if (mtLogins.length === 0) return [];
+
+  const owner = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true },
+  });
+  const ownerWebsiteName = owner?.name?.trim() ? owner.name.trim() : null;
 
   const published = await prisma.mtCommunityPublishedAccount.findMany({
     where: { userId },
@@ -69,6 +77,7 @@ export async function loadMtCommunityPublishRows(userId: string): Promise<MtComm
     return {
       mtLogin,
       tradeAccountName: snap?.tradeAccountName ?? null,
+      ownerWebsiteName,
       sourcePlatform: snap?.sourcePlatform ?? null,
       brokerName: snap?.brokerName ?? null,
       brokerServer: snap?.brokerServer ?? null,

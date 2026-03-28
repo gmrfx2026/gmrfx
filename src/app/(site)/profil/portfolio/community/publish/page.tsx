@@ -26,8 +26,9 @@ export default async function PortfolioCommunityPublishPage() {
           <Link href="/profil/portfolio/community/accounts" className="text-broker-accent hover:underline">
             lihat daftar komunitas
           </Link>
-          . Nama akun di tabel diambil dari terminal (field{" "}
-          <span className="font-mono text-[10px]">tradeAccountName</span> / ACCOUNT_NAME) lewat EA 1.04+.
+          . Nama di daftar komunitas: dari terminal jika EA mengirim{" "}
+          <span className="font-mono text-[10px]">tradeAccountName</span> (ACCOUNT_NAME); jika kosong, dipakai
+          nama profil Anda di website.
         </p>
       </header>
 

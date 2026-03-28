@@ -52,7 +52,8 @@ function PublishRowForm({ row }: { row: MtCommunityPublishRow }) {
     }
   }
 
-  const displayName = row.tradeAccountName?.trim() || `Akun ${row.mtLogin}`;
+  const displayName =
+    row.tradeAccountName?.trim() || row.ownerWebsiteName?.trim() || `Akun ${row.mtLogin}`;
 
   return (
     <form

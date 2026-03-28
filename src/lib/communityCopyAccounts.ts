@@ -129,8 +129,13 @@ export async function fetchCommunityPublishedAccounts(
     const platRaw = (row.platform || snap?.sourcePlatform || "mt5").toLowerCase();
     const platformLabel = platRaw === "mt4" ? "MetaTrader 4" : "MetaTrader 5";
     const nameFromSnap = snap?.tradeAccountName?.trim() ?? "";
+    const ownerName = row.user.name?.trim() ?? "";
     const displayName =
-      nameFromSnap.length > 0 ? nameFromSnap : `Akun ${row.mtLogin}`;
+      nameFromSnap.length > 0
+        ? nameFromSnap
+        : ownerName.length > 0
+          ? ownerName
+          : `Akun ${row.mtLogin}`;
 
     return {
       publisherUserId: row.userId,
