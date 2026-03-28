@@ -1,5 +1,7 @@
 # Expert Advisor GMR FX — log transaksi MT5
 
+Untuk **MetaTrader 4**, gunakan folder **`mql4/`** (`GMRFX_TradeLogger.mq4` → endpoint **`/api/mt4/ingest`**).
+
 File **`GMRFX_TradeLogger.mq5`** mengirim:
 
 - snapshot **balance / equity / margin** akun;

@@ -10,7 +10,12 @@ type Row = {
   lastUsedAt: string | null;
 };
 
+function mt4IngestUrlFromMt5(mt5Url: string): string {
+  return mt5Url.replace(/\/api\/mt5\/ingest\/?$/, "/api/mt4/ingest");
+}
+
 export function Mt5TokenPanel({ ingestPath }: { ingestPath: string }) {
+  const ingestPathMt4 = mt4IngestUrlFromMt5(ingestPath);
   const [items, setItems] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [label, setLabel] = useState("");
@@ -79,7 +84,7 @@ export function Mt5TokenPanel({ ingestPath }: { ingestPath: string }) {
 
   return (
     <section className="rounded-2xl border border-broker-border/80 bg-broker-surface/40 p-5 sm:p-6">
-      <h2 className="text-base font-semibold text-white sm:text-lg">Token EA MetaTrader 5</h2>
+      <h2 className="text-base font-semibold text-white sm:text-lg">Token EA MetaTrader (MT4 &amp; MT5)</h2>
       <div className="mt-3 rounded-xl border border-broker-accent/25 bg-broker-accent/5 px-4 py-3 text-sm leading-relaxed text-broker-muted">
         <p className="font-medium text-broker-accent">Cara situs mengenali member &amp; akun MT</p>
         <ul className="mt-2 list-inside list-disc space-y-1.5">
@@ -101,10 +106,17 @@ export function Mt5TokenPanel({ ingestPath }: { ingestPath: string }) {
         </ul>
       </div>
       <p className="mt-3 text-sm leading-relaxed text-broker-muted">
-        Tempel token di Expert Advisor dan izinkan URL di MetaTrader (lihat{" "}
-        <code className="rounded bg-broker-bg/50 px-1 text-xs text-broker-accent">mql5/README.md</code>).
-        Endpoint:{" "}
+        Tempel token di Expert Advisor dan izinkan URL di MetaTrader (
+        <code className="rounded bg-broker-bg/50 px-1 text-xs text-broker-accent">mql5/README.md</code> /{" "}
+        <code className="rounded bg-broker-bg/50 px-1 text-xs text-broker-accent">mql4/README.md</code>).
+      </p>
+      <p className="mt-2 text-sm text-broker-muted">
+        Endpoint <span className="text-broker-muted/80">MT5:</span>{" "}
         <code className="break-all rounded bg-broker-bg/50 px-1 text-xs">{ingestPath}</code>
+      </p>
+      <p className="mt-1 text-sm text-broker-muted">
+        Endpoint <span className="text-broker-muted/80">MT4:</span>{" "}
+        <code className="break-all rounded bg-broker-bg/50 px-1 text-xs">{ingestPathMt4}</code>
       </p>
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">

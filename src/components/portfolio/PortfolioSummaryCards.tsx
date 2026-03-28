@@ -29,14 +29,29 @@ function Card({
   lines: { label: string; value: string; valueClass?: string }[];
 }) {
   return (
-    <div className="rounded-2xl border border-broker-border/80 bg-broker-surface/50 p-4 shadow-md shadow-black/20">
+    <div className="flex min-w-0 flex-col rounded-2xl border border-broker-border/80 bg-broker-surface/50 p-4 shadow-md shadow-black/20">
       <p className="text-[10px] font-semibold uppercase tracking-wide text-broker-muted">{title}</p>
-      <p className={clsx("mt-2 font-mono text-xl font-semibold sm:text-2xl", mainClass ?? "text-white")}>{main}</p>
-      <ul className="mt-3 space-y-1.5 text-xs text-broker-muted">
+      <p
+        className={clsx(
+          "mt-2 min-w-0 max-w-full [overflow-wrap:anywhere] font-mono text-base font-semibold leading-snug tracking-tight",
+          "sm:text-lg lg:text-xl xl:text-xl 2xl:text-2xl",
+          mainClass ?? "text-white"
+        )}
+      >
+        {main}
+      </p>
+      <ul className="mt-3 flex flex-1 flex-col gap-2.5 border-t border-broker-border/40 pt-3">
         {lines.map((l) => (
-          <li key={l.label} className="flex justify-between gap-2">
-            <span>{l.label}</span>
-            <span className={clsx("font-mono text-white", l.valueClass)}>{l.value}</span>
+          <li key={l.label} className="min-w-0">
+            <p className="text-[11px] leading-snug text-broker-muted">{l.label}</p>
+            <p
+              className={clsx(
+                "mt-0.5 [overflow-wrap:anywhere] font-mono text-xs leading-snug text-white sm:text-sm",
+                l.valueClass
+              )}
+            >
+              {l.value}
+            </p>
           </li>
         ))}
       </ul>
@@ -64,7 +79,12 @@ export function PortfolioSummaryCards({ rangeLabel, metrics, balance, equity }: 
       <p className="text-xs text-broker-muted">
         Periode: <span className="font-medium text-white">{rangeLabel}</span>
       </p>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+
+      {/* minmax: lebar kartu cukup untuk angka panjang; baris bertambah otomatis */}
+      <div
+        className="grid gap-4"
+        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 17.5rem), 1fr))" }}
+      >
         <Card
           title="Saldo & equity"
           main={
@@ -78,7 +98,6 @@ export function PortfolioSummaryCards({ rangeLabel, metrics, balance, equity }: 
               label: "Equity (snapshot)",
               value: equity != null && Number.isFinite(equity) ? fmtNum(equity, 2) : "—",
             },
-            { label: "Catatan", value: "Dari snapshot terakhir ≤ akhir periode" },
           ]}
         />
         <Card
@@ -88,8 +107,8 @@ export function PortfolioSummaryCards({ rangeLabel, metrics, balance, equity }: 
           lines={[
             { label: "Trade penutupan", value: String(metrics.closedTrades) },
             {
-              label: "Sumber",
-              value: "OUT / OUT_BY",
+              label: "Sumber data",
+              value: "Deal OUT / OUT_BY",
             },
           ]}
         />
@@ -138,6 +157,12 @@ export function PortfolioSummaryCards({ rangeLabel, metrics, balance, equity }: 
           ]}
         />
       </div>
+
+      <p className="text-[11px] leading-relaxed text-broker-muted/85">
+        <span className="font-medium text-broker-muted">Saldo &amp; equity:</span> nilai dari{" "}
+        <strong className="text-broker-muted">snapshot terakhir</strong> yang tercatat pada atau sebelum akhir rentang
+        periode (zona WIB).
+      </p>
     </div>
   );
 }
