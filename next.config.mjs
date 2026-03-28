@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverComponentsExternalPackages: ["xss"],
+    serverComponentsExternalPackages: ["xss", "daftar-wilayah-indonesia"],
   },
   async redirects() {
     return [

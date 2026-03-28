@@ -129,6 +129,30 @@ model User {
   dmRequestsReceived ChatDmRequest[] @relation("DmRequestTo")
 }
 
+/// Referensi wilayah Indonesia (kode BPS) — diisi dengan `npm run db:seed-wilayah`.
+model IndonesiaProvince {
+  id        String             @id
+  name      String
+  regencies IndonesiaRegency[]
+}
+
+model IndonesiaRegency {
+  id         String               @id
+  provinceId String
+  name       String
+  province   IndonesiaProvince    @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  districts  IndonesiaDistrict[]
+  @@index([provinceId])
+}
+
+model IndonesiaDistrict {
+  id        String           @id
+  regencyId String
+  name      String
+  regency   IndonesiaRegency @relation(fields: [regencyId], references: [id], onDelete: Cascade)
+  @@index([regencyId])
+}
+
 /// Permintaan buka chat privat (seperti DM request Instagram) jika belum saling follow.
 model ChatDmRequest {
   id            String              @id @default(cuid())

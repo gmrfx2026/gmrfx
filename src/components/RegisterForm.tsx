@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { IndonesiaAddressFields } from "@/components/IndonesiaAddressFields";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -14,9 +15,7 @@ export function RegisterForm() {
     password: "",
     phoneWhatsApp: "",
     addressLine: "",
-    kecamatan: "",
-    kabupaten: "",
-    provinsi: "",
+    districtCode: "",
     kodePos: "",
     negara: "Indonesia",
   });
@@ -50,7 +49,7 @@ export function RegisterForm() {
     "mt-1 w-full rounded-lg border border-broker-border bg-broker-surface px-3 py-2 text-sm text-white";
 
   return (
-    <form onSubmit={onSubmit} className="mt-8 space-y-4">
+    <form onSubmit={onSubmit} className="mt-8 space-y-5">
       <div>
         <label className="text-xs text-broker-muted">Nama</label>
         <input className={input} value={form.name} onChange={(e) => set("name", e.target.value)} required />
@@ -85,60 +84,17 @@ export function RegisterForm() {
           required
         />
       </div>
-      <p className="text-xs font-medium text-broker-accent">Alamat</p>
-      <div>
-        <label className="text-xs text-broker-muted">Jalan / desa</label>
-        <input
-          className={input}
-          value={form.addressLine}
-          onChange={(e) => set("addressLine", e.target.value)}
-          required
-        />
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="text-xs text-broker-muted">Kecamatan</label>
-          <input
-            className={input}
-            value={form.kecamatan}
-            onChange={(e) => set("kecamatan", e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label className="text-xs text-broker-muted">Kabupaten / kota</label>
-          <input
-            className={input}
-            value={form.kabupaten}
-            onChange={(e) => set("kabupaten", e.target.value)}
-            required
-          />
-        </div>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="text-xs text-broker-muted">Provinsi</label>
-          <input
-            className={input}
-            value={form.provinsi}
-            onChange={(e) => set("provinsi", e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label className="text-xs text-broker-muted">Kode pos</label>
-          <input
-            className={input}
-            value={form.kodePos}
-            onChange={(e) => set("kodePos", e.target.value)}
-            required
-          />
-        </div>
-      </div>
-      <div>
-        <label className="text-xs text-broker-muted">Negara</label>
-        <input className={input} value={form.negara} onChange={(e) => set("negara", e.target.value)} required />
-      </div>
+      <IndonesiaAddressFields
+        districtCode={form.districtCode}
+        onDistrictCodeChange={(v) => set("districtCode", v)}
+        addressLine={form.addressLine}
+        onAddressLineChange={(v) => set("addressLine", v)}
+        kodePos={form.kodePos}
+        onKodePosChange={(v) => set("kodePos", v)}
+        negara={form.negara}
+        onNegaraChange={(v) => set("negara", v)}
+        inputClass={input}
+      />
       {err && <p className="text-sm text-broker-danger">{err}</p>}
       <button
         type="submit"

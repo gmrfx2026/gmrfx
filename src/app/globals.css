@@ -20,6 +20,18 @@ body {
     linear-gradient(180deg, #0b0e11 0%, #080a0c 100%);
 }
 
+/**
+ * Native <select> di tema gelap: di Chrome/Edge (Windows) daftar opsi sering pakai latar terang
+ * sambil mewarisi `color: white` → teks tak terbaca; user mengira dropdown rusak.
+ */
+select.broker-native-select {
+  color-scheme: dark;
+}
+select.broker-native-select option {
+  background-color: #12161c;
+  color: #f0f4f8;
+}
+
 /* TipTap — tipografi dari kelas `article-content prose` */
 .ProseMirror {
   @apply min-h-[200px] outline-none;

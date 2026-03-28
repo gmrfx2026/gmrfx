@@ -6,6 +6,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { generateUniqueWalletAddress } from "@/lib/wallet";
 import { toMemberSlug } from "@/lib/memberSlug";
+import { resolveWilayahByDistrictId } from "@/lib/wilayahIndonesia";
 
 export const maxDuration = 60;
 
@@ -15,10 +16,9 @@ const schema = z.object({
   password: z.string().min(8).max(128),
   phoneWhatsApp: z.string().min(10).max(20),
   addressLine: z.string().min(3).max(200),
-  kecamatan: z.string().min(2).max(80),
-  kabupaten: z.string().min(2).max(80),
-  provinsi: z.string().min(2).max(80),
-  kodePos: z.string().min(3).max(12),
+  /** Kode BPS kecamatan (7 digit), dari database wilayah. */
+  districtCode: z.string().regex(/^\d{7}$/, "Pilih kecamatan dari daftar"),
+  kodePos: z.string().regex(/^\d{5}$/, "Kode pos harus 5 angka"),
   negara: z.string().min(2).max(80),
 });
 
@@ -31,6 +31,14 @@ export async function POST(req: Request) {
     }
     const d = parsed.data;
     const email = d.email.toLowerCase().trim();
+
+    const wilayah = await resolveWilayahByDistrictId(d.districtCode);
+    if (!wilayah) {
+      return NextResponse.json(
+        { error: "Kecamatan tidak valid atau data wilayah belum diisi di server." },
+        { status: 400 }
+      );
+    }
 
     const dup = await prisma.user.findUnique({ where: { email } });
     if (dup) {
@@ -50,9 +58,9 @@ export async function POST(req: Request) {
         passwordHash,
         phoneWhatsApp: d.phoneWhatsApp,
         addressLine: d.addressLine,
-        kecamatan: d.kecamatan,
-        kabupaten: d.kabupaten,
-        provinsi: d.provinsi,
+        kecamatan: wilayah.kecamatan,
+        kabupaten: wilayah.kabupaten,
+        provinsi: wilayah.provinsi,
         kodePos: d.kodePos,
         negara: d.negara,
         profileComplete: true,

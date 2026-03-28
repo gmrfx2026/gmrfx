@@ -4,15 +4,14 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { toMemberSlug } from "@/lib/memberSlug";
+import { resolveWilayahByDistrictId } from "@/lib/wilayahIndonesia";
 
 const schema = z.object({
   name: z.string().trim().min(2).max(120),
   phoneWhatsApp: z.string().trim().min(10).max(20),
   addressLine: z.string().trim().min(3).max(200),
-  kecamatan: z.string().trim().min(2).max(80),
-  kabupaten: z.string().trim().min(2).max(80),
-  provinsi: z.string().trim().min(2).max(80),
-  kodePos: z.string().trim().min(3).max(12),
+  districtCode: z.string().regex(/^\d{7}$/, "Pilih kecamatan dari daftar"),
+  kodePos: z.string().regex(/^\d{5}$/, "Kode pos harus 5 angka"),
   negara: z.string().trim().min(2).max(80),
 });
 
@@ -45,6 +44,14 @@ export async function POST(req: Request) {
   }
 
   const d = parsed.data;
+  const wilayah = await resolveWilayahByDistrictId(d.districtCode);
+  if (!wilayah) {
+    return NextResponse.json(
+      { error: "Kecamatan tidak valid atau data wilayah belum diisi di server." },
+      { status: 400 }
+    );
+  }
+
   let memberSlug = toMemberSlug(d.name, user.id);
 
   try {
@@ -54,9 +61,9 @@ export async function POST(req: Request) {
         name: d.name,
         phoneWhatsApp: d.phoneWhatsApp,
         addressLine: d.addressLine,
-        kecamatan: d.kecamatan,
-        kabupaten: d.kabupaten,
-        provinsi: d.provinsi,
+        kecamatan: wilayah.kecamatan,
+        kabupaten: wilayah.kabupaten,
+        provinsi: wilayah.provinsi,
         kodePos: d.kodePos,
         negara: d.negara,
         profileComplete: true,
@@ -72,9 +79,9 @@ export async function POST(req: Request) {
           name: d.name,
           phoneWhatsApp: d.phoneWhatsApp,
           addressLine: d.addressLine,
-          kecamatan: d.kecamatan,
-          kabupaten: d.kabupaten,
-          provinsi: d.provinsi,
+          kecamatan: wilayah.kecamatan,
+          kabupaten: wilayah.kabupaten,
+          provinsi: wilayah.provinsi,
           kodePos: d.kodePos,
           negara: d.negara,
           profileComplete: true,

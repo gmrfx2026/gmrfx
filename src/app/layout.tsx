@@ -25,8 +25,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const criticalCss = `
+:root { color-scheme: dark; }
+html { background-color: #0b0e11; }
+body { margin: 0; min-height: 100vh; background-color: #0b0e11; color: #eaecef; }
+/* Jika file CSS Next gagal dimuat (404/proksi), halaman tetap terbaca — utility Tailwind menimpa jika ada. */
+`;
+
   return (
     <html lang="id" className={dmSans.variable}>
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: criticalCss }} />
+      </head>
       <body className="font-sans">
         {/*
           Wrapper flex memastikan main flex-1 + footer mt-auto bekerja meski ada batas client/server.

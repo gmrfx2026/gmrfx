@@ -18,7 +18,8 @@
     "test:e2e": "playwright test",
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
-    "db:seed": "npx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+    "db:seed": "npx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
+    "db:seed-wilayah": "node prisma/seed-wilayah.cjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
@@ -36,6 +37,7 @@
     "@vercel/blob": "^2.3.1",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
+    "daftar-wilayah-indonesia": "^4.0.3",
     "next": "14.2.18",
     "next-auth": "^5.0.0-beta.25",
     "react": "^18.3.1",
