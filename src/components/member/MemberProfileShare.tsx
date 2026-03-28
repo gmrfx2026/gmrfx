@@ -113,7 +113,7 @@ export function MemberProfileShare({
     <div
       className={clsx(
         variant === "toolbar" && "min-w-0 shrink",
-        variant === "belowFollow" && "mt-5 w-full sm:mt-6",
+        variant === "belowFollow" && "mt-8 w-full sm:mt-10",
         variant === "belowProfile" && "mt-3 w-full",
         className,
       )}
