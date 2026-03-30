@@ -2,6 +2,9 @@ import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { seedEducationalArticles } from "../src/lib/educationalArticlesSeed";
 import { seedPiphunterIndicators } from "./seed-piphunter-indicators";
+import { loadRootEnv } from "./loadEnv";
+
+loadRootEnv();
 
 const prisma = new PrismaClient();
 

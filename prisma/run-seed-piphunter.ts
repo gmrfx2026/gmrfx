@@ -1,5 +1,8 @@
+import { loadRootEnv } from "./loadEnv";
 import { PrismaClient } from "@prisma/client";
 import { seedPiphunterIndicators } from "./seed-piphunter-indicators";
+
+loadRootEnv();
 
 const prisma = new PrismaClient();
 seedPiphunterIndicators(prisma)

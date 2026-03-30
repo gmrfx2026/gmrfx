@@ -21,6 +21,7 @@
     "db:seed": "npx tsx prisma/seed.ts",
     "db:seed:articles": "npx tsx prisma/seed-articles.ts",
     "db:seed:piphunter": "npx tsx prisma/run-seed-piphunter.ts",
+    "db:list-indicators": "node scripts/list-indicators.mjs",
     "db:seed-wilayah": "node prisma/seed-wilayah.cjs",
     "db:generate": "node scripts/prisma-generate.cjs",
     "db:generate:force": "node scripts/prisma-generate-force.cjs"
@@ -59,6 +60,7 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "autoprefixer": "^10.4.20",
+    "dotenv": "^17.3.1",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.18",
     "postcss": "^8.4.49",
