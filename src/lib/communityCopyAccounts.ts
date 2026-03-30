@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { activeCommunitySubscriptionWhere } from "@/lib/communitySubscription";
 import { listablePublicMemberWhere } from "@/lib/memberFollowListable";
 import {
   buildPortfolioStatsModel,
@@ -160,13 +161,13 @@ export async function fetchCommunityPublishedAccounts(
     }),
     viewerUserId
       ? prisma.mtCopyFollow.findMany({
-          where: { followerUserId: viewerUserId },
+          where: { followerUserId: viewerUserId, ...activeCommunitySubscriptionWhere() },
           select: { publisherUserId: true, mtLogin: true },
         })
       : Promise.resolve([]),
     viewerUserId
       ? prisma.mtCommunityActivityWatch.findMany({
-          where: { followerUserId: viewerUserId },
+          where: { followerUserId: viewerUserId, ...activeCommunitySubscriptionWhere() },
           select: { publisherUserId: true, mtLogin: true },
         })
       : Promise.resolve([]),

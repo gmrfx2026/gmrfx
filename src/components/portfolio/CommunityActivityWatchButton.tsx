@@ -111,7 +111,7 @@ export function CommunityActivityWatchButton({
           ? "…"
           : watchAlertFree
             ? "Ikuti — Gratis"
-            : `Ikuti — Rp ${Math.round(watchAlertPriceIdr).toLocaleString("id-ID")}`}
+            : `Ikuti — Rp ${Math.round(watchAlertPriceIdr).toLocaleString("id-ID")} / ~30 hari`}
       </button>
       {err ? <p className="max-w-[14rem] text-right text-[10px] text-broker-danger">{err}</p> : null}
     </div>

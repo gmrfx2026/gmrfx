@@ -255,7 +255,8 @@ export default async function PortfolioCommunityAccountsPage({
         <Link href="/profil/portfolio/community/publish" className="text-broker-accent hover:underline">
           Publikasi copy trade
         </Link>{" "}
-        dan terpisah dari harga Copy.{" "}
+        dan terpisah dari harga Copy. Layanan berbayar berlangganan ~30 hari per pembayaran; saat habis Anda
+        mendapat notifikasi dan email.{" "}
         <strong className="text-broker-muted">Copy</strong> menyimpan relasi di situs; mirror order di terminal tetap
         lewat EA terpisah jika Anda tambahkan nanti.
       </p>

@@ -58,6 +58,10 @@ enum NotificationType {
   CHAT_DM_REQUEST
   /// Buka/tutup posisi pada akun komunitas yang di-"Ikuti" (bukan Copy trade).
   COMMUNITY_MT_TRADE_ALERT
+  /// Langganan Copy trade berbayar (30 hari) telah berakhir.
+  COMMUNITY_COPY_SUB_EXPIRED
+  /// Langganan alert Ikuti berbayar (30 hari) telah berakhir.
+  COMMUNITY_WATCH_SUB_EXPIRED
 }
 
 enum ChatDmRequestStatus {
@@ -268,6 +272,8 @@ model MtCopyFollow {
   publisherUserId String
   mtLogin         String
   paidAmountIdr   Decimal  @default(0) @db.Decimal(18, 2)
+  /// null = gratis / tidak kedaluwarsa; diisi untuk berbayar (30 hari sejak pembayaran / perpanjang).
+  expiresAt       DateTime?
   createdAt       DateTime @default(now())
 
   followerUser  User @relation("CopyFollowFollower", fields: [followerUserId], references: [id], onDelete: Cascade)
@@ -276,6 +282,7 @@ model MtCopyFollow {
   @@unique([followerUserId, publisherUserId, mtLogin])
   @@index([followerUserId])
   @@index([publisherUserId, mtLogin])
+  @@index([expiresAt])
 }
 
 /// Member mengikuti aktivitas posisi (buka/tutup) akun komunitas — terpisah dari Copy trade.
@@ -285,6 +292,8 @@ model MtCommunityActivityWatch {
   publisherUserId String
   mtLogin         String
   paidAmountIdr   Decimal  @default(0) @db.Decimal(18, 2)
+  /// null = gratis; diisi untuk alert berbayar (30 hari).
+  expiresAt       DateTime?
   createdAt       DateTime @default(now())
 
   follower  User @relation("CommunityMtWatchFollower", fields: [followerUserId], references: [id], onDelete: Cascade)
@@ -293,6 +302,7 @@ model MtCommunityActivityWatch {
   @@unique([followerUserId, publisherUserId, mtLogin])
   @@index([followerUserId])
   @@index([publisherUserId, mtLogin])
+  @@index([expiresAt])
 }
 
 /// Referensi wilayah Indonesia (kode BPS) — diisi dengan `npm run db:seed-wilayah`.

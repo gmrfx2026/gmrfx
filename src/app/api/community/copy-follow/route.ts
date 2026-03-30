@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  isCommunitySubscriptionActive,
+  paidSubscriptionExpiresAt,
+} from "@/lib/communitySubscription";
 import { Decimal } from "@prisma/client/runtime/library";
 import { newTransactionId } from "@/lib/txid";
 import { z } from "zod";
@@ -59,11 +63,13 @@ export async function POST(req: Request) {
           },
         },
       });
-      if (dup) {
+
+      if (dup && isCommunitySubscriptionActive(dup.expiresAt)) {
         throw new Error("Anda sudah mengikuti akun ini");
       }
 
       const price = pub.copyFree ? new Decimal(0) : new Decimal(pub.copyPriceIdr.toString());
+      const expiresAt = pub.copyFree ? null : paidSubscriptionExpiresAt();
 
       if (!pub.copyFree) {
         if (price.lte(0)) throw new Error("Harga langganan tidak valid");
@@ -98,19 +104,30 @@ export async function POST(req: Request) {
             fromUserId: followerUserId,
             toUserId: publisherUserId,
             amount: price,
-            note: `Copy trade: MT ${mtLogin}`,
+            note: `Copy trade (30 hari): MT ${mtLogin}`,
           },
         });
       }
 
-      await tx.mtCopyFollow.create({
-        data: {
-          followerUserId,
-          publisherUserId,
-          mtLogin,
-          paidAmountIdr: price,
-        },
-      });
+      if (dup) {
+        await tx.mtCopyFollow.update({
+          where: { id: dup.id },
+          data: {
+            paidAmountIdr: price,
+            expiresAt,
+          },
+        });
+      } else {
+        await tx.mtCopyFollow.create({
+          data: {
+            followerUserId,
+            publisherUserId,
+            mtLogin,
+            paidAmountIdr: price,
+            expiresAt,
+          },
+        });
+      }
     });
 
     return NextResponse.json({ ok: true });

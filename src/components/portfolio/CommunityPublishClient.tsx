@@ -147,7 +147,8 @@ function PublishRowForm({ row }: { row: MtCommunityPublishRow }) {
               </label>
               <p className="mt-1 text-[10px] text-broker-muted">
                 Member yang copy membayar dari saldo wallet IDR mereka (wajib punya alamat wallet di profil).
-                Dana masuk ke saldo wallet Anda.
+                Dana masuk ke saldo wallet Anda. Langganan berbayar berlaku ~30 hari per pembayaran; setelah habis
+                mereka mendapat notifikasi &amp; email dan harus memperpanjang lewat tombol Copy lagi.
               </p>
             </div>
           ) : null}
@@ -158,8 +159,9 @@ function PublishRowForm({ row }: { row: MtCommunityPublishRow }) {
             Biaya alert posisi (tombol &quot;Ikuti&quot;)
           </p>
           <p className="mb-2 text-xs text-broker-muted">
-            Terpisah dari harga Copy. Member yang menekan Ikuti membayar sekali (wallet IDR) jika Anda set
-            berbayar — mereka mendapat toast/notifikasi saat posisi buka/tutup.
+            Terpisah dari harga Copy. Jika berbayar: satu pembayaran wallet IDR per periode ~30 hari; mereka
+            mendapat toast/notifikasi saat posisi buka/tutup. Setelah habis: notifikasi &amp; email, lalu bisa
+            perpanjang lewat tombol Ikuti lagi.
           </p>
           <div className="flex flex-wrap gap-4">
             <label className="flex cursor-pointer items-center gap-2 text-sm text-white">

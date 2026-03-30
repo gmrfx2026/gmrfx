@@ -84,7 +84,11 @@ export async function notifyCommunityMtActivityWatchers(params: {
   if (opened.length === 0 && closed.length === 0 && sltpChanged.length === 0) return;
 
   const watchers = await prisma.mtCommunityActivityWatch.findMany({
-    where: { publisherUserId: params.publisherUserId, mtLogin: params.mtLogin },
+    where: {
+      publisherUserId: params.publisherUserId,
+      mtLogin: params.mtLogin,
+      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+    },
     select: { followerUserId: true },
   });
   if (watchers.length === 0) return;

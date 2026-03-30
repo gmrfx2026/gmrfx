@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  isCommunitySubscriptionActive,
+  paidSubscriptionExpiresAt,
+} from "@/lib/communitySubscription";
 import { Decimal } from "@prisma/client/runtime/library";
 import { newTransactionId } from "@/lib/txid";
 import { z } from "zod";
@@ -54,11 +58,13 @@ export async function POST(req: Request) {
           },
         },
       });
-      if (dup) {
+
+      if (dup && isCommunitySubscriptionActive(dup.expiresAt)) {
         throw new Error("DUPLICATE_WATCH");
       }
 
       const price = pub.watchAlertFree ? new Decimal(0) : new Decimal(pub.watchAlertPriceIdr.toString());
+      const expiresAt = pub.watchAlertFree ? null : paidSubscriptionExpiresAt();
 
       if (!pub.watchAlertFree) {
         if (price.lte(0)) throw new Error("Harga alert tidak valid");
@@ -93,19 +99,30 @@ export async function POST(req: Request) {
             fromUserId: followerUserId,
             toUserId: publisherUserId,
             amount: price,
-            note: `Alert posisi (Ikuti): MT ${mtLogin}`,
+            note: `Alert Ikuti (30 hari): MT ${mtLogin}`,
           },
         });
       }
 
-      await tx.mtCommunityActivityWatch.create({
-        data: {
-          followerUserId,
-          publisherUserId,
-          mtLogin,
-          paidAmountIdr: price,
-        },
-      });
+      if (dup) {
+        await tx.mtCommunityActivityWatch.update({
+          where: { id: dup.id },
+          data: {
+            paidAmountIdr: price,
+            expiresAt,
+          },
+        });
+      } else {
+        await tx.mtCommunityActivityWatch.create({
+          data: {
+            followerUserId,
+            publisherUserId,
+            mtLogin,
+            paidAmountIdr: price,
+            expiresAt,
+          },
+        });
+      }
     });
 
     return NextResponse.json({ ok: true });

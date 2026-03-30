@@ -13,7 +13,10 @@ export default async function PortfolioCommunityFollowingPage() {
   }
 
   const follows = await prisma.mtCopyFollow.findMany({
-    where: { followerUserId: session.user.id },
+    where: {
+      followerUserId: session.user.id,
+      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+    },
     orderBy: { createdAt: "desc" },
     include: {
       publisherUser: { select: { id: true, name: true, memberSlug: true } },
@@ -65,10 +68,12 @@ export default async function PortfolioCommunityFollowingPage() {
                 </p>
                 <p className="mt-1 text-xs text-broker-muted">
                   {Number(f.paidAmountIdr) > 0
-                    ? `Dibayar: Rp ${Number(f.paidAmountIdr).toLocaleString("id-ID")} (wallet)`
+                    ? `Dibayar: Rp ${Number(f.paidAmountIdr).toLocaleString("id-ID")} (wallet) · langganan ~30 hari`
                     : "Gratis"}
                   {" · "}
-                  {formatJakarta(f.createdAt, { dateStyle: "medium", timeStyle: "short" })}
+                  {f.expiresAt
+                    ? `Berlaku s.d. ${formatJakarta(f.expiresAt, { dateStyle: "medium", timeStyle: "short" })}`
+                    : `Mulai ${formatJakarta(f.createdAt, { dateStyle: "medium", timeStyle: "short" })}`}
                 </p>
               </div>
               <Link
@@ -83,8 +88,13 @@ export default async function PortfolioCommunityFollowingPage() {
       )}
 
       <p className="text-xs text-broker-muted">
-        Relasi tersimpan di server untuk langkah berikutnya (EA mirror). Harga berbayar dipotong dari saldo
-        wallet IDR Anda sekali saat Anda menekan Copy.
+        Relasi tersimpan di server untuk langkah berikutnya (EA mirror). Harga berbayar dipotong dari saldo wallet
+        IDR per periode langganan (~30 hari). Saat masa habis, Anda mendapat notifikasi dan email; untuk melanjutkan
+        tekan Copy lagi di daftar komunitas. Jadwalkan pemanggilan harian ke{" "}
+        <code className="rounded bg-broker-bg/80 px-1 font-mono text-[10px] text-broker-accent">
+          /api/cron/community-subscriptions
+        </code>{" "}
+        dengan header Authorization Bearer <code className="font-mono">CRON_SECRET</code> (set di server).
       </p>
     </div>
   );

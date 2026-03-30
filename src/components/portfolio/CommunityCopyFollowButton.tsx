@@ -51,7 +51,7 @@ export function CommunityCopyFollowButton({
 
   const priceLabel = copyFree
     ? "Gratis"
-    : `Rp ${Math.round(copyPriceIdr).toLocaleString("id-ID")}`;
+    : `Rp ${Math.round(copyPriceIdr).toLocaleString("id-ID")} / ~30 hari`;
 
   return (
     <div className="flex flex-col items-end gap-1">
