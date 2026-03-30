@@ -35,8 +35,7 @@ export function GoOutClient() {
   const searchParams = useSearchParams();
   const downloadPath = parseGoPageDownloadPath(searchParams.get("download"));
 
-  const [logged, setLogged] = useState(false);
-  const [autoOpened, setAutoOpened] = useState<boolean | null>(null);
+  const [popupBlocked, setPopupBlocked] = useState<boolean | null>(null);
 
   useEffect(() => {
     const visitorId = getOrCreateVisitorId();
@@ -44,9 +43,7 @@ export function GoOutClient() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ visitorId }),
-    })
-      .then(() => setLogged(true))
-      .catch(() => setLogged(true));
+    }).catch(() => {});
 
     const ex = tryOpenUrl(AFFILIATE_EXNESS_URL);
     const tk = tryOpenUrl(AFFILIATE_TICKMILL_URL);
@@ -55,41 +52,46 @@ export function GoOutClient() {
       const origin = window.location.origin;
       dl = tryOpenUrl(`${origin}${downloadPath}`);
     }
-    setAutoOpened(ex && tk && (!downloadPath || dl));
+    const allOk = ex && tk && (!downloadPath || dl);
+    setPopupBlocked(!allOk);
   }, [downloadPath]);
+
+  function openDownloadInNewTab() {
+    if (!downloadPath) return;
+    tryOpenUrl(`${window.location.origin}${downloadPath}`);
+  }
 
   return (
     <div className="mx-auto max-w-md text-center">
-      <p className="text-lg font-medium text-white">Mitra broker edukasi</p>
-      <p className="mt-2 text-sm text-zinc-400">
-        Kami mengarahkan Anda ke dua mitra (Exness & Tickmill) di tab baru.
-        {downloadPath
-          ? " Unduhan file indikator/EA gratis juga dibuka di tab tambahan."
-          : null}{" "}
-        Jika tab tidak muncul, gunakan tombol di bawah — browser kadang memblokir beberapa jendela sekaligus.
-      </p>
-      {autoOpened === false ? (
-        <p className="mt-2 text-xs text-amber-200/90">Popup diblokir: silakan klik tautan secara manual.</p>
+      {popupBlocked === true ? (
+        <div
+          role="alert"
+          className="rounded-lg border border-amber-500/40 bg-amber-950/40 px-4 py-3 text-left text-sm text-amber-100"
+        >
+          <p className="font-medium text-amber-50">Popup diblokir</p>
+          <p className="mt-2 text-amber-100/90">
+            Izinkan <strong>popup</strong> untuk situs ini: klik ikon gembok atau &quot;i&quot; di bilah alamat browser →
+            atur <strong>Popup</strong> menjadi <strong>Izinkan</strong>. Setelah itu, muat ulang halaman ini atau gunakan
+            tombol di bawah.
+          </p>
+        </div>
       ) : null}
-      {downloadPath ? (
-        <p className="mt-3 text-xs text-zinc-500">
-          Unduhan tidak mulai?{" "}
-          <a
-            href={downloadPath}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-emerald-400 underline hover:text-emerald-300"
+
+      <div className={`flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center ${popupBlocked === true ? "mt-6" : ""}`}>
+        {downloadPath ? (
+          <button
+            type="button"
+            onClick={() => openDownloadInNewTab()}
+            className="rounded-lg border border-emerald-500/50 bg-emerald-950/50 px-4 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-900/60"
           >
-            Buka unduhan file
-          </a>
-        </p>
-      ) : null}
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            Unduh file
+          </button>
+        ) : null}
         <a
           href={AFFILIATE_EXNESS_URL}
           target="_blank"
           rel="noopener noreferrer sponsored"
-          className="rounded-lg bg-[#f3a952] px-4 py-3 text-sm font-semibold text-black hover:opacity-90"
+          className="inline-flex justify-center rounded-lg bg-[#f3a952] px-4 py-3 text-sm font-semibold text-black hover:opacity-90"
         >
           Buka Exness
         </a>
@@ -97,15 +99,13 @@ export function GoOutClient() {
           href={AFFILIATE_TICKMILL_URL}
           target="_blank"
           rel="noopener noreferrer sponsored"
-          className="rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-500"
+          className="inline-flex justify-center rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-500"
         >
           Buka Tickmill
         </a>
       </div>
-      <p className="mt-8 text-xs text-zinc-500">
-        {logged ? "Kunjungan tercatat untuk statistik edukasi." : "Mencatat kunjungan…"}
-      </p>
-      <a href="/" className="mt-4 inline-block text-sm text-emerald-400 hover:underline">
+
+      <a href="/" className="mt-8 inline-block text-sm text-emerald-400 hover:underline">
         Kembali ke beranda
       </a>
     </div>
