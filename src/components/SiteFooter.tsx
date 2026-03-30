@@ -62,6 +62,16 @@ export function SiteFooter() {
                   Syarat &amp; ketentuan
                 </Link>
               </li>
+              <li>
+                <Link href="/cara-pemakaian" className="hover:text-broker-accent">
+                  Cara pemakaian
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" className="hover:text-broker-accent">
+                  FAQ
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
