@@ -73,14 +73,15 @@ export async function HomePageContent() {
       <section className="border-b border-broker-border bg-broker-surface/30">
         <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
           <p className="text-sm font-medium uppercase tracking-widest text-broker-accent">
-            Forex & CFD education
+            Komunitas trader
           </p>
           <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight text-white md:text-5xl">
-            Belajar forex dengan gaya platform broker profesional
+            Wadah berkomunikasi, belajar, dan berbagi strategi trading
           </h1>
           <p className="mt-4 max-w-2xl text-broker-muted md:text-lg">
-            Tampilan menginspirasi Exness & IC Markets: gelap, kontras, aksen hijau. Daftar untuk artikel
-            member, wallet IDR, dan fitur komunitas yang akan terus dikembangkan.
+            GMR FX menghubungkan trader dalam satu tempat: diskusi dan chat antar member, materi edukasi dan
+            artikel, berita pasar, serta marketplace indikator &amp; Expert Advisor. Bukan sinyal investasi —
+            ruang untuk saling menguatkan pemahaman dan ide strategi.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link

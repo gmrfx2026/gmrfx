@@ -4,12 +4,13 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { HomePageContent } from "@/components/home/HomePageContent";
 
 export const metadata: Metadata = {
-  title: "GMR FX — Edukasi & Komunitas Forex",
+  title: "GMR FX — Komunitas Trader, Edukasi & Berbagi Strategi",
   description:
-    "Belajar forex dengan materi artikel, galeri, dan komunitas. Wallet IDR antar member dan fitur yang terus berkembang.",
+    "Platform komunitas trading: komunikasi dan chat antar trader, edukasi forex & CFD, berbagi strategi, artikel & berita, marketplace indikator dan Expert Advisor.",
   openGraph: {
-    title: "GMR FX — Edukasi & Komunitas Forex",
-    description: "Artikel, galeri, dan komunitas trading.",
+    title: "GMR FX — Komunitas Trader, Edukasi & Berbagi Strategi",
+    description:
+      "Wadah trader untuk berdiskusi, belajar, dan berbagi ide strategi — dengan artikel, komunitas, dan marketplace indikator & EA.",
     type: "website",
   },
 };

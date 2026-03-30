@@ -9,9 +9,9 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "GMR FX — Edukasi & Komunitas Forex",
+  title: "GMR FX — Komunitas Trader, Edukasi & Berbagi Strategi",
   description:
-    "Artikel, galeri, dan komunitas trading. Wallet IDR antar member dan pengembangan toko indikator.",
+    "Komunitas trading Indonesia: komunikasi antar trader, edukasi forex & CFD, berbagi strategi, artikel & berita, galeri, marketplace indikator & Expert Advisor.",
 };
 
 export const viewport: Viewport = {
