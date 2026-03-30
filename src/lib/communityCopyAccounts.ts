@@ -103,9 +103,9 @@ export async function fetchCommunityPublishedAccounts(
   const skip = (page - 1) * pageSize;
 
   const wherePub = {
-    allowCopy: true,
+    OR: [{ allowCopy: true }, { allowWatch: true }],
     user: { ...listablePublicMemberWhere },
-  } as const;
+  };
 
   const [total, published] = await Promise.all([
     prisma.mtCommunityPublishedAccount.count({ where: wherePub }),
