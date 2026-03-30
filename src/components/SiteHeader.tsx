@@ -3,34 +3,17 @@ import { auth } from "@/auth";
 import { HeaderAuth } from "./HeaderAuth";
 import { MobileSiteNav } from "./MobileSiteNav";
 import { NotificationBell } from "./NotificationBell";
-
-const nav = [
-  { href: "/", label: "Home" },
-  { href: "/artikel", label: "Artikel" },
-  { href: "/indikator", label: "Indikator" },
-  { href: "/ea", label: "EA" },
-  { href: "/berita", label: "Berita" },
-  { href: "/cari", label: "Cari" },
-  { href: "/galeri", label: "Galeri" },
-  { href: "/daftar", label: "Daftar" },
-  { href: "/login", label: "Login" },
-];
+import { getResolvedSiteHeaderNavItems } from "@/lib/siteHeaderNav";
 
 export async function SiteHeader() {
   const session = await auth();
+  const navItems = await getResolvedSiteHeaderNavItems(session);
 
-  const mobileLinks: { href: string; label: string }[] = [];
-  for (const item of nav) {
-    if (item.href === "/daftar" && session) continue;
-    if (item.href === "/login" && session) continue;
-    mobileLinks.push(item);
-  }
-  if (session) {
-    mobileLinks.push({ href: "/profil", label: "Dashboard" });
-    if (session.user.role === "ADMIN") {
-      mobileLinks.push({ href: "/admin", label: "Admin" });
-    }
-  }
+  const mobileLinks = navItems.map((it) => ({
+    href: it.href,
+    label: it.label,
+    adminAccent: it.adminAccent,
+  }));
 
   return (
     <header className="sticky top-0 z-50 border-b border-broker-border bg-broker-bg backdrop-blur-none md:bg-broker-bg/90 md:backdrop-blur-md">
@@ -44,37 +27,20 @@ export async function SiteHeader() {
           </span>
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
-          {nav.map((item) => {
-            if (item.href === "/daftar" && session) return null;
-            if (item.href === "/login" && session) return null;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-md px-3 py-2 text-sm text-broker-muted transition hover:bg-broker-surface hover:text-white"
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-          {session && (
-            <>
-              <Link
-                href="/profil"
-                className="rounded-md px-3 py-2 text-sm text-broker-muted transition hover:bg-broker-surface hover:text-white"
-              >
-                Dashboard
-              </Link>
-              {session.user.role === "ADMIN" && (
-                <Link
-                  href="/admin"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-broker-gold transition hover:bg-broker-surface"
-                >
-                  Admin
-                </Link>
-              )}
-            </>
-          )}
+          {navItems.map((item) => (
+            <Link
+              key={item.key}
+              href={item.href}
+              className={[
+                "rounded-md px-3 py-2 text-sm transition hover:bg-broker-surface",
+                item.adminAccent
+                  ? "font-medium text-broker-gold hover:text-broker-gold"
+                  : "text-broker-muted hover:text-white",
+              ].join(" ")}
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
         <div className="flex items-center gap-2">
           <MobileSiteNav links={mobileLinks} />

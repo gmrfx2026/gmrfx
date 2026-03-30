@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useState } from "react";
 
-export type MobileNavLink = { href: string; label: string };
+export type MobileNavLink = { href: string; label: string; adminAccent?: boolean };
 
 export function MobileSiteNav({ links }: { links: MobileNavLink[] }) {
   const [open, setOpen] = useState(false);
@@ -53,10 +53,15 @@ export function MobileSiteNav({ links }: { links: MobileNavLink[] }) {
           >
             <ul className="flex flex-col gap-0.5 px-2">
               {links.map((item) => (
-                <li key={item.href}>
+                <li key={`${item.href}-${item.label}`}>
                   <Link
                     href={item.href}
-                    className="block rounded-lg px-3 py-2.5 text-sm text-broker-muted transition hover:bg-broker-surface hover:text-white"
+                    className={[
+                      "block rounded-lg px-3 py-2.5 text-sm transition hover:bg-broker-surface",
+                      item.adminAccent
+                        ? "font-medium text-broker-gold hover:text-broker-gold"
+                        : "text-broker-muted hover:text-white",
+                    ].join(" ")}
                     onClick={() => setOpen(false)}
                   >
                     {item.label}
