@@ -37,6 +37,12 @@ export function ProfilNotificationsPanel() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    const onTrade = () => void load();
+    window.addEventListener("gmrfx:trade-alerts-received", onTrade);
+    return () => window.removeEventListener("gmrfx:trade-alerts-received", onTrade);
+  }, [load]);
+
   async function markRead(id: string) {
     await fetch(`/api/notifications/${encodeURIComponent(id)}/read`, { method: "PATCH" });
     setItems((prev) => prev.map((x) => (x.id === id ? { ...x, readAt: new Date().toISOString() } : x)));
