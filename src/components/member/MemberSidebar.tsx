@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { playChatIncomingBeep, readChatBeepPreference } from "@/lib/chatBeep";
-import { CommunityNavEmbedded, PortfolioNavEmbedded } from "@/components/portfolio/PortfolioSubNav";
+import {
+  CommunityNavEmbedded,
+  getCommunityNavLinks,
+  PortfolioNavEmbedded,
+} from "@/components/portfolio/PortfolioSubNav";
 import type { MemberMenuResolvedItem } from "@/lib/memberMenu";
 import type { PortfolioNavConfig } from "@/lib/portfolioMenu";
 import clsx from "clsx";
@@ -58,6 +62,7 @@ export function MemberSidebar({
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab");
   const activeTab = getActiveTab(pathname, tab);
+  const communityDockLinks = useMemo(() => getCommunityNavLinks(portfolioMenu), [portfolioMenu]);
 
   const [chatUnread, setChatUnread] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
@@ -153,6 +158,34 @@ export function MemberSidebar({
                     </div>
                   );
                 })}
+                {communityDockLinks.length > 0 ? (
+                  <>
+                    <div
+                      className="mx-0.5 w-px shrink-0 self-stretch bg-broker-border/50"
+                      aria-hidden
+                      role="separator"
+                    />
+                    {communityDockLinks.map(({ href, label }) => {
+                      const commActive =
+                        pathname === href || pathname.startsWith(`${href}/`);
+                      return (
+                        <div key={href} className="shrink-0">
+                          <Link
+                            href={href}
+                            className={[
+                              "flex max-w-[9.5rem] flex-col items-center justify-center rounded-xl px-2.5 py-2 text-center text-xs font-medium leading-tight transition",
+                              commActive
+                                ? "bg-broker-accent/15 text-broker-accent ring-1 ring-broker-accent/35"
+                                : "text-broker-muted hover:bg-broker-bg/60 hover:text-white",
+                            ].join(" ")}
+                          >
+                            <span className="line-clamp-2">{label}</span>
+                          </Link>
+                        </div>
+                      );
+                    })}
+                  </>
+                ) : null}
               </div>
             </div>
           </div>

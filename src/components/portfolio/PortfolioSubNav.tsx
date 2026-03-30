@@ -102,6 +102,13 @@ function hrefForPortfolioKey(
   }
 }
 
+/** Link komunitas (dock mobile profil, dll.) — label & urutan mengikuti menu admin. */
+export function getCommunityNavLinks(menu: PortfolioNavConfig): { href: string; label: string }[] {
+  return COMM_KEYS.filter((k) => menu[k].enabled)
+    .sort((a, b) => menu[a].sortOrder - menu[b].sortOrder || a.localeCompare(b))
+    .map((k) => ({ href: hrefForPortfolioKey(k), label: menu[k].label }));
+}
+
 /** Sub-menu Komunitas di kartu Member menu (desktop), terpisah dari blok Portofolio MT. */
 export function CommunityNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
   const pathname = usePathname();

@@ -43,6 +43,11 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/profil/portfolio/community/accounts" className="hover:text-broker-accent">
+                  Komunitas
+                </Link>
+              </li>
+              <li>
                 <Link href="/galeri" className="hover:text-broker-accent">
                   Galeri
                 </Link>
