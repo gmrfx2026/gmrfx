@@ -330,6 +330,7 @@ export async function POST(req: Request) {
           entryType: d.entryType,
           positionId: d.positionId ?? null,
           dealReason: d.dealReason,
+          profit: d.profit ?? 0,
         }));
         void (async () => {
           try {

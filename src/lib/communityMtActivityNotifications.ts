@@ -45,10 +45,20 @@ function closeAlertTitle(accountLabel: string, kind: Mt5CloseKind): string {
   switch (kind) {
     case "tp":
       return `${accountLabel}: Take Profit`;
+    case "sl_profit":
+      return `${accountLabel}: Stop Loss+ (profit)`;
     case "sl":
       return `${accountLabel}: Stop Loss`;
     case "stop_out":
       return `${accountLabel}: Stop out`;
+    case "vmargin":
+      return `${accountLabel}: Break / VMargin`;
+    case "rollover":
+      return `${accountLabel}: Rollover`;
+    case "split":
+      return `${accountLabel}: Split`;
+    case "corporate":
+      return `${accountLabel}: Aksi korporasi`;
     default:
       return `${accountLabel}: posisi ditutup`;
   }
