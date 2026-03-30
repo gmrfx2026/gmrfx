@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450" role="img" aria-label="Ilustrasi support resistance">
+  <rect width="800" height="450" fill="#0b0e11"/>
+  <rect x="48" y="56" width="704" height="320" rx="8" fill="#141a20" stroke="#eaecef" stroke-opacity="0.1"/>
+  <line x1="72" y1="120" x2="728" y2="120" stroke="#f6465d" stroke-opacity="0.7" stroke-width="2" stroke-dasharray="10 6"/>
+  <line x1="72" y1="220" x2="728" y2="220" stroke="#2ebd85" stroke-opacity="0.7" stroke-width="2" stroke-dasharray="10 6"/>
+  <line x1="72" y1="320" x2="728" y2="320" stroke="#f0b90b" stroke-opacity="0.6" stroke-width="2" stroke-dasharray="10 6"/>
+  <polyline fill="none" stroke="#eaecef" stroke-width="2.2" stroke-linecap="round"
+    points="72,340 130,300 200,320 280,240 360,280 440,200 520,250 600,190 680,230 728,210"/>
+  <text x="400" y="40" text-anchor="middle" fill="#eaecef" font-family="system-ui,sans-serif" font-size="22" font-weight="600">Zona Support &amp; Resistance</text>
+  <text x="400" y="410" text-anchor="middle" fill="#848e9c" font-family="system-ui,sans-serif" font-size="13">PipHunter · GMR FX · contoh visual</text>
+</svg>

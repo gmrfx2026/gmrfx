@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450" role="img" aria-label="Ilustrasi RSI">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f1419"/>
+      <stop offset="100%" stop-color="#0b0e11"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#bg)"/>
+  <rect x="48" y="48" width="704" height="320" rx="8" fill="#1a1f26" stroke="#2ebd85" stroke-opacity="0.35"/>
+  <polyline fill="none" stroke="#2ebd85" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+    points="80,280 140,260 200,300 260,220 320,250 380,200 440,240 500,180 560,210 620,160 680,190 720,170"/>
+  <line x1="80" y1="320" x2="720" y2="320" stroke="#eaecef" stroke-opacity="0.15" stroke-width="1"/>
+  <text x="400" y="40" text-anchor="middle" fill="#eaecef" font-family="system-ui,sans-serif" font-size="22" font-weight="600">RSI  osilator momentum</text>
+  <text x="400" y="410" text-anchor="middle" fill="#848e9c" font-family="system-ui,sans-serif" font-size="13">PipHunter · GMR FX · contoh visual</text>
+</svg>
