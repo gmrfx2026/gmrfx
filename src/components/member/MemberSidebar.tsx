@@ -195,13 +195,6 @@ export function MemberSidebar({
               {toast}
             </div>
           )}
-
-          {!pathname.startsWith("/profil/portfolio") && (
-            <div className="mt-3 rounded-2xl border border-broker-border/60 bg-broker-surface/40 p-3 text-xs leading-relaxed text-broker-muted shadow-md">
-              Menu ini khusus member. Anda bisa kembangkan nanti jadi toko indikator, transaksi marketplace, dan
-              riwayat transaksi.
-            </div>
-          )}
         </aside>
       </div>
     </>
