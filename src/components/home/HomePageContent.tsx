@@ -3,15 +3,20 @@ import { prisma } from "@/lib/prisma";
 import { ArticleStatus, HomeNewsScope, HomeNewsStatus } from "@prisma/client";
 import { MemberTicker } from "@/components/MemberTicker";
 import {
+  HOME_INDICATORS_VISIBLE_KEY,
   HOME_MEMBER_TICKER_VISIBLE_KEY,
   HOME_NEWS_DOMESTIC_VISIBLE_KEY,
   HOME_NEWS_INTERNATIONAL_VISIBLE_KEY,
   HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY,
+  isHomeIndicatorsVisible,
   isHomeMemberTickerVisible,
   isHomeNewsDomesticVisible,
   isHomeNewsInternationalVisible,
   parseHomeNewsHomepagePerBlock,
 } from "@/lib/homePageSettings";
+import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
+import { marketplaceDescriptionPlainExcerpt } from "@/lib/marketplaceDescription";
+import { resolveMarketplaceIndicatorCoverUrl } from "@/lib/marketplaceCoverImage";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 import { homeNewsAuthorForDisplay } from "@/lib/homeNewsAuthor";
 import {
@@ -39,6 +44,7 @@ export async function HomePageContent() {
     },
   });
   const vis = (key: string) => visRows.find((r) => r.key === key)?.value ?? null;
+  const showHomeIndicators = isHomeIndicatorsVisible(vis(HOME_INDICATORS_VISIBLE_KEY));
   const showMemberTicker = isHomeMemberTickerVisible(vis(HOME_MEMBER_TICKER_VISIBLE_KEY));
   const showDomesticNews = isHomeNewsDomesticVisible(vis(HOME_NEWS_DOMESTIC_VISIBLE_KEY));
   const showIntlNews = isHomeNewsInternationalVisible(vis(HOME_NEWS_INTERNATIONAL_VISIBLE_KEY));
@@ -49,7 +55,7 @@ export async function HomePageContent() {
     subtext: vis(HOME_HERO_SUBTEXT_KEY),
   });
 
-  const [articles, domesticNews, intlNews, members] = await Promise.all([
+  const [articles, domesticNews, intlNews, members, homeIndicators] = await Promise.all([
     prisma.article.findMany({
       where: { status: ArticleStatus.PUBLISHED },
       orderBy: { publishedAt: "desc" },
@@ -78,6 +84,23 @@ export async function HomePageContent() {
           orderBy: { createdAt: "desc" },
           take: 10,
           select: { name: true, kabupaten: true },
+        })
+      : Promise.resolve([]),
+    showHomeIndicators
+      ? prisma.sharedIndicator.findMany({
+          where: { published: true },
+          orderBy: { updatedAt: "desc" },
+          take: 6,
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            description: true,
+            priceIdr: true,
+            platform: true,
+            coverImageUrl: true,
+            seller: { select: { name: true } },
+          },
         })
       : Promise.resolve([]),
   ]);
@@ -110,7 +133,66 @@ export async function HomePageContent() {
 
       {showMemberTicker ? <MemberTicker members={members} /> : null}
 
-      <section className="mx-auto max-w-6xl px-4 py-14">
+      {showHomeIndicators ? (
+        <section className="mx-auto max-w-6xl px-4 py-14">
+          <div className="mb-8 flex items-end justify-between gap-4">
+            <h2 className="text-xl font-bold text-white md:text-2xl">Indikator</h2>
+            <Link href="/indikator" className="text-sm font-medium text-broker-accent hover:underline">
+              Lihat semua
+            </Link>
+          </div>
+          {homeIndicators.length === 0 ? (
+            <p className="text-center text-sm text-broker-muted">Belum ada indikator yang dipublikasikan.</p>
+          ) : (
+            <ul className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              {homeIndicators.map((r) => {
+                const price = Number(r.priceIdr);
+                const excerpt = marketplaceDescriptionPlainExcerpt(r.description, 120);
+                const cover = resolveMarketplaceIndicatorCoverUrl(r.coverImageUrl);
+                return (
+                  <li key={r.id}>
+                    <Link
+                      href={`/indikator/${r.slug}`}
+                      className="group flex h-full flex-col overflow-hidden rounded-xl border border-broker-border bg-broker-surface/40 transition hover:border-broker-accent/40 hover:bg-broker-surface/70"
+                    >
+                      {cover ? (
+                        <div className="relative aspect-[16/9] w-full overflow-hidden border-b border-broker-border/60 bg-broker-bg">
+                          {/* eslint-disable-next-line @next/next/no-img-element -- sampul SVG; next/image memblokir SVG di production */}
+                          <img
+                            src={cover}
+                            alt=""
+                            className="absolute inset-0 h-full w-full object-cover"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        </div>
+                      ) : null}
+                      <div className="flex flex-1 flex-col p-5">
+                        <h3 className="font-semibold text-white group-hover:text-broker-accent">{r.title}</h3>
+                        <p className="mt-1 text-xs text-broker-muted">
+                          {r.seller.name ?? "Member"} · {formatMarketplacePlatformLabel(r.platform)} ·{" "}
+                          {price <= 0 ? (
+                            <span className="text-emerald-400/90">Gratis</span>
+                          ) : (
+                            <>Rp {price.toLocaleString("id-ID")}</>
+                          )}
+                        </p>
+                        {excerpt ? (
+                          <p className="mt-2 line-clamp-2 flex-1 text-sm text-broker-muted">{excerpt}</p>
+                        ) : null}
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      ) : null}
+
+      <section
+        className={`mx-auto max-w-6xl px-4 py-14 ${showHomeIndicators ? "border-t border-broker-border" : ""}`}
+      >
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold text-white md:text-2xl">Artikel terbaru</h2>

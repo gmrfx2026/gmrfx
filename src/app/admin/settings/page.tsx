@@ -6,10 +6,12 @@ import {
 } from "@/lib/memberStatusPagination";
 import { prisma } from "@/lib/prisma";
 import {
+  HOME_INDICATORS_VISIBLE_KEY,
   HOME_MEMBER_TICKER_VISIBLE_KEY,
   HOME_NEWS_DOMESTIC_VISIBLE_KEY,
   HOME_NEWS_INTERNATIONAL_VISIBLE_KEY,
   HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY,
+  isHomeIndicatorsVisible,
   isHomeMemberTickerVisible,
   isHomeNewsDomesticVisible,
   isHomeNewsInternationalVisible,
@@ -36,6 +38,7 @@ export default async function AdminSettingsPage() {
     timelinePer,
     statusCommentsPer,
     memberTicker,
+    homeIndicatorsVis,
     newsDnVis,
     newsIntVis,
     newsPerBlockHome,
@@ -51,6 +54,7 @@ export default async function AdminSettingsPage() {
     prisma.systemSetting.findUnique({ where: { key: MEMBER_TIMELINE_PER_PAGE_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: MEMBER_STATUS_COMMENTS_PER_PAGE_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: HOME_MEMBER_TICKER_VISIBLE_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: HOME_INDICATORS_VISIBLE_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_DOMESTIC_VISIBLE_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_INTERNATIONAL_VISIBLE_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY } }),
@@ -66,8 +70,8 @@ export default async function AdminSettingsPage() {
     <div>
       <h1 className="text-2xl font-bold text-gray-800">Pengaturan konten / sistem</h1>
       <p className="mt-1 text-sm text-gray-600">
-        Teks hero beranda, fee platform, pagination, tampilan beranda (strip member, blok berita), URL RSS, dan
-        hari escrow marketplace. Perubahan hero langsung terlihat di halaman utama situs.
+        Teks hero beranda, fee platform, pagination, tampilan beranda (strip member, blok indikator, blok berita),
+        URL RSS, dan hari escrow marketplace. Perubahan hero langsung terlihat di halaman utama situs.
       </p>
       <div className="mt-6 max-w-2xl rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
         <AdminSettingsForm
@@ -76,6 +80,7 @@ export default async function AdminSettingsPage() {
           initialMemberTimelinePerPage={timelinePer?.value ?? "10"}
           initialMemberStatusCommentsPerPage={statusCommentsPer?.value ?? "10"}
           initialHomeMemberTickerVisible={isHomeMemberTickerVisible(memberTicker?.value ?? null)}
+          initialHomeIndicatorsVisible={isHomeIndicatorsVisible(homeIndicatorsVis?.value ?? null)}
           initialHomeNewsDomesticVisible={isHomeNewsDomesticVisible(newsDnVis?.value ?? null)}
           initialHomeNewsInternationalVisible={isHomeNewsInternationalVisible(newsIntVis?.value ?? null)}
           initialHomeNewsPerBlockHomepage={String(

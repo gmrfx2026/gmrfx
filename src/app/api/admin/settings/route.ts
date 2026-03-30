@@ -8,6 +8,7 @@ import {
 } from "@/lib/memberStatusPagination";
 import { clampPageSize } from "@/lib/walletTransferFilters";
 import {
+  HOME_INDICATORS_VISIBLE_KEY,
   HOME_MEMBER_TICKER_VISIBLE_KEY,
   HOME_NEWS_DOMESTIC_VISIBLE_KEY,
   HOME_NEWS_INTERNATIONAL_VISIBLE_KEY,
@@ -109,6 +110,15 @@ export async function PATCH(req: Request) {
     await prisma.systemSetting.upsert({
       where: { key: HOME_MEMBER_TICKER_VISIBLE_KEY },
       create: { key: HOME_MEMBER_TICKER_VISIBLE_KEY, value: on ? "1" : "0" },
+      update: { value: on ? "1" : "0" },
+    });
+  }
+
+  if (body.homeIndicatorsVisible !== undefined) {
+    const on = Boolean(body.homeIndicatorsVisible);
+    await prisma.systemSetting.upsert({
+      where: { key: HOME_INDICATORS_VISIBLE_KEY },
+      create: { key: HOME_INDICATORS_VISIBLE_KEY, value: on ? "1" : "0" },
       update: { value: on ? "1" : "0" },
     });
   }

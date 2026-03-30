@@ -9,6 +9,7 @@ export function AdminSettingsForm({
   initialMemberTimelinePerPage,
   initialMemberStatusCommentsPerPage,
   initialHomeMemberTickerVisible,
+  initialHomeIndicatorsVisible,
   initialHomeNewsDomesticVisible,
   initialHomeNewsInternationalVisible,
   initialHomeNewsPerBlockHomepage,
@@ -24,6 +25,7 @@ export function AdminSettingsForm({
   initialMemberTimelinePerPage: string;
   initialMemberStatusCommentsPerPage: string;
   initialHomeMemberTickerVisible: boolean;
+  initialHomeIndicatorsVisible: boolean;
   initialHomeNewsDomesticVisible: boolean;
   initialHomeNewsInternationalVisible: boolean;
   initialHomeNewsPerBlockHomepage: string;
@@ -40,6 +42,7 @@ export function AdminSettingsForm({
   const [timelinePer, setTimelinePer] = useState(initialMemberTimelinePerPage);
   const [statusCommentsPer, setStatusCommentsPer] = useState(initialMemberStatusCommentsPerPage);
   const [memberTickerVisible, setMemberTickerVisible] = useState(initialHomeMemberTickerVisible);
+  const [homeIndicatorsVisible, setHomeIndicatorsVisible] = useState(initialHomeIndicatorsVisible);
   const [homeNewsDomesticVisible, setHomeNewsDomesticVisible] = useState(initialHomeNewsDomesticVisible);
   const [homeNewsInternationalVisible, setHomeNewsInternationalVisible] = useState(
     initialHomeNewsInternationalVisible
@@ -66,6 +69,7 @@ export function AdminSettingsForm({
         memberTimelinePerPage: timelinePer,
         memberStatusCommentsPerPage: statusCommentsPer,
         homeMemberTickerVisible: memberTickerVisible,
+        homeIndicatorsVisible,
         homeNewsDomesticVisible: homeNewsDomesticVisible,
         homeNewsInternationalVisible: homeNewsInternationalVisible,
         homeNewsPerBlockHomepage: homeNewsPerBlockHomepage,
@@ -181,6 +185,21 @@ export function AdminSettingsForm({
           <span className="mt-1 block text-xs text-gray-500">
             Bilah horizontal di bawah hero yang menampilkan nama member terbaru. Nonaktifkan jika ingin
             menyembunyikannya.
+          </span>
+        </span>
+      </label>
+      <label className="flex cursor-pointer items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={homeIndicatorsVisible}
+          onChange={(e) => setHomeIndicatorsVisible(e.target.checked)}
+          className="mt-1 h-4 w-4 shrink-0"
+        />
+        <span>
+          <span className="font-medium text-gray-800">Tampilkan blok &quot;Indikator&quot; di beranda</span>
+          <span className="mt-1 block text-xs text-gray-500">
+            Kartu indikator dipublikasikan (maks. 6 terbaru) di atas &quot;Artikel terbaru&quot;. Nonaktifkan untuk
+            menyembunyikan blok ini.
           </span>
         </span>
       </label>

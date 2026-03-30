@@ -10,6 +10,9 @@ export const HOME_NEWS_INTERNATIONAL_VISIBLE_KEY = "home_news_international_visi
 /** Jumlah item berita per blok (dalam negeri & internasional) di beranda. Default 6, clamp 1–24. */
 export const HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY = "home_news_per_block_homepage";
 
+/** Blok katalog indikator di beranda (di atas "Artikel terbaru"). Default = tampil. */
+export const HOME_INDICATORS_VISIBLE_KEY = "home_indicators_visible";
+
 export function parseHomeNewsHomepagePerBlock(value: string | null | undefined): number {
   const n = Number.parseInt(String(value ?? "6"), 10);
   if (!Number.isFinite(n)) return 6;
@@ -33,5 +36,9 @@ export function isHomeNewsDomesticVisible(value: string | null | undefined): boo
 }
 
 export function isHomeNewsInternationalVisible(value: string | null | undefined): boolean {
+  return isHomeSectionVisibleBySetting(value);
+}
+
+export function isHomeIndicatorsVisible(value: string | null | undefined): boolean {
   return isHomeSectionVisibleBySetting(value);
 }
