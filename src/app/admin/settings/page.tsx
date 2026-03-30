@@ -20,6 +20,12 @@ import {
   HOME_NEWS_RSS_INTERNATIONAL_URL_KEY,
 } from "@/lib/homeNewsRssSettings";
 import { MARKETPLACE_ESCROW_DAYS_KEY } from "@/lib/marketplaceEscrow";
+import {
+  HOME_HERO_DEFAULTS,
+  HOME_HERO_EYEBROW_KEY,
+  HOME_HERO_SUBTEXT_KEY,
+  HOME_HERO_TITLE_KEY,
+} from "@/lib/homeHeroSettings";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +42,9 @@ export default async function AdminSettingsPage() {
     rssDn,
     rssInt,
     escrowDays,
+    heroEyebrow,
+    heroTitle,
+    heroSubtext,
   ] = await Promise.all([
     prisma.systemSetting.findUnique({ where: { key: "platform_fee_percent" } }),
     prisma.systemSetting.findUnique({ where: { key: ARTICLE_COMMENTS_PER_PAGE_KEY } }),
@@ -48,17 +57,19 @@ export default async function AdminSettingsPage() {
     prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_DOMESTIC_URL_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_INTERNATIONAL_URL_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: MARKETPLACE_ESCROW_DAYS_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: HOME_HERO_EYEBROW_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: HOME_HERO_TITLE_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: HOME_HERO_SUBTEXT_KEY } }),
   ]);
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-800">Pengaturan konten / sistem</h1>
       <p className="mt-1 text-sm text-gray-600">
-        Fee platform untuk transaksi marketplace (persen) — digunakan saat modul toko diaktifkan. Pagination
-        komentar artikel dan linimasa member mengatur jumlah item per halaman di halaman publik. Tampilan
-        beranda: strip member baru, blok berita DN/internasional. URL RSS untuk impor cepat di Admin → Berita beranda.
+        Teks hero beranda, fee platform, pagination, tampilan beranda (strip member, blok berita), URL RSS, dan
+        hari escrow marketplace. Perubahan hero langsung terlihat di halaman utama situs.
       </p>
-      <div className="mt-6 max-w-md rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="mt-6 max-w-2xl rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
         <AdminSettingsForm
           initialFee={fee?.value ?? "2.5"}
           initialArticleCommentsPerPage={commentsPer?.value ?? "10"}
@@ -73,6 +84,9 @@ export default async function AdminSettingsPage() {
           initialHomeNewsRssDomesticUrl={rssDn?.value ?? ""}
           initialHomeNewsRssInternationalUrl={rssInt?.value ?? ""}
           initialMarketplaceEscrowDays={escrowDays?.value ?? "3"}
+          initialHomeHeroEyebrow={heroEyebrow?.value ?? HOME_HERO_DEFAULTS.eyebrow}
+          initialHomeHeroTitle={heroTitle?.value ?? HOME_HERO_DEFAULTS.title}
+          initialHomeHeroSubtext={heroSubtext?.value ?? HOME_HERO_DEFAULTS.subtext}
         />
       </div>
     </div>

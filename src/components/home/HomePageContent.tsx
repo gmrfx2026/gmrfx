@@ -14,6 +14,12 @@ import {
 } from "@/lib/homePageSettings";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 import { homeNewsAuthorForDisplay } from "@/lib/homeNewsAuthor";
+import {
+  HOME_HERO_EYEBROW_KEY,
+  HOME_HERO_SUBTEXT_KEY,
+  HOME_HERO_TITLE_KEY,
+  resolveHomeHeroFromSettings,
+} from "@/lib/homeHeroSettings";
 
 /** Konten beranda (data + JSX). Dipakai dari `app/page.tsx` di luar layout `(site)`. */
 export async function HomePageContent() {
@@ -34,6 +40,11 @@ export async function HomePageContent() {
   const showDomesticNews = isHomeNewsDomesticVisible(vis(HOME_NEWS_DOMESTIC_VISIBLE_KEY));
   const showIntlNews = isHomeNewsInternationalVisible(vis(HOME_NEWS_INTERNATIONAL_VISIBLE_KEY));
   const newsPerBlock = parseHomeNewsHomepagePerBlock(vis(HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY));
+  const hero = resolveHomeHeroFromSettings({
+    eyebrow: vis(HOME_HERO_EYEBROW_KEY),
+    title: vis(HOME_HERO_TITLE_KEY),
+    subtext: vis(HOME_HERO_SUBTEXT_KEY),
+  });
 
   const [articles, domesticNews, intlNews, members] = await Promise.all([
     prisma.article.findMany({
@@ -72,16 +83,11 @@ export async function HomePageContent() {
     <div>
       <section className="border-b border-broker-border bg-broker-surface/30">
         <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
-          <p className="text-sm font-medium uppercase tracking-widest text-broker-accent">
-            Komunitas trader
-          </p>
+          <p className="text-sm font-medium uppercase tracking-widest text-broker-accent">{hero.eyebrow}</p>
           <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight text-white md:text-5xl">
-            Wadah berkomunikasi, belajar, dan berbagi strategi trading
+            {hero.title}
           </h1>
-          <p className="mt-4 max-w-2xl text-broker-muted md:text-lg">
-            Menghubungkan trader dalam satu wadah: diskusi, materi edukasi, berita pasar, indikator &amp;
-            Expert Advisor. Ruang untuk saling menguatkan pemahaman, ide dan strategi.
-          </p>
+          <p className="mt-4 max-w-2xl text-broker-muted md:text-lg whitespace-pre-wrap">{hero.subtext}</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href="/daftar"

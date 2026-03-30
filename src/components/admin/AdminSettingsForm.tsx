@@ -15,6 +15,9 @@ export function AdminSettingsForm({
   initialHomeNewsRssDomesticUrl,
   initialHomeNewsRssInternationalUrl,
   initialMarketplaceEscrowDays,
+  initialHomeHeroEyebrow,
+  initialHomeHeroTitle,
+  initialHomeHeroSubtext,
 }: {
   initialFee: string;
   initialArticleCommentsPerPage: string;
@@ -27,6 +30,9 @@ export function AdminSettingsForm({
   initialHomeNewsRssDomesticUrl: string;
   initialHomeNewsRssInternationalUrl: string;
   initialMarketplaceEscrowDays: string;
+  initialHomeHeroEyebrow: string;
+  initialHomeHeroTitle: string;
+  initialHomeHeroSubtext: string;
 }) {
   const router = useRouter();
   const [v, setV] = useState(initialFee);
@@ -44,6 +50,9 @@ export function AdminSettingsForm({
   const [rssDn, setRssDn] = useState(initialHomeNewsRssDomesticUrl);
   const [rssInt, setRssInt] = useState(initialHomeNewsRssInternationalUrl);
   const [escrowDays, setEscrowDays] = useState(initialMarketplaceEscrowDays);
+  const [homeHeroEyebrow, setHomeHeroEyebrow] = useState(initialHomeHeroEyebrow);
+  const [homeHeroTitle, setHomeHeroTitle] = useState(initialHomeHeroTitle);
+  const [homeHeroSubtext, setHomeHeroSubtext] = useState(initialHomeHeroSubtext);
   const [msg, setMsg] = useState("");
 
   async function save(e: React.FormEvent) {
@@ -63,6 +72,9 @@ export function AdminSettingsForm({
         homeNewsRssDomesticUrl: rssDn,
         homeNewsRssInternationalUrl: rssInt,
         marketplaceEscrowDays: escrowDays,
+        homeHeroEyebrow,
+        homeHeroTitle,
+        homeHeroSubtext,
       }),
     });
     setMsg(res.ok ? "Disimpan." : "Gagal");
@@ -71,6 +83,41 @@ export function AdminSettingsForm({
 
   return (
     <form onSubmit={save} className="space-y-3">
+      <div className="rounded-lg border border-gray-200 bg-gray-50/80 p-4">
+        <p className="text-sm font-medium text-gray-800">Hero beranda (/)</p>
+        <p className="mt-1 text-xs text-gray-500">
+          Teks di bagian atas halaman utama. Kosongkan salah satu field lalu simpan untuk mengembalikan teks
+          bawaan pada field tersebut.
+        </p>
+        <label className="mt-3 block text-sm">
+          <span className="text-gray-600">Label kecil (uppercase di situs)</span>
+          <input
+            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm"
+            value={homeHeroEyebrow}
+            onChange={(e) => setHomeHeroEyebrow(e.target.value)}
+            maxLength={120}
+          />
+        </label>
+        <label className="mt-2 block text-sm">
+          <span className="text-gray-600">Judul utama</span>
+          <input
+            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm"
+            value={homeHeroTitle}
+            onChange={(e) => setHomeHeroTitle(e.target.value)}
+            maxLength={400}
+          />
+        </label>
+        <label className="mt-2 block text-sm">
+          <span className="text-gray-600">Paragraf penjelasan</span>
+          <textarea
+            className="mt-1 min-h-[120px] w-full rounded border border-gray-300 px-3 py-2 text-sm"
+            value={homeHeroSubtext}
+            onChange={(e) => setHomeHeroSubtext(e.target.value)}
+            maxLength={4000}
+            rows={5}
+          />
+        </label>
+      </div>
       <label className="block text-sm">
         <span className="text-gray-600">Hari escrow marketplace (1–30)</span>
         <input

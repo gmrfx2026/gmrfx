@@ -21,6 +21,14 @@ import {
   normalizeRssFeedUrl,
 } from "@/lib/homeNewsRssSettings";
 import { MARKETPLACE_ESCROW_DAYS_KEY } from "@/lib/marketplaceEscrow";
+import {
+  HOME_HERO_EYEBROW_KEY,
+  HOME_HERO_SUBTEXT_KEY,
+  HOME_HERO_TITLE_KEY,
+  clampHomeHeroEyebrow,
+  clampHomeHeroSubtext,
+  clampHomeHeroTitle,
+} from "@/lib/homeHeroSettings";
 
 export async function GET() {
   const session = await auth();
@@ -194,6 +202,29 @@ export async function PATCH(req: Request) {
       create: { key: MARKETPLACE_ESCROW_DAYS_KEY, value: String(clamped) },
       update: { value: String(clamped) },
     });
+  }
+
+  async function upsertOrDeleteHero(key: string, raw: string) {
+    const v = raw.trim();
+    if (!v) {
+      await prisma.systemSetting.deleteMany({ where: { key } });
+    } else {
+      await prisma.systemSetting.upsert({
+        where: { key },
+        create: { key, value: v },
+        update: { value: v },
+      });
+    }
+  }
+
+  if (body.homeHeroEyebrow !== undefined) {
+    await upsertOrDeleteHero(HOME_HERO_EYEBROW_KEY, clampHomeHeroEyebrow(String(body.homeHeroEyebrow ?? "")));
+  }
+  if (body.homeHeroTitle !== undefined) {
+    await upsertOrDeleteHero(HOME_HERO_TITLE_KEY, clampHomeHeroTitle(String(body.homeHeroTitle ?? "")));
+  }
+  if (body.homeHeroSubtext !== undefined) {
+    await upsertOrDeleteHero(HOME_HERO_SUBTEXT_KEY, clampHomeHeroSubtext(String(body.homeHeroSubtext ?? "")));
   }
 
   return NextResponse.json({ ok: true });
