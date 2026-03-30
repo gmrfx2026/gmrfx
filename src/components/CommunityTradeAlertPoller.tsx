@@ -3,7 +3,11 @@
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useRef } from "react";
 import { useToast } from "@/components/ToastProvider";
-import { playChatIncomingBeep, readChatBeepPreference } from "@/lib/chatBeep";
+import {
+  attachAudioUnlockOnFirstUserGesture,
+  playChatIncomingBeep,
+  readChatBeepPreference,
+} from "@/lib/chatBeep";
 
 type TradeAlertItem = {
   id: string;
@@ -22,7 +26,6 @@ export function CommunityTradeAlertPoller() {
   const { show } = useToast();
   const afterRef = useRef<string>(new Date().toISOString());
   const seenRef = useRef<Set<string>>(new Set());
-  const beepRef = useRef<AudioContext | null>(null);
 
   const poll = useCallback(async () => {
     try {
@@ -47,7 +50,7 @@ export function CommunityTradeAlertPoller() {
         const t = new Date(it.createdAt).getTime();
         if (t > latestMs) latestMs = t;
         if (!playedBeep && readChatBeepPreference()) {
-          playChatIncomingBeep(beepRef);
+          playChatIncomingBeep();
           playedBeep = true;
         }
       }
@@ -63,6 +66,7 @@ export function CommunityTradeAlertPoller() {
 
     afterRef.current = new Date().toISOString();
     seenRef.current.clear();
+    attachAudioUnlockOnFirstUserGesture();
 
     let intervalId: number | undefined;
 

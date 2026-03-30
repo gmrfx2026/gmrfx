@@ -55,7 +55,6 @@ export function ProfilChatBox({
   const lastMessageIdsRef = useRef<Set<string>>(new Set());
   const threadInitializedRef = useRef(false);
   const threadLoadErrorShownRef = useRef(false);
-  const audioCtxRef = useRef<AudioContext | null>(null);
   const beepEnabledRef = useRef(false);
 
   useEffect(() => {
@@ -72,7 +71,7 @@ export function ProfilChatBox({
       const newOnes = next.filter((m) => !prevIds.has(m.id));
       const fromOthers = newOnes.filter((m) => m.senderId !== selfId);
       if (fromOthers.length > 0) {
-        playChatIncomingBeep(audioCtxRef);
+        playChatIncomingBeep();
       }
     }
 
@@ -317,7 +316,7 @@ export function ProfilChatBox({
                 } catch {
                   /* private mode */
                 }
-                if (on) playChatIncomingBeep(audioCtxRef);
+                if (on) playChatIncomingBeep();
               }}
               className="h-4 w-4 rounded border-broker-border bg-broker-bg text-broker-accent focus:ring-broker-accent"
             />

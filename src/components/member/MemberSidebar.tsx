@@ -63,8 +63,6 @@ export function MemberSidebar({
   const [toast, setToast] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const prevChatUnreadRef = useRef(0);
-  const sidebarBeepAudioRef = useRef<AudioContext | null>(null);
-
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
@@ -89,7 +87,7 @@ export function MemberSidebar({
       if (nextChat > prevChatUnreadRef.current) {
         setToast(`Ada chat baru (${nextChat}).`);
         if (readChatBeepPreference()) {
-          playChatIncomingBeep(sidebarBeepAudioRef);
+          playChatIncomingBeep();
         }
         prevChatUnreadRef.current = nextChat;
         setTimeout(() => {
