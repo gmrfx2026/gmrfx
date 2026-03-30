@@ -88,7 +88,17 @@ export type DealRowForCloseResolve = {
   profit?: number | null;
   /** DEAL_COMMENT dari terminal (alasan/komentar saat tutup). */
   comment?: string | null;
+  /** Symbol deal (fallback jika ticket posisi ≠ DEAL_POSITION_ID). */
+  symbol?: string | null;
 };
+
+function normSym(s: string): string {
+  return String(s).trim().toLowerCase();
+}
+
+function isFiniteDealReason(r: unknown): r is number {
+  return typeof r === "number" && Number.isFinite(r);
+}
 
 const MAX_DEAL_COMMENT_IN_ALERT = 220;
 
@@ -121,6 +131,23 @@ function latestExitForPosition(
   return matches.reduce((a, b) => (a.dealTime >= b.dealTime ? a : b));
 }
 
+/** Deal keluar terbaru untuk symbol (hanya yang punya dealReason numerik). */
+function latestExitForSymbol(
+  symbol: string,
+  deals: DealRowForCloseResolve[]
+): DealRowForCloseResolve | null {
+  const sym = normSym(symbol);
+  const matches = deals.filter(
+    (d) =>
+      isExitEntry(d.entryType) &&
+      d.symbol != null &&
+      normSym(String(d.symbol)) === sym &&
+      isFiniteDealReason(d.dealReason)
+  );
+  if (matches.length === 0) return null;
+  return matches.reduce((a, b) => (a.dealTime >= b.dealTime ? a : b));
+}
+
 function profitToNumber(p: unknown): number | null {
   if (p == null) return null;
   if (typeof p === "number") return Number.isFinite(p) ? p : null;
@@ -144,19 +171,30 @@ export async function enrichClosedWithCloseKind(
   if (closed.length === 0) return [];
 
   const resolvedByTicket = new Map<string, ResolvedClose>();
+
+  const mergeResolved = (ticket: string, next: ResolvedClose) => {
+    const prev = resolvedByTicket.get(ticket);
+    const kind =
+      next.closeKind !== "unknown" ? next.closeKind : prev?.closeKind ?? "unknown";
+    resolvedByTicket.set(ticket, {
+      closeKind: kind,
+      dealComment: next.dealComment ?? prev?.dealComment ?? null,
+    });
+  };
+
   const needDb = new Set<string>();
 
   for (const c of closed) {
     const ex = latestExitForPosition(c.ticket, dealsInBatch);
     if (ex) {
-      const closeKind =
-        typeof ex.dealReason === "number"
-          ? closeKindFromDealReason(ex.dealReason, ex.profit ?? null)
-          : "unknown";
+      const closeKind = isFiniteDealReason(ex.dealReason)
+        ? closeKindFromDealReason(ex.dealReason, ex.profit ?? null)
+        : "unknown";
       resolvedByTicket.set(c.ticket, {
         closeKind,
         dealComment: sanitizeDealCommentForAlert(ex.comment),
       });
+      if (!isFiniteDealReason(ex.dealReason)) needDb.add(c.ticket);
     } else {
       needDb.add(c.ticket);
     }
@@ -177,12 +215,54 @@ export async function enrichClosedWithCloseKind(
     for (const r of rows) {
       if (!r.positionId || seen.has(r.positionId)) continue;
       seen.add(r.positionId);
-      if (!resolvedByTicket.has(r.positionId)) {
-        resolvedByTicket.set(r.positionId, {
-          closeKind: closeKindFromDealReason(r.dealReason, profitToNumber(r.profit)),
-          dealComment: sanitizeDealCommentForAlert(r.comment),
-        });
-      }
+      mergeResolved(r.positionId, {
+        closeKind: closeKindFromDealReason(r.dealReason, profitToNumber(r.profit)),
+        dealComment: sanitizeDealCommentForAlert(r.comment),
+      });
+    }
+  }
+
+  const symCount = new Map<string, number>();
+  for (const c of closed) {
+    const k = normSym(c.symbol);
+    symCount.set(k, (symCount.get(k) ?? 0) + 1);
+  }
+
+  for (const c of closed) {
+    const cur = resolvedByTicket.get(c.ticket);
+    if (cur && cur.closeKind !== "unknown") continue;
+    if (symCount.get(normSym(c.symbol)) !== 1) continue;
+    const ex2 = latestExitForSymbol(c.symbol, dealsInBatch);
+    if (ex2 && isFiniteDealReason(ex2.dealReason)) {
+      mergeResolved(c.ticket, {
+        closeKind: closeKindFromDealReason(ex2.dealReason, ex2.profit ?? null),
+        dealComment: sanitizeDealCommentForAlert(ex2.comment) ?? cur?.dealComment ?? null,
+      });
+    }
+  }
+
+  const recentCutoff = new Date(Date.now() - 25 * 60 * 1000);
+  for (const c of closed) {
+    const cur = resolvedByTicket.get(c.ticket);
+    if (cur && cur.closeKind !== "unknown") continue;
+    if (symCount.get(normSym(c.symbol)) !== 1) continue;
+    const row = await prisma.mtDeal.findFirst({
+      where: {
+        userId,
+        mtLogin,
+        entryType: { in: [DEAL_ENTRY_OUT, DEAL_ENTRY_OUT_BY] },
+        symbol: c.symbol.trim() || c.symbol,
+        dealTime: { gte: recentCutoff },
+        dealReason: { not: null },
+      },
+      orderBy: { dealTime: "desc" },
+      select: { dealReason: true, profit: true, comment: true },
+    });
+    if (row?.dealReason != null) {
+      mergeResolved(c.ticket, {
+        closeKind: closeKindFromDealReason(row.dealReason, profitToNumber(row.profit)),
+        dealComment: sanitizeDealCommentForAlert(row.comment) ?? cur?.dealComment ?? null,
+      });
     }
   }
 

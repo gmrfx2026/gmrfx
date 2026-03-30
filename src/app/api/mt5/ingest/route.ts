@@ -332,6 +332,7 @@ export async function POST(req: Request) {
           dealReason: d.dealReason,
           profit: d.profit ?? 0,
           comment: d.comment ?? "",
+          symbol: d.symbol ?? "",
         }));
         void (async () => {
           try {

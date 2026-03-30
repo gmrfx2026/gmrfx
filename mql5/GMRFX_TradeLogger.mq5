@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "GMR FX"
 #property link      "https://github.com/"
-#property version   "1.05"
+#property version   "1.06"
 #property strict
 
 ulong  g_gmrfx_pos_ids[];
@@ -113,6 +113,8 @@ string GmrfxOpenPositionsJson()
       double profit = PositionGetDouble(POSITION_PROFIT);
       double swap = PositionGetDouble(POSITION_SWAP);
       ulong posIdentifier = (ulong)PositionGetInteger(POSITION_IDENTIFIER);
+      // Samakan dengan DEAL_POSITION_ID di deal penutupan (HistoryDealInteger DEAL_POSITION_ID).
+      ulong idForApi = (posIdentifier > 0 ? posIdentifier : ticket);
       double comm = GmrfxCommissionForPositionId(posIdentifier);
       long openTime = (long)PositionGetInteger(POSITION_TIME);
 
@@ -130,7 +132,7 @@ string GmrfxOpenPositionsJson()
       first = false;
 
       out += "{";
-      out += "\"ticket\":\"" + StringFormat("%I64u", ticket) + "\",";
+      out += "\"ticket\":\"" + StringFormat("%I64u", idForApi) + "\",";
       out += "\"symbol\":\"" + symJson + "\",";
       out += "\"side\":" + IntegerToString((int)ptype) + ",";
       out += "\"volume\":" + DoubleToString(vol, 8) + ",";
