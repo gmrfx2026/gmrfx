@@ -230,10 +230,9 @@ export async function seedEducationalArticles(
     if (mode === "create_new") {
       const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 9)}`;
       const slug = `${a.slug}-${suffix}`;
-      const titleSuffix = now.toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
       await prisma.article.create({
         data: {
-          title: `${a.title} · ${titleSuffix}`,
+          title: a.title,
           slug,
           excerpt: a.excerpt,
           contentHtml,
