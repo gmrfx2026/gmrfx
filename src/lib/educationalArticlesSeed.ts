@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { ArticleStatus, Role } from "@prisma/client";
+import { formatArticleTitle } from "@/lib/articleTitleFormat";
 import { injectBrokerAffiliateLinks } from "@/lib/brokerAffiliateLinks";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 
@@ -226,13 +227,14 @@ export async function seedEducationalArticles(
 
   for (const a of rows) {
     const contentHtml = prepareArticleHtml(a.contentHtml);
+    const title = formatArticleTitle(a.title);
 
     if (mode === "create_new") {
       const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 9)}`;
       const slug = `${a.slug}-${suffix}`;
       await prisma.article.create({
         data: {
-          title: a.title,
+          title,
           slug,
           excerpt: a.excerpt,
           contentHtml,
@@ -245,7 +247,7 @@ export async function seedEducationalArticles(
       await prisma.article.upsert({
         where: { slug: a.slug },
         create: {
-          title: a.title,
+          title,
           slug: a.slug,
           excerpt: a.excerpt,
           contentHtml,
@@ -254,7 +256,7 @@ export async function seedEducationalArticles(
           publishedAt: now,
         },
         update: {
-          title: a.title,
+          title,
           excerpt: a.excerpt,
           contentHtml,
           status: ArticleStatus.PUBLISHED,

@@ -6,6 +6,7 @@ import { ArticleStatus } from "@prisma/client";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { sanitizePlainText } from "@/lib/sanitizePlainText";
 import { slugify } from "@/lib/slug";
+import { formatArticleTitle } from "@/lib/articleTitleFormat";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -14,7 +15,7 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const title = sanitizePlainText(String(body.title ?? ""), 200);
+  const title = formatArticleTitle(sanitizePlainText(String(body.title ?? ""), 200));
   const excerpt = sanitizePlainText(String(body.excerpt ?? ""), 400);
   const rawHtml = String(body.contentHtml ?? "");
   if (!title || !rawHtml) {

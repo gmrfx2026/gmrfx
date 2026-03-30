@@ -5,6 +5,7 @@ import { ArticleStatus } from "@prisma/client";
 import { notifyFollowersNewArticle } from "@/lib/memberNotifications";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { sanitizePlainText } from "@/lib/sanitizePlainText";
+import { formatArticleTitle } from "@/lib/articleTitleFormat";
 
 export async function PATCH(req: Request) {
   const session = await auth();
@@ -25,7 +26,7 @@ export async function PATCH(req: Request) {
   }
 
   const data: Record<string, unknown> = {};
-  if (body.title) data.title = sanitizePlainText(String(body.title), 200);
+  if (body.title) data.title = formatArticleTitle(sanitizePlainText(String(body.title), 200));
   if (body.excerpt !== undefined) data.excerpt = body.excerpt ? sanitizePlainText(String(body.excerpt), 400) : null;
   if (body.contentHtml) data.contentHtml = sanitizeArticleHtml(String(body.contentHtml));
   if (body.status && ["DRAFT", "PENDING", "PUBLISHED", "REJECTED"].includes(body.status)) {
