@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "prisma": {
-    "seed": "npx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+    "seed": "npx tsx prisma/seed.ts"
   },
   "scripts": {
     "clean": "node -e \"try{require('fs').rmSync('.next',{recursive:true,force:true})}catch(e){}\"",
@@ -18,7 +18,8 @@
     "test:e2e": "playwright test",
     "postinstall": "node scripts/prisma-generate.cjs",
     "db:push": "prisma db push",
-    "db:seed": "npx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
+    "db:seed": "npx tsx prisma/seed.ts",
+    "db:seed:articles": "npx tsx prisma/seed-articles.ts",
     "db:seed-wilayah": "node prisma/seed-wilayah.cjs",
     "db:generate": "node scripts/prisma-generate.cjs",
     "db:generate:force": "node scripts/prisma-generate-force.cjs"
@@ -62,6 +63,7 @@
     "prisma": "^6.5.0",
     "tailwindcss": "^3.4.15",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.2"
   }
 }
