@@ -7,7 +7,11 @@ import {
   MEMBER_TIMELINE_PER_PAGE_KEY,
 } from "@/lib/memberStatusPagination";
 import { clampPageSize } from "@/lib/walletTransferFilters";
-import { HOME_MEMBER_TICKER_VISIBLE_KEY } from "@/lib/homePageSettings";
+import {
+  HOME_MEMBER_TICKER_VISIBLE_KEY,
+  HOME_NEWS_DOMESTIC_VISIBLE_KEY,
+  HOME_NEWS_INTERNATIONAL_VISIBLE_KEY,
+} from "@/lib/homePageSettings";
 import {
   HOME_NEWS_RSS_DOMESTIC_URL_KEY,
   HOME_NEWS_RSS_INTERNATIONAL_URL_KEY,
@@ -90,6 +94,24 @@ export async function PATCH(req: Request) {
     await prisma.systemSetting.upsert({
       where: { key: HOME_MEMBER_TICKER_VISIBLE_KEY },
       create: { key: HOME_MEMBER_TICKER_VISIBLE_KEY, value: on ? "1" : "0" },
+      update: { value: on ? "1" : "0" },
+    });
+  }
+
+  if (body.homeNewsDomesticVisible !== undefined) {
+    const on = Boolean(body.homeNewsDomesticVisible);
+    await prisma.systemSetting.upsert({
+      where: { key: HOME_NEWS_DOMESTIC_VISIBLE_KEY },
+      create: { key: HOME_NEWS_DOMESTIC_VISIBLE_KEY, value: on ? "1" : "0" },
+      update: { value: on ? "1" : "0" },
+    });
+  }
+
+  if (body.homeNewsInternationalVisible !== undefined) {
+    const on = Boolean(body.homeNewsInternationalVisible);
+    await prisma.systemSetting.upsert({
+      where: { key: HOME_NEWS_INTERNATIONAL_VISIBLE_KEY },
+      create: { key: HOME_NEWS_INTERNATIONAL_VISIBLE_KEY, value: on ? "1" : "0" },
       update: { value: on ? "1" : "0" },
     });
   }
