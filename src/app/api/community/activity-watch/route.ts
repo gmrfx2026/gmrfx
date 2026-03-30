@@ -45,8 +45,8 @@ export async function POST(req: Request) {
       const pub = await tx.mtCommunityPublishedAccount.findUnique({
         where: { userId_mtLogin: { userId: publisherUserId, mtLogin } },
       });
-      if (!pub?.allowCopy) {
-        throw new Error("Akun tidak dipublikasikan di komunitas");
+      if (!pub?.allowWatch) {
+        throw new Error("Pemilik akun tidak membuka layanan Ikuti untuk login ini");
       }
 
       const dup = await tx.mtCommunityActivityWatch.findUnique({

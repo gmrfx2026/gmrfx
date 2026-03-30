@@ -27,7 +27,7 @@ const DEFAULTS: Record<PortfolioMenuTabKey, { label: string; sortOrder: number }
   playbook: { label: "Playbook", sortOrder: 40 },
   community_accounts: { label: "Akun", sortOrder: 50 },
   community_following: { label: "Mengikuti (copy)", sortOrder: 60 },
-  community_publish: { label: "Publikasi copy", sortOrder: 70 },
+  community_publish: { label: "Publikasi komunitas", sortOrder: 70 },
 };
 
 function isTabKey(s: string): s is PortfolioMenuTabKey {

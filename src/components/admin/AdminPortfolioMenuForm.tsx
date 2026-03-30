@@ -19,7 +19,7 @@ const HELP: Record<string, string> = {
   playbook: "Playbook / catatan strategi.",
   community_accounts: "Komunitas: daftar akun publikasi.",
   community_following: "Komunitas: akun yang di-copy.",
-  community_publish: "Komunitas: pengaturan publikasi copy.",
+  community_publish: "Komunitas: pengaturan publikasi Copy / Ikuti.",
 };
 
 export function AdminPortfolioMenuForm({ initialItems }: { initialItems: AdminPortfolioMenuRow[] }) {

@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       });
 
       if (!pub?.allowCopy) {
-        throw new Error("Akun ini tidak membuka copy atau tidak ditemukan");
+        throw new Error("Pemilik akun tidak membuka layanan Copy untuk login ini");
       }
 
       const dup = await tx.mtCopyFollow.findUnique({

@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 const putSchema = z.object({
   mtLogin: z.string().min(1).max(32),
   allowCopy: z.boolean(),
+  allowWatch: z.boolean(),
   copyFree: z.boolean(),
   copyPriceIdr: z.number().min(0).default(0),
   watchAlertFree: z.boolean(),
@@ -46,8 +47,16 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Data tidak valid", details: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { mtLogin, allowCopy, copyFree, copyPriceIdr, watchAlertFree, watchAlertPriceIdr, platform } =
-    parsed.data;
+  const {
+    mtLogin,
+    allowCopy,
+    allowWatch,
+    copyFree,
+    copyPriceIdr,
+    watchAlertFree,
+    watchAlertPriceIdr,
+    platform,
+  } = parsed.data;
   const userId = session.user.id;
 
   if (!(await userOwnsMtLogin(userId, mtLogin))) {
@@ -63,7 +72,7 @@ export async function PUT(req: Request) {
     }
   }
 
-  if (allowCopy && !watchAlertFree) {
+  if (allowWatch && !watchAlertFree) {
     if (!Number.isFinite(watchAlertPriceIdr) || watchAlertPriceIdr < MIN_PAID_IDR) {
       return NextResponse.json(
         { error: `Harga alert Ikuti minimal Rp ${MIN_PAID_IDR.toLocaleString("id-ID")}` },
@@ -84,6 +93,7 @@ export async function PUT(req: Request) {
         userId,
         mtLogin,
         allowCopy,
+        allowWatch,
         copyFree,
         copyPriceIdr: priceDec,
         watchAlertFree,
@@ -92,6 +102,7 @@ export async function PUT(req: Request) {
       },
       update: {
         allowCopy,
+        allowWatch,
         copyFree,
         copyPriceIdr: priceDec,
         watchAlertFree,

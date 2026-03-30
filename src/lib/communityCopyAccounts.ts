@@ -33,6 +33,8 @@ export type CommunityPublishedAccountView = {
   /** Harga sekali daftar alert Ikuti (jika tidak gratis). */
   watchAlertFree: boolean;
   watchAlertPriceIdr: number;
+  allowCopy: boolean;
+  allowWatch: boolean;
   alreadyFollowing: boolean;
   /** Mengikuti alert buka/tutup posisi (tombol Ikuti). */
   activityWatching: boolean;
@@ -262,6 +264,8 @@ export async function fetchCommunityPublishedAccounts(
       copyPriceIdr: Number(row.copyPriceIdr),
       watchAlertFree: row.watchAlertFree,
       watchAlertPriceIdr: Number(row.watchAlertPriceIdr),
+      allowCopy: row.allowCopy,
+      allowWatch: row.allowWatch,
       alreadyFollowing: followSet.has(k),
       activityWatching: watchSet.has(k),
       gainTone: pctTone(absGain),

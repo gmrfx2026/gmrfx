@@ -9,6 +9,7 @@ export type MtCommunityPublishRow = {
   brokerName: string | null;
   brokerServer: string | null;
   allowCopy: boolean;
+  allowWatch: boolean;
   copyFree: boolean;
   copyPriceIdr: number;
   watchAlertFree: boolean;
@@ -84,6 +85,7 @@ export async function loadMtCommunityPublishRows(userId: string): Promise<MtComm
       brokerName: snap?.brokerName ?? null,
       brokerServer: snap?.brokerServer ?? null,
       allowCopy: pub?.allowCopy ?? false,
+      allowWatch: pub?.allowWatch ?? false,
       copyFree: pub?.copyFree ?? true,
       copyPriceIdr: pub ? Number(pub.copyPriceIdr) : 0,
       watchAlertFree: pub?.watchAlertFree ?? true,

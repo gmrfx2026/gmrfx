@@ -248,6 +248,8 @@ model MtCommunityPublishedAccount {
   userId       String
   mtLogin      String
   allowCopy    Boolean  @default(false)
+  /// Tombol & langganan "Ikuti" (alert buka/tutup posisi), terpisah dari Copy.
+  allowWatch   Boolean  @default(false)
   /// true = member lain boleh copy gratis; false = wajib bayar copyPriceIdr.
   copyFree     Boolean  @default(true)
   copyPriceIdr Decimal  @default(0) @db.Decimal(18, 2)
@@ -263,6 +265,7 @@ model MtCommunityPublishedAccount {
 
   @@unique([userId, mtLogin])
   @@index([allowCopy])
+  @@index([allowWatch])
 }
 
 /// Member yang memilih "Copy" pada akun komunitas (gratis atau berbayar via wallet).

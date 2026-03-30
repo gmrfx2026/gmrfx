@@ -99,6 +99,14 @@ export async function notifyCommunityMtActivityWatchers(params: {
   const { opened, closed, sltpChanged } = params;
   if (opened.length === 0 && closed.length === 0 && sltpChanged.length === 0) return;
 
+  const pub = await prisma.mtCommunityPublishedAccount.findUnique({
+    where: {
+      userId_mtLogin: { userId: params.publisherUserId, mtLogin: params.mtLogin },
+    },
+    select: { allowWatch: true },
+  });
+  if (!pub?.allowWatch) return;
+
   const watchers = await prisma.mtCommunityActivityWatch.findMany({
     where: {
       publisherUserId: params.publisherUserId,

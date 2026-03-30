@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     where: {
       userId: ownerId,
       mtLogin,
-      allowCopy: true,
+      OR: [{ allowCopy: true }, { allowWatch: true }],
       user: { ...listablePublicMemberWhere },
     },
   });

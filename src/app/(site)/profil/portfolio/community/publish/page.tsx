@@ -18,17 +18,17 @@ export default async function PortfolioCommunityPublishPage() {
     <div className="space-y-6">
       <header>
         <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">
-          Publikasi copy trade
+          Publikasi komunitas
         </h1>
         <p className="mt-1 text-sm text-broker-muted">
-          Pilih akun MT yang sudah terhubung ke situs, lalu izinkan member lain untuk{" "}
-          <strong className="text-white">Copy</strong> —{" "}
+          Per akun MT: aktifkan <strong className="text-white">Copy</strong>,{" "}
+          <strong className="text-white">Ikuti</strong>, atau keduanya. Akun hanya muncul di{" "}
           <Link href="/profil/portfolio/community/accounts" className="text-broker-accent hover:underline">
-            lihat daftar komunitas
-          </Link>
-          . Nama di daftar komunitas: dari terminal jika EA mengirim{" "}
-          <span className="font-mono text-[10px]">tradeAccountName</span> (ACCOUNT_NAME); jika kosong, dipakai
-          nama profil Anda di website.
+            daftar komunitas
+          </Link>{" "}
+          jika salah satu layanan di atas dihidupkan. Nama di daftar: dari terminal (
+          <span className="font-mono text-[10px]">tradeAccountName</span>) jika ada; jika kosong dipakai nama profil
+          Anda di website.
         </p>
       </header>
 

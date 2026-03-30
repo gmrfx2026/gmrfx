@@ -86,8 +86,9 @@ export default async function PortfolioCommunityAccountsPage({
         <div className="rounded-2xl border border-broker-border/80 bg-broker-surface/40 px-6 py-12 text-center text-sm text-broker-muted">
           <p className="font-medium text-white">Belum ada akun yang dipublikasikan</p>
           <p className="mx-auto mt-2 max-w-md">
-            Saat member lain mengaktifkan &quot;izinkan Copy&quot;, baris akan muncul di sini dengan tombol{" "}
-            <strong className="text-broker-accent">Copy</strong> (gratis atau berbayar lewat wallet IDR).
+            Saat pemilik mengaktifkan <strong className="text-white">Copy</strong> dan/atau{" "}
+            <strong className="text-white">Ikuti</strong> di halaman publikasi, akun muncul di sini dengan tombol
+            sesuai pengaturan mereka.
           </p>
         </div>
       ) : (
@@ -170,27 +171,31 @@ export default async function PortfolioCommunityAccountsPage({
                       <div className="flex flex-col items-end gap-2 sm:flex-row sm:justify-end">
                         {viewerId ? (
                           <>
-                            <CommunityActivityWatchButton
-                              publisherUserId={r.publisherUserId}
-                              mtLogin={r.mtLogin}
-                              initiallyWatching={r.activityWatching}
-                              watchAlertFree={r.watchAlertFree}
-                              watchAlertPriceIdr={r.watchAlertPriceIdr}
-                            />
-                            <CommunityCopyFollowButton
-                              publisherUserId={r.publisherUserId}
-                              mtLogin={r.mtLogin}
-                              copyFree={r.copyFree}
-                              copyPriceIdr={r.copyPriceIdr}
-                              alreadyFollowing={r.alreadyFollowing}
-                            />
+                            {r.allowWatch ? (
+                              <CommunityActivityWatchButton
+                                publisherUserId={r.publisherUserId}
+                                mtLogin={r.mtLogin}
+                                initiallyWatching={r.activityWatching}
+                                watchAlertFree={r.watchAlertFree}
+                                watchAlertPriceIdr={r.watchAlertPriceIdr}
+                              />
+                            ) : null}
+                            {r.allowCopy ? (
+                              <CommunityCopyFollowButton
+                                publisherUserId={r.publisherUserId}
+                                mtLogin={r.mtLogin}
+                                copyFree={r.copyFree}
+                                copyPriceIdr={r.copyPriceIdr}
+                                alreadyFollowing={r.alreadyFollowing}
+                              />
+                            ) : null}
                           </>
                         ) : (
                           <Link
                             href={`/login?callbackUrl=/profil/portfolio/community/accounts`}
                             className="inline-block rounded-lg border border-broker-accent/40 px-2 py-1 text-[10px] font-semibold text-broker-accent hover:bg-broker-accent/10 sm:text-xs"
                           >
-                            Login untuk Copy
+                            Login untuk Copy / Ikuti
                           </Link>
                         )}
                       </div>

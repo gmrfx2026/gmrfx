@@ -22,7 +22,7 @@ export default async function CommunityPublishedAccountSummaryPage({
     where: {
       userId: ownerId,
       mtLogin,
-      allowCopy: true,
+      OR: [{ allowCopy: true }, { allowWatch: true }],
       user: { ...listablePublicMemberWhere },
     },
     include: {

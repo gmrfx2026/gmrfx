@@ -8,6 +8,7 @@ import type { MtCommunityPublishRow } from "@/lib/mtCommunityPublishRows";
 function PublishRowForm({ row }: { row: MtCommunityPublishRow }) {
   const router = useRouter();
   const [allowCopy, setAllowCopy] = useState(row.allowCopy);
+  const [allowWatch, setAllowWatch] = useState(row.allowWatch);
   const [copyFree, setCopyFree] = useState(row.copyFree);
   const [copyPriceIdr, setCopyPriceIdr] = useState(
     row.copyPriceIdr > 0 ? String(Math.round(row.copyPriceIdr)) : "10000"
@@ -29,7 +30,7 @@ function PublishRowForm({ row }: { row: MtCommunityPublishRow }) {
       return;
     }
     const watchPriceNum = Number.parseFloat(watchAlertPriceIdr.replace(/,/g, "."));
-    if (allowCopy && !watchAlertFree && (!Number.isFinite(watchPriceNum) || watchPriceNum < 1000)) {
+    if (allowWatch && !watchAlertFree && (!Number.isFinite(watchPriceNum) || watchPriceNum < 1000)) {
       setMsg("Harga alert Ikuti minimal Rp 1.000");
       return;
     }
@@ -42,6 +43,7 @@ function PublishRowForm({ row }: { row: MtCommunityPublishRow }) {
         body: JSON.stringify({
           mtLogin: row.mtLogin,
           allowCopy,
+          allowWatch,
           copyFree,
           copyPriceIdr: copyFree ? 0 : priceNum,
           watchAlertFree,
@@ -89,22 +91,45 @@ function PublishRowForm({ row }: { row: MtCommunityPublishRow }) {
       </div>
 
       <div className="mt-4 grid gap-3 border-t border-broker-border/50 pt-4 sm:grid-cols-2">
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-broker-muted">
-          <input
-            type="checkbox"
-            checked={allowCopy}
-            onChange={(e) => setAllowCopy(e.target.checked)}
-            className="rounded border-broker-border"
-          />
-          Tampilkan di komunitas &amp; izinkan tombol Copy
-        </label>
+        <div className="space-y-2 sm:col-span-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-broker-muted">
+            Tampil di komunitas (pilih satu atau keduanya)
+          </p>
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-broker-muted">
+            <input
+              type="checkbox"
+              checked={allowCopy}
+              onChange={(e) => setAllowCopy(e.target.checked)}
+              className="rounded border-broker-border"
+            />
+            <span>
+              <span className="text-white">Copy trade</span> — tombol Copy &amp; langganan mirror (terpisah dari Ikuti)
+            </span>
+          </label>
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-broker-muted">
+            <input
+              type="checkbox"
+              checked={allowWatch}
+              onChange={(e) => setAllowWatch(e.target.checked)}
+              className="rounded border-broker-border"
+            />
+            <span>
+              <span className="text-white">Ikuti</span> — alert toast/notifikasi saat buka/tutup posisi
+            </span>
+          </label>
+          {!allowCopy && !allowWatch ? (
+            <p className="text-xs text-amber-200/90">
+              Jika keduanya mati, akun ini tidak muncul di daftar komunitas sampai Anda mengaktifkan salah satu.
+            </p>
+          ) : null}
+        </div>
 
-        <div className="text-sm text-broker-muted">
+        <div className="text-sm text-broker-muted sm:col-span-2">
           <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide">Platform</span>
           <select
             value={platform}
             onChange={(e) => setPlatform(e.target.value as "mt4" | "mt5")}
-            className="w-full rounded-lg border border-broker-border/70 bg-broker-bg/60 px-2 py-1.5 text-xs text-white"
+            className="w-full max-w-xs rounded-lg border border-broker-border/70 bg-broker-bg/60 px-2 py-1.5 text-xs text-white"
           >
             <option value="mt5">MetaTrader 5</option>
             <option value="mt4">MetaTrader 4</option>
@@ -113,6 +138,10 @@ function PublishRowForm({ row }: { row: MtCommunityPublishRow }) {
 
         <div className="sm:col-span-2">
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-broker-muted">Biaya copy</p>
+          {!allowCopy ? (
+            <p className="text-xs text-broker-muted">Aktifkan &quot;Copy trade&quot; di atas untuk mengatur harga Copy.</p>
+          ) : (
+            <>
           <div className="flex flex-wrap gap-4">
             <label className="flex cursor-pointer items-center gap-2 text-sm text-white">
               <input
@@ -152,12 +181,18 @@ function PublishRowForm({ row }: { row: MtCommunityPublishRow }) {
               </p>
             </div>
           ) : null}
+            </>
+          )}
         </div>
 
         <div className="sm:col-span-2">
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-broker-muted">
             Biaya alert posisi (tombol &quot;Ikuti&quot;)
           </p>
+          {!allowWatch ? (
+            <p className="text-xs text-broker-muted">Aktifkan &quot;Ikuti&quot; di atas untuk mengatur harga alert.</p>
+          ) : (
+            <>
           <p className="mb-2 text-xs text-broker-muted">
             Terpisah dari harga Copy. Jika berbayar: satu pembayaran wallet IDR per periode ~30 hari; mereka
             mendapat toast/notifikasi saat posisi buka/tutup. Setelah habis: notifikasi &amp; email, lalu bisa
@@ -197,6 +232,8 @@ function PublishRowForm({ row }: { row: MtCommunityPublishRow }) {
               </label>
             </div>
           ) : null}
+            </>
+          )}
         </div>
       </div>
 
@@ -221,7 +258,7 @@ export function CommunityPublishClient({ initialRows }: { initialRows: MtCommuni
         <p className="font-medium text-white">Belum ada akun MT terhubung</p>
         <p className="mt-2 text-broker-muted">
           Pasang EA dengan token di halaman Ringkasan portofolio, lalu kembali ke sini untuk mengatur publikasi
-          copy.
+          Copy dan/atau Ikuti per akun.
         </p>
       </div>
     );
