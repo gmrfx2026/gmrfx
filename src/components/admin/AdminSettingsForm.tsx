@@ -9,6 +9,8 @@ export function AdminSettingsForm({
   initialMemberTimelinePerPage,
   initialMemberStatusCommentsPerPage,
   initialHomeMemberTickerVisible,
+  initialHomeNewsDomesticVisible,
+  initialHomeNewsInternationalVisible,
   initialHomeNewsRssDomesticUrl,
   initialHomeNewsRssInternationalUrl,
 }: {
@@ -17,6 +19,8 @@ export function AdminSettingsForm({
   initialMemberTimelinePerPage: string;
   initialMemberStatusCommentsPerPage: string;
   initialHomeMemberTickerVisible: boolean;
+  initialHomeNewsDomesticVisible: boolean;
+  initialHomeNewsInternationalVisible: boolean;
   initialHomeNewsRssDomesticUrl: string;
   initialHomeNewsRssInternationalUrl: string;
 }) {
@@ -26,6 +30,10 @@ export function AdminSettingsForm({
   const [timelinePer, setTimelinePer] = useState(initialMemberTimelinePerPage);
   const [statusCommentsPer, setStatusCommentsPer] = useState(initialMemberStatusCommentsPerPage);
   const [memberTickerVisible, setMemberTickerVisible] = useState(initialHomeMemberTickerVisible);
+  const [homeNewsDomesticVisible, setHomeNewsDomesticVisible] = useState(initialHomeNewsDomesticVisible);
+  const [homeNewsInternationalVisible, setHomeNewsInternationalVisible] = useState(
+    initialHomeNewsInternationalVisible
+  );
   const [rssDn, setRssDn] = useState(initialHomeNewsRssDomesticUrl);
   const [rssInt, setRssInt] = useState(initialHomeNewsRssInternationalUrl);
   const [msg, setMsg] = useState("");
@@ -41,6 +49,8 @@ export function AdminSettingsForm({
         memberTimelinePerPage: timelinePer,
         memberStatusCommentsPerPage: statusCommentsPer,
         homeMemberTickerVisible: memberTickerVisible,
+        homeNewsDomesticVisible: homeNewsDomesticVisible,
+        homeNewsInternationalVisible: homeNewsInternationalVisible,
         homeNewsRssDomesticUrl: rssDn,
         homeNewsRssInternationalUrl: rssInt,
       }),
@@ -99,6 +109,34 @@ export function AdminSettingsForm({
           <span className="mt-1 block text-xs text-gray-500">
             Bilah horizontal di bawah hero yang menampilkan nama member terbaru. Nonaktifkan jika ingin
             menyembunyikannya.
+          </span>
+        </span>
+      </label>
+      <label className="flex cursor-pointer items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={homeNewsDomesticVisible}
+          onChange={(e) => setHomeNewsDomesticVisible(e.target.checked)}
+          className="mt-1 h-4 w-4 shrink-0"
+        />
+        <span>
+          <span className="font-medium text-gray-800">Tampilkan blok &quot;Berita dalam negeri&quot; di beranda</span>
+          <span className="mt-1 block text-xs text-gray-500">
+            Menyembunyikan hanya di halaman utama; halaman /berita dan artikel tetap bisa diakses.
+          </span>
+        </span>
+      </label>
+      <label className="flex cursor-pointer items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={homeNewsInternationalVisible}
+          onChange={(e) => setHomeNewsInternationalVisible(e.target.checked)}
+          className="mt-1 h-4 w-4 shrink-0"
+        />
+        <span>
+          <span className="font-medium text-gray-800">Tampilkan blok &quot;Berita internasional&quot; di beranda</span>
+          <span className="mt-1 block text-xs text-gray-500">
+            Sama seperti di atas — hanya mengatur tampilan di beranda.
           </span>
         </span>
       </label>
