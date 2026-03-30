@@ -10,6 +10,7 @@ export const PORTFOLIO_MENU_TAB_KEYS = [
   "playbook",
   "community_accounts",
   "community_following",
+  "community_my_followers",
   "community_publish",
 ] as const;
 
@@ -27,6 +28,7 @@ const DEFAULTS: Record<PortfolioMenuTabKey, { label: string; sortOrder: number }
   playbook: { label: "Playbook", sortOrder: 40 },
   community_accounts: { label: "Akun", sortOrder: 50 },
   community_following: { label: "Mengikuti (copy)", sortOrder: 60 },
+  community_my_followers: { label: "Pengikut akun", sortOrder: 65 },
   community_publish: { label: "Publikasi komunitas", sortOrder: 70 },
 };
 

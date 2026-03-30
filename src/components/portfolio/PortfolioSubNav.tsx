@@ -64,7 +64,12 @@ function SectionToggle({
   );
 }
 
-const COMM_KEYS = ["community_accounts", "community_following", "community_publish"] as const;
+const COMM_KEYS = [
+  "community_accounts",
+  "community_following",
+  "community_my_followers",
+  "community_publish",
+] as const;
 const MID_KEYS = ["journal", "trade_log", "playbook"] as const;
 
 type CommKey = (typeof COMM_KEYS)[number];
@@ -88,6 +93,8 @@ function hrefForPortfolioKey(
       return "/profil/portfolio/community/accounts";
     case "community_following":
       return "/profil/portfolio/community/following";
+    case "community_my_followers":
+      return "/profil/portfolio/community/pengikut";
     case "community_publish":
       return "/profil/portfolio/community/publish";
     default:
@@ -123,6 +130,7 @@ export function PortfolioNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
   const playbookActive = pathname.startsWith("/profil/portfolio/playbook");
   const commAccountsActive = pathname.startsWith("/profil/portfolio/community/accounts");
   const commFollowingActive = pathname.startsWith("/profil/portfolio/community/following");
+  const commMyFollowersActive = pathname.startsWith("/profil/portfolio/community/pengikut");
   const commPublishActive = pathname.startsWith("/profil/portfolio/community/publish");
 
   const midSorted = useMemo(
@@ -178,6 +186,7 @@ export function PortfolioNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
   function isCommActive(k: CommKey): boolean {
     if (k === "community_accounts") return commAccountsActive;
     if (k === "community_following") return commFollowingActive;
+    if (k === "community_my_followers") return commMyFollowersActive;
     return commPublishActive;
   }
 

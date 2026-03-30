@@ -30,6 +30,14 @@ export default async function PortfolioCommunityPublishPage() {
           <span className="font-mono text-[10px]">tradeAccountName</span>) jika ada; jika kosong dipakai nama profil
           Anda di website.
         </p>
+        <p className="mt-2 text-sm">
+          <Link
+            href="/profil/portfolio/community/pengikut"
+            className="font-medium text-broker-accent hover:underline"
+          >
+            Lihat siapa yang Copy / Ikuti akun Anda →
+          </Link>
+        </p>
       </header>
 
       <CommunityPublishClient initialRows={initialRows} />
