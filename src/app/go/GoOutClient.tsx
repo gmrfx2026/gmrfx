@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AFFILIATE_EXNESS_URL, AFFILIATE_TICKMILL_URL } from "@/lib/affiliatePartners";
 import { parseGoPageDownloadPath } from "@/lib/goPageDownloadPath";
 
@@ -26,9 +26,44 @@ function getOrCreateVisitorId(): string {
   return id;
 }
 
-function tryOpenUrl(url: string): boolean {
-  const w = window.open(url, "_blank", "noopener,noreferrer");
-  return Boolean(w);
+/** Tanpa daftar fitur window — beberapa browser lebih sering mengizinkan popup. */
+function openInNewTab(url: string): boolean {
+  try {
+    const w = window.open(url, "_blank");
+    if (w) {
+      try {
+        w.opener = null;
+      } catch {
+        /* ignore */
+      }
+      return true;
+    }
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+/**
+ * Unduhan API kadang gagal dengan window.open langsung; buka tab kosong lalu arahkan ke URL unduhan.
+ */
+function openDownloadInNewTab(url: string): boolean {
+  if (openInNewTab(url)) return true;
+  try {
+    const w = window.open("about:blank", "_blank");
+    if (w) {
+      try {
+        w.opener = null;
+      } catch {
+        /* ignore */
+      }
+      w.location.href = url;
+      return true;
+    }
+  } catch {
+    /* ignore */
+  }
+  return false;
 }
 
 export function GoOutClient() {
@@ -36,6 +71,7 @@ export function GoOutClient() {
   const downloadPath = parseGoPageDownloadPath(searchParams.get("download"));
 
   const [popupBlocked, setPopupBlocked] = useState<boolean | null>(null);
+  const timeoutsRef = useRef<number[]>([]);
 
   useEffect(() => {
     const visitorId = getOrCreateVisitorId();
@@ -45,69 +81,59 @@ export function GoOutClient() {
       body: JSON.stringify({ visitorId }),
     }).catch(() => {});
 
-    const ex = tryOpenUrl(AFFILIATE_EXNESS_URL);
-    const tk = tryOpenUrl(AFFILIATE_TICKMILL_URL);
-    let dl = true;
-    if (downloadPath) {
-      const origin = window.location.origin;
-      dl = tryOpenUrl(`${origin}${downloadPath}`);
-    }
-    const allOk = ex && tk && (!downloadPath || dl);
-    setPopupBlocked(!allOk);
+    const origin = window.location.origin;
+    const fullDownload = downloadPath ? `${origin}${downloadPath}` : "";
+
+    let exOk = false;
+    let tkOk = false;
+    let dlOk = true;
+
+    const schedule = (fn: () => void, ms: number) => {
+      const id = window.setTimeout(fn, ms);
+      timeoutsRef.current.push(id);
+    };
+
+    schedule(() => {
+      exOk = openInNewTab(AFFILIATE_EXNESS_URL);
+    }, 0);
+
+    schedule(() => {
+      tkOk = openInNewTab(AFFILIATE_TICKMILL_URL);
+    }, 200);
+
+    schedule(() => {
+      if (fullDownload) {
+        dlOk = openDownloadInNewTab(fullDownload);
+      }
+      const allOk = exOk && tkOk && (!downloadPath || dlOk);
+      setPopupBlocked(!allOk);
+    }, 450);
+
+    return () => {
+      for (const id of timeoutsRef.current) {
+        clearTimeout(id);
+      }
+      timeoutsRef.current = [];
+    };
   }, [downloadPath]);
 
-  function openDownloadInNewTab() {
-    if (!downloadPath) return;
-    tryOpenUrl(`${window.location.origin}${downloadPath}`);
+  if (popupBlocked !== true) {
+    return <div className="min-h-[1px] w-full" aria-hidden />;
   }
 
   return (
-    <div className="mx-auto max-w-md text-center">
-      {popupBlocked === true ? (
-        <div
-          role="alert"
-          className="rounded-lg border border-amber-500/40 bg-amber-950/40 px-4 py-3 text-left text-sm text-amber-100"
-        >
-          <p className="font-medium text-amber-50">Popup diblokir</p>
-          <p className="mt-2 text-amber-100/90">
-            Izinkan <strong>popup</strong> untuk situs ini: klik ikon gembok atau &quot;i&quot; di bilah alamat browser →
-            atur <strong>Popup</strong> menjadi <strong>Izinkan</strong>. Setelah itu, muat ulang halaman ini atau gunakan
-            tombol di bawah.
-          </p>
-        </div>
-      ) : null}
-
-      <div className={`flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center ${popupBlocked === true ? "mt-6" : ""}`}>
-        {downloadPath ? (
-          <button
-            type="button"
-            onClick={() => openDownloadInNewTab()}
-            className="rounded-lg border border-emerald-500/50 bg-emerald-950/50 px-4 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-900/60"
-          >
-            Unduh file
-          </button>
-        ) : null}
-        <a
-          href={AFFILIATE_EXNESS_URL}
-          target="_blank"
-          rel="noopener noreferrer sponsored"
-          className="inline-flex justify-center rounded-lg bg-[#f3a952] px-4 py-3 text-sm font-semibold text-black hover:opacity-90"
-        >
-          Buka Exness
-        </a>
-        <a
-          href={AFFILIATE_TICKMILL_URL}
-          target="_blank"
-          rel="noopener noreferrer sponsored"
-          className="inline-flex justify-center rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-500"
-        >
-          Buka Tickmill
-        </a>
+    <div className="mx-auto max-w-md px-2 text-center">
+      <div
+        role="alert"
+        className="rounded-lg border border-amber-500/40 bg-amber-950/40 px-4 py-3 text-left text-sm text-amber-100"
+      >
+        <p className="font-medium text-amber-50">Popup diblokir</p>
+        <p className="mt-2 text-amber-100/90">
+          Izinkan <strong>popup</strong> untuk situs ini: klik ikon gembok atau &quot;i&quot; di bilah alamat browser → atur{" "}
+          <strong>Popup</strong> menjadi <strong>Izinkan</strong>. Setelah itu, <strong>muat ulang halaman ini</strong>{" "}
+          agar tab mitra broker dan unduhan file terbuka otomatis.
+        </p>
       </div>
-
-      <a href="/" className="mt-8 inline-block text-sm text-emerald-400 hover:underline">
-        Kembali ke beranda
-      </a>
     </div>
   );
 }
