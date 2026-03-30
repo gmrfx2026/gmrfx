@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
+import { marketplaceDescriptionPlainExcerpt } from "@/lib/marketplaceDescription";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +45,7 @@ export default async function IndikatorCatalogPage() {
         <ul className="mt-10 grid gap-4 sm:grid-cols-2">
           {rows.map((r) => {
             const price = Number(r.priceIdr);
-            const excerpt = (r.description ?? "").trim().slice(0, 160);
+            const excerpt = marketplaceDescriptionPlainExcerpt(r.description, 160);
             return (
               <li key={r.id}>
                 <Link

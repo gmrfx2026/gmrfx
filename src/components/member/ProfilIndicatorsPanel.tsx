@@ -1,8 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
 import { useCallback, useEffect, useState } from "react";
+
+const MarketplaceRichDescription = dynamic(
+  () =>
+    import("@/components/member/MarketplaceRichDescription").then((m) => m.MarketplaceRichDescription),
+  { ssr: false, loading: () => <p className="py-4 text-sm text-broker-muted">Memuat editor…</p> }
+);
 
 type Row = {
   id: string;
@@ -18,7 +25,7 @@ type Row = {
 
 const emptyForm = {
   title: "",
-  description: "",
+  description: "<p></p>",
   priceIdr: "0",
   platform: "mt5",
   published: false,
@@ -33,6 +40,8 @@ export function ProfilIndicatorsPanel() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [file, setFile] = useState<File | null>(null);
+  /** Remount editor agar isi sinkron saat buka form baru / edit. */
+  const [descEditorKey, setDescEditorKey] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -62,13 +71,14 @@ export function ProfilIndicatorsPanel() {
     setFile(null);
     setMsg(null);
     setErr(null);
+    setDescEditorKey((k) => k + 1);
   }
 
   function startEdit(row: Row) {
     setEditId(row.id);
     setForm({
       title: row.title,
-      description: row.description ?? "",
+      description: row.description?.trim() ? row.description : "<p></p>",
       priceIdr: String(row.priceIdr),
       platform: row.platform,
       published: row.published,
@@ -76,6 +86,7 @@ export function ProfilIndicatorsPanel() {
     setFile(null);
     setMsg(null);
     setErr(null);
+    setDescEditorKey((k) => k + 1);
   }
 
   async function submit(e: React.FormEvent) {
@@ -86,7 +97,7 @@ export function ProfilIndicatorsPanel() {
 
     const fd = new FormData();
     fd.set("title", form.title.trim());
-    fd.set("description", form.description.trim());
+    fd.set("description", form.description);
     fd.set("priceIdr", form.priceIdr.trim() || "0");
     fd.set("platform", form.platform);
     fd.set("published", form.published ? "true" : "false");
@@ -121,7 +132,8 @@ export function ProfilIndicatorsPanel() {
         <h2 className="text-2xl font-bold text-white">Indikator & strategi</h2>
         <p className="mt-1 text-sm text-broker-muted">
           Unggah file (.zip, .ex4/.ex5, .mq4/.mq5). Harga 0 = gratis — member lain bisa langsung unduh setelah
-          login. Berbayar = pembeli memotong saldo wallet IDR ke Anda.
+          login. Berbayar = pembeli memotong saldo wallet IDR ke Anda. Deskripsi memakai editor seperti artikel
+          (tebal, list, gambar JPG/PNG/WebP lewat tombol Gambar).
         </p>
         <p className="mt-2 text-sm text-broker-muted">
           Katalog publik:{" "}
@@ -158,16 +170,16 @@ export function ProfilIndicatorsPanel() {
           />
         </label>
 
-        <label className="block space-y-1">
+        <div className="space-y-1">
           <span className="text-xs text-broker-muted">Deskripsi (opsional)</span>
-          <textarea
-            rows={4}
-            maxLength={8000}
-            value={form.description}
-            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-            className="w-full rounded-lg border border-broker-border bg-broker-bg px-3 py-2 text-sm text-white"
-          />
-        </label>
+          <div key={descEditorKey} className="min-h-[12rem]">
+            <MarketplaceRichDescription
+              value={form.description}
+              onChange={(html) => setForm((f) => ({ ...f, description: html }))}
+              placeholder="Jelaskan indikator, cara instal, parameter…"
+            />
+          </div>
+        </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block space-y-1">
@@ -190,6 +202,8 @@ export function ProfilIndicatorsPanel() {
             >
               <option value="mt5">MetaTrader 5</option>
               <option value="mt4">MetaTrader 4</option>
+              <option value="tradingview">TradingView</option>
+              <option value="other">Lainnya</option>
             </select>
           </label>
         </div>

@@ -1,8 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
 import { useCallback, useEffect, useState } from "react";
+
+const MarketplaceRichDescription = dynamic(
+  () =>
+    import("@/components/member/MarketplaceRichDescription").then((m) => m.MarketplaceRichDescription),
+  { ssr: false, loading: () => <p className="py-4 text-sm text-broker-muted">Memuat editor…</p> }
+);
 
 type Row = {
   id: string;
@@ -33,6 +40,7 @@ export function ProfilEaPanel() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [file, setFile] = useState<File | null>(null);
+  const [descEditorKey, setDescEditorKey] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -62,13 +70,14 @@ export function ProfilEaPanel() {
     setFile(null);
     setMsg(null);
     setErr(null);
+    setDescEditorKey((k) => k + 1);
   }
 
   function startEdit(row: Row) {
     setEditId(row.id);
     setForm({
       title: row.title,
-      description: row.description ?? "",
+      description: row.description?.trim() ? row.description : "<p></p>",
       priceIdr: String(row.priceIdr),
       platform: row.platform,
       published: row.published,
@@ -76,6 +85,7 @@ export function ProfilEaPanel() {
     setFile(null);
     setMsg(null);
     setErr(null);
+    setDescEditorKey((k) => k + 1);
   }
 
   async function submit(e: React.FormEvent) {
@@ -86,7 +96,7 @@ export function ProfilEaPanel() {
 
     const fd = new FormData();
     fd.set("title", form.title.trim());
-    fd.set("description", form.description.trim());
+    fd.set("description", form.description);
     fd.set("priceIdr", form.priceIdr.trim() || "0");
     fd.set("platform", form.platform);
     fd.set("published", form.published ? "true" : "false");
@@ -121,7 +131,8 @@ export function ProfilEaPanel() {
         <h2 className="text-2xl font-bold text-white">Expert Advisor (EA)</h2>
         <p className="mt-1 text-sm text-broker-muted">
           Robot / EA untuk MT4 atau MT5. Aturan sama seperti indikator: harga 0 = gratis; berbayar memotong
-          wallet pembeli dan mengkredit Anda.
+          wallet pembeli dan mengkredit Anda. Deskripsi memakai editor seperti artikel (format teks, list,
+          gambar).
         </p>
         <p className="mt-2 text-sm text-broker-muted">
           Katalog:{" "}
@@ -158,16 +169,16 @@ export function ProfilEaPanel() {
           />
         </label>
 
-        <label className="block space-y-1">
+        <div className="space-y-1">
           <span className="text-xs text-broker-muted">Deskripsi (opsional)</span>
-          <textarea
-            rows={4}
-            maxLength={8000}
-            value={form.description}
-            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-            className="w-full rounded-lg border border-broker-border bg-broker-bg px-3 py-2 text-sm text-white"
-          />
-        </label>
+          <div key={descEditorKey} className="min-h-[12rem]">
+            <MarketplaceRichDescription
+              value={form.description}
+              onChange={(html) => setForm((f) => ({ ...f, description: html }))}
+              placeholder="Jelaskan EA, setfile, risiko, saran VPS…"
+            />
+          </div>
+        </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block space-y-1">

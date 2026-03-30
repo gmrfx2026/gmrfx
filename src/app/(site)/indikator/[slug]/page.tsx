@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { toMemberSlug } from "@/lib/memberSlug";
 import { IndicatorMarketActions } from "@/components/indikator/IndicatorMarketActions";
 import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
+import { articleProseTypographyClass } from "@/lib/articleProseClassName";
+import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { Decimal } from "@prisma/client/runtime/library";
 
 export const dynamic = "force-dynamic";
@@ -57,6 +59,10 @@ export default async function IndikatorDetailPage({ params }: Props) {
 
   const sellerSlug = ind.seller.memberSlug ?? toMemberSlug(ind.seller.name, ind.seller.id);
 
+  const descHtml = ind.description?.trim()
+    ? sanitizeArticleHtml(ind.description)
+    : "";
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <p className="text-xs text-broker-muted">
@@ -85,9 +91,12 @@ export default async function IndikatorDetailPage({ params }: Props) {
         File: <span className="font-mono text-xs text-broker-gold/90">{ind.fileName}</span>
       </p>
 
-      {ind.description ? (
+      {descHtml ? (
         <div className="mt-8 rounded-xl border border-broker-border/80 bg-broker-surface/30 p-4">
-          <p className="text-sm whitespace-pre-wrap text-broker-muted">{ind.description}</p>
+          <div
+            className={articleProseTypographyClass}
+            dangerouslySetInnerHTML={{ __html: descHtml }}
+          />
         </div>
       ) : null}
 
