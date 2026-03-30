@@ -8,7 +8,7 @@ import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
 import { articleProseTypographyClass } from "@/lib/articleProseClassName";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { Decimal } from "@prisma/client/runtime/library";
-import { isAllowedMarketplaceCoverSrc } from "@/lib/marketplaceCoverImage";
+import { resolveMarketplaceIndicatorCoverUrl } from "@/lib/marketplaceCoverImage";
 
 export const dynamic = "force-dynamic";
 
@@ -65,8 +65,7 @@ export default async function IndikatorDetailPage({ params }: Props) {
     ? sanitizeArticleHtml(ind.description)
     : "";
 
-  const cover =
-    ind.coverImageUrl && isAllowedMarketplaceCoverSrc(ind.coverImageUrl) ? ind.coverImageUrl : null;
+  const cover = resolveMarketplaceIndicatorCoverUrl(ind.coverImageUrl);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
 import { marketplaceDescriptionPlainExcerpt } from "@/lib/marketplaceDescription";
-import { isAllowedMarketplaceCoverSrc } from "@/lib/marketplaceCoverImage";
+import { resolveMarketplaceIndicatorCoverUrl } from "@/lib/marketplaceCoverImage";
 
 export const dynamic = "force-dynamic";
 
@@ -48,8 +48,7 @@ export default async function IndikatorCatalogPage() {
           {rows.map((r) => {
             const price = Number(r.priceIdr);
             const excerpt = marketplaceDescriptionPlainExcerpt(r.description, 160);
-            const cover =
-              r.coverImageUrl && isAllowedMarketplaceCoverSrc(r.coverImageUrl) ? r.coverImageUrl : null;
+            const cover = resolveMarketplaceIndicatorCoverUrl(r.coverImageUrl);
             return (
               <li key={r.id}>
                 <Link

@@ -1,5 +1,5 @@
 /**
- * Member demo PipHunter + indikator MT5 gratis (stub .mq5) + sampul SVG di /indikator-assets/covers/.
+ * Member demo PipHunter + indikator MT5 gratis (stub .mq5) + sampul via /api/indikator-cover/…
  * Idempotent: aman dijalankan ulang (slug unik).
  */
 import type { PrismaClient } from "@prisma/client";
@@ -33,28 +33,28 @@ const INDICATORS: Def[] = [
     slug: "piphunter-alert-ma-cross-mt5",
     title: "Alert persilangan Moving Average (stub) MT5",
     clientFileName: "PipHunter_MA_Cross_Sample.mq5",
-    coverImageUrl: "/indikator-assets/covers/ma-cross.svg",
+    coverImageUrl: "/api/indikator-cover/ma-cross",
     description: `<p>Gambaran konsep <strong>dua kurva MA</strong> dan ide alert saat persilangan. File .mq5 berisi stub — Anda bisa kembangkan logika crossover sendiri di MetaEditor.</p><p>Penulis: <strong>PipHunter</strong> · Gratis · MT5.</p>`,
   },
   {
     slug: "piphunter-macd-histogram-mt5",
     title: "Panel konsep MACD / histogram (stub) MT5",
     clientFileName: "PipHunter_MACD_Sample.mq5",
-    coverImageUrl: "/indikator-assets/covers/macd.svg",
+    coverImageUrl: "/api/indikator-cover/macd",
     description: `<p>Ilustrasi konsep <strong>MACD</strong> dan histogram untuk pembelajaran. Lampiran berupa stub skrip — bukan EA atau indikator siap pakai berperforma.</p><p>Penulis: <strong>PipHunter</strong> · Gratis · MT5.</p>`,
   },
   {
     slug: "piphunter-zona-support-resistance-mt5",
     title: "Zona Support & Resistance (stub) MT5",
     clientFileName: "PipHunter_SR_Zones_Sample.mq5",
-    coverImageUrl: "/indikator-assets/covers/sr-zones.svg",
+    coverImageUrl: "/api/indikator-cover/sr-zones",
     description: `<p>Kerangka berpikir <strong>level harga</strong> sebagai referensi, bukan prediksi mutlak. File stub untuk latihan menggambar atau menghitung zona di kode Anda sendiri.</p><p>Penulis: <strong>PipHunter</strong> · Gratis · MT5.</p>`,
   },
   {
     slug: "piphunter-session-high-low-mt5",
     title: "Penanda high/low sesi (stub) MT5",
     clientFileName: "PipHunter_Session_HiLo_Sample.mq5",
-    coverImageUrl: "/indikator-assets/covers/session-hilo.svg",
+    coverImageUrl: "/api/indikator-cover/session-hilo",
     description: `<p>Konsep menandai <strong>high dan low</strong> per sesi perdagangan. Stub .mq5 untuk eksperimen; sesuaikan zona waktu dan aturan broker Anda.</p><p>Penulis: <strong>PipHunter</strong> · Gratis · MT5.</p>`,
   },
 ];
