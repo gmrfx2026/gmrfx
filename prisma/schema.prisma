@@ -80,6 +80,19 @@ enum ChatDmRequestStatus {
   DECLINED
 }
 
+/// Dana marketplace ditahan hingga masa komplain selesai / admin putuskan.
+enum MarketplaceEscrowStatus {
+  PENDING
+  DISPUTED
+  RELEASED
+  REFUNDED
+}
+
+enum MarketplaceEscrowProductType {
+  INDICATOR
+  EA
+}
+
 model User {
   id              String       @id @default(cuid())
   name            String?
@@ -169,6 +182,8 @@ model User {
   indicatorPurchases   IndicatorPurchase[]   @relation("IndicatorPurchaseBuyer")
   sharedEasSold        SharedExpertAdvisor[] @relation("SharedExpertAdvisorSeller")
   eaPurchases          ExpertAdvisorPurchase[] @relation("ExpertAdvisorPurchaseBuyer")
+  marketplaceEscrowAsBuyer  MarketplaceEscrowHold[] @relation("MarketplaceEscrowBuyer")
+  marketplaceEscrowAsSeller MarketplaceEscrowHold[] @relation("MarketplaceEscrowSeller")
 }
 
 /// Token untuk EA MT — verifikasi pakai hash; plaintext disimpan terenkripsi agar pemilik bisa salin lagi.
@@ -591,10 +606,14 @@ model WalletTransfer {
   toUserId      String
   amount        Decimal
   note          String?
+  /// Jika diisi, baris disembunyikan dari riwayat (mis. refund escrow).
+  cancelledAt   DateTime?
   createdAt     DateTime @default(now())
 
   fromUser User @relation("TransferFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
   toUser   User @relation("TransferTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  marketplaceEscrowHold MarketplaceEscrowHold?
 }
 
 model ShopTransaction {
@@ -646,6 +665,10 @@ model IndicatorPurchase {
   buyer       User            @relation("IndicatorPurchaseBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
   amountIdr   Decimal         @db.Decimal(18, 2)
   createdAt   DateTime        @default(now())
+  /// Jika diisi, pembelian dibatalkan (refund escrow) — unduhan ditutup.
+  revokedAt   DateTime?
+
+  escrowHold MarketplaceEscrowHold?
 
   @@unique([indicatorId, buyerId])
   @@index([buyerId])
@@ -682,9 +705,49 @@ model ExpertAdvisorPurchase {
   buyer     User                @relation("ExpertAdvisorPurchaseBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
   amountIdr Decimal             @db.Decimal(18, 2)
   createdAt DateTime            @default(now())
+  revokedAt DateTime?
+
+  escrowHold MarketplaceEscrowHold?
 
   @@unique([eaId, buyerId])
   @@index([buyerId])
+}
+
+/// Penahanan dana pembelian marketplace (Shopee-style); penjual menerima setelah masa komplain atau konfirmasi.
+model MarketplaceEscrowHold {
+  id        String @id @default(cuid())
+  buyerId   String
+  sellerId  String
+  amount    Decimal @db.Decimal(18, 2)
+  productType MarketplaceEscrowProductType
+  status    MarketplaceEscrowStatus @default(PENDING)
+
+  /// Setelah tanggal ini (jika masih PENDING) dana dicairkan ke penjual via cron.
+  releaseAt DateTime
+  releasedAt DateTime?
+  refundedAt DateTime?
+
+  disputeReason String? @db.Text
+  adminNote     String? @db.Text
+
+  walletTransferId String @unique
+  walletTransfer   WalletTransfer @relation(fields: [walletTransferId], references: [id], onDelete: Cascade)
+
+  indicatorPurchaseId String? @unique
+  indicatorPurchase   IndicatorPurchase? @relation(fields: [indicatorPurchaseId], references: [id], onDelete: SetNull)
+
+  eaPurchaseId String? @unique
+  eaPurchase   ExpertAdvisorPurchase? @relation(fields: [eaPurchaseId], references: [id], onDelete: SetNull)
+
+  buyer  User @relation("MarketplaceEscrowBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller User @relation("MarketplaceEscrowSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, releaseAt])
+  @@index([buyerId, status])
+  @@index([sellerId, status])
 }
 
 model SystemSetting {

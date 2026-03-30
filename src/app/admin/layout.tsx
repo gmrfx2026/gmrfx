@@ -9,6 +9,7 @@ const links = [
   { href: "/admin/member-menu", label: "Menu member" },
   { href: "/admin/portfolio-menu", label: "Menu portofolio" },
   { href: "/admin/transfers", label: "Transfer wallet" },
+  { href: "/admin/marketplace-escrow", label: "Escrow marketplace" },
   { href: "/admin/articles", label: "Artikel" },
   { href: "/admin/home-news", label: "Berita beranda" },
   { href: "/admin/affiliate-go", label: "Statistik /go" },

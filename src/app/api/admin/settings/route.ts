@@ -20,6 +20,7 @@ import {
   isValidOptionalHttpUrl,
   normalizeRssFeedUrl,
 } from "@/lib/homeNewsRssSettings";
+import { MARKETPLACE_ESCROW_DAYS_KEY } from "@/lib/marketplaceEscrow";
 
 export async function GET() {
   const session = await auth();
@@ -27,7 +28,7 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const [fee, commentsPer, timelinePer, statusCommentsPer, rssDn, rssInt, newsPerBlock] =
+  const [fee, commentsPer, timelinePer, statusCommentsPer, rssDn, rssInt, newsPerBlock, escrowDays] =
     await Promise.all([
       prisma.systemSetting.findUnique({ where: { key: "platform_fee_percent" } }),
       prisma.systemSetting.findUnique({ where: { key: ARTICLE_COMMENTS_PER_PAGE_KEY } }),
@@ -36,6 +37,7 @@ export async function GET() {
       prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_DOMESTIC_URL_KEY } }),
       prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_INTERNATIONAL_URL_KEY } }),
       prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY } }),
+      prisma.systemSetting.findUnique({ where: { key: MARKETPLACE_ESCROW_DAYS_KEY } }),
     ]);
   return NextResponse.json({
     platformFeePercent: fee?.value ?? "0",
@@ -177,6 +179,19 @@ export async function PATCH(req: Request) {
     await prisma.systemSetting.upsert({
       where: { key: MEMBER_STATUS_COMMENTS_PER_PAGE_KEY },
       create: { key: MEMBER_STATUS_COMMENTS_PER_PAGE_KEY, value: String(clamped) },
+      update: { value: String(clamped) },
+    });
+  }
+
+  if (body.marketplaceEscrowDays !== undefined) {
+    const n = Number.parseInt(String(body.marketplaceEscrowDays), 10);
+    if (!Number.isFinite(n)) {
+      return NextResponse.json({ error: "Hari escrow tidak valid" }, { status: 400 });
+    }
+    const clamped = Math.min(30, Math.max(1, n));
+    await prisma.systemSetting.upsert({
+      where: { key: MARKETPLACE_ESCROW_DAYS_KEY },
+      create: { key: MARKETPLACE_ESCROW_DAYS_KEY, value: String(clamped) },
       update: { value: String(clamped) },
     });
   }

@@ -3,6 +3,12 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Decimal } from "@prisma/client/runtime/library";
 import { newTransactionId } from "@/lib/txid";
+import { MarketplaceEscrowProductType } from "@prisma/client";
+import {
+  computeEscrowReleaseAt,
+  ESCROW_WALLET_NOTE_PREFIX,
+  getMarketplaceEscrowDays,
+} from "@/lib/marketplaceEscrow";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +23,9 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
   if (!eaId) {
     return NextResponse.json({ error: "ID tidak valid" }, { status: 400 });
   }
+
+  const escrowDays = await getMarketplaceEscrowDays();
+  const releaseAt = computeEscrowReleaseAt(escrowDays);
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -59,36 +68,44 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
       const seller = await tx.user.findUnique({ where: { id: ea.sellerId } });
       if (!seller) throw new Error("Penjual tidak ditemukan");
 
-      const txId = newTransactionId("EA");
-      await tx.user.update({
-        where: { id: buyerId },
-        data: { walletBalance: bal.minus(price) },
-      });
-      await tx.user.update({
-        where: { id: ea.sellerId },
-        data: {
-          walletBalance: new Decimal(seller.walletBalance.toString()).plus(price),
-        },
-      });
-      await tx.walletTransfer.create({
-        data: {
-          transactionId: txId,
-          fromUserId: buyerId,
-          toUserId: ea.sellerId,
-          amount: price,
-          note: `Beli Expert Advisor: ${ea.title}`,
-        },
-      });
-      await tx.expertAdvisorPurchase.create({
+      const purchase = await tx.expertAdvisorPurchase.create({
         data: {
           eaId,
           buyerId,
           amountIdr: price,
         },
       });
+
+      const txId = newTransactionId("EA");
+      const wt = await tx.walletTransfer.create({
+        data: {
+          transactionId: txId,
+          fromUserId: buyerId,
+          toUserId: ea.sellerId,
+          amount: price,
+          note: `${ESCROW_WALLET_NOTE_PREFIX} Beli Expert Advisor: ${ea.title}. Dana penjual dicairkan setelah ±${escrowDays} hari jika tidak ada komplain.`,
+        },
+      });
+
+      await tx.marketplaceEscrowHold.create({
+        data: {
+          buyerId,
+          sellerId: ea.sellerId,
+          amount: price,
+          productType: MarketplaceEscrowProductType.EA,
+          releaseAt,
+          walletTransferId: wt.id,
+          eaPurchaseId: purchase.id,
+        },
+      });
+
+      await tx.user.update({
+        where: { id: buyerId },
+        data: { walletBalance: bal.minus(price) },
+      });
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, escrowDays, releaseAt: releaseAt.toISOString() });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Gagal memproses pembelian";
     const status =

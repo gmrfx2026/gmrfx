@@ -28,6 +28,12 @@ import { parsePrefixedListQuery, resolvePagedWindow } from "@/lib/adminListParam
 import { listablePublicMemberWhere } from "@/lib/memberFollowListable";
 import { maskEmail } from "@/lib/memberEmailDisplay";
 import { normalizeSocialLinkForForm } from "@/lib/socialLinks";
+import { formatJakarta } from "@/lib/jakartaDateFormat";
+import { MarketplaceEscrowStatus } from "@prisma/client";
+import {
+  ProfilMarketplaceEscrowSection,
+  type ProfilEscrowRow,
+} from "@/components/member/ProfilMarketplaceEscrowSection";
 
 export const dynamic = "force-dynamic";
 
@@ -209,6 +215,9 @@ export default async function ProfilPage({
             include: {
               fromUser: { select: { name: true, email: true, walletAddress: true } },
               toUser: { select: { name: true, email: true, walletAddress: true } },
+              marketplaceEscrowHold: {
+                select: { status: true, releaseAt: true },
+              },
             },
           });
           return {
@@ -254,17 +263,82 @@ export default async function ProfilPage({
       : Promise.resolve(null),
   ]);
 
+  const marketplaceEscrowRaw = showWalletTransfer
+    ? await prisma.marketplaceEscrowHold.findMany({
+        where: { OR: [{ buyerId: user.id }, { sellerId: user.id }] },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+        include: {
+          buyer: { select: { name: true, email: true } },
+          seller: { select: { name: true, email: true } },
+          indicatorPurchase: {
+            select: { indicator: { select: { title: true, slug: true } } },
+          },
+          eaPurchase: {
+            select: { ea: { select: { title: true, slug: true } } },
+          },
+        },
+      })
+    : [];
+
+  const marketplaceEscrowRows: ProfilEscrowRow[] = marketplaceEscrowRaw.map((h) => {
+    const isBuyer = h.buyerId === user.id;
+    const cp = isBuyer ? h.seller : h.buyer;
+    const counterpartyLabel = cp.name ?? (cp.email ? maskEmail(cp.email) : "—");
+    let title: string | null = null;
+    let slug: string | null = null;
+    let productPath: string | null = null;
+    if (h.indicatorPurchase?.indicator) {
+      title = h.indicatorPurchase.indicator.title;
+      slug = h.indicatorPurchase.indicator.slug;
+      productPath = `/indikator/${slug}`;
+    } else if (h.eaPurchase?.ea) {
+      title = h.eaPurchase.ea.title;
+      slug = h.eaPurchase.ea.slug;
+      productPath = `/ea/${slug}`;
+    }
+    return {
+      id: h.id,
+      role: isBuyer ? ("buyer" as const) : ("seller" as const),
+      status: h.status as ProfilEscrowRow["status"],
+      productType: h.productType as ProfilEscrowRow["productType"],
+      amountIdr: Number(h.amount),
+      releaseAt: h.releaseAt.toISOString(),
+      createdAt: h.createdAt.toISOString(),
+      title,
+      slug,
+      productPath,
+      disputeReason: h.disputeReason,
+      counterpartyLabel,
+    };
+  });
+
   const walletHistoryRows: WalletHistoryRow[] =
     showWalletTransfer && walletHistoryBundle
       ? walletHistoryBundle.raw.map((t) => {
           const outgoing = t.fromUserId === user.id;
           const cp = outgoing ? t.toUser : t.fromUser;
+          let note = t.note;
+          const eh = t.marketplaceEscrowHold;
+          if (
+            eh &&
+            (eh.status === MarketplaceEscrowStatus.PENDING ||
+              eh.status === MarketplaceEscrowStatus.DISPUTED)
+          ) {
+            const releaseLabel = formatJakarta(eh.releaseAt, { dateStyle: "medium" });
+            if (!outgoing && t.toUserId === user.id) {
+              note = `${note ?? ""} — [Escrow] Dana belum masuk saldo Anda sampai masa komplain selesai (paling lambat ${releaseLabel}).`;
+            }
+            if (outgoing) {
+              note = `${note ?? ""} — [Escrow] Dana ditahan; konfirmasi atau komplain di bagian "Pembelian marketplace" di bawah.`;
+            }
+          }
           return {
             id: t.id,
             transactionId: t.transactionId,
             direction: outgoing ? ("out" as const) : ("in" as const),
             amount: Number(t.amount),
-            note: t.note,
+            note,
             createdAt: t.createdAt.toISOString(),
             counterpartyLabel:
               cp.name ?? (cp.email ? maskEmail(cp.email) : "—"),
@@ -363,6 +437,7 @@ export default async function ProfilPage({
           <section className="border-t border-broker-border pt-10">
             <ProfilWalletTransfer />
           </section>
+          <ProfilMarketplaceEscrowSection rows={marketplaceEscrowRows} />
           {walletHistoryBundle && (
             <ProfilWalletHistory
               rows={walletHistoryRows}

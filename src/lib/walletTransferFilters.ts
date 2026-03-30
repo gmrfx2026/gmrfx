@@ -83,7 +83,10 @@ export function memberWalletTransferWhere(
   opts: { from?: Date | null; to?: Date | null; q?: string }
 ): Prisma.WalletTransferWhereInput {
   const involved: Prisma.WalletTransferWhereInput = {
-    OR: [{ fromUserId: userId }, { toUserId: userId }],
+    AND: [
+      { cancelledAt: null },
+      { OR: [{ fromUserId: userId }, { toUserId: userId }] },
+    ],
   };
 
   const createdAt: Prisma.DateTimeFilter = {};
@@ -147,6 +150,8 @@ export function adminWalletTransferWhere(opts: {
   const datePart: Prisma.WalletTransferWhereInput =
     Object.keys(createdAt).length > 0 ? { createdAt } : {};
 
+  const cancelledPart: Prisma.WalletTransferWhereInput = { cancelledAt: null };
+
   const q = opts.q?.trim();
   const userMatch: Prisma.UserWhereInput = q
     ? {
@@ -169,10 +174,9 @@ export function adminWalletTransferWhere(opts: {
       }
     : undefined;
 
-  const parts: Prisma.WalletTransferWhereInput[] = [];
+  const parts: Prisma.WalletTransferWhereInput[] = [cancelledPart];
   if (Object.keys(datePart).length) parts.push(datePart);
   if (searchPart) parts.push(searchPart);
-  if (parts.length === 0) return {};
   if (parts.length === 1) return parts[0]!;
   return { AND: parts };
 }

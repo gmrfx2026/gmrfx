@@ -14,6 +14,7 @@ export function AdminSettingsForm({
   initialHomeNewsPerBlockHomepage,
   initialHomeNewsRssDomesticUrl,
   initialHomeNewsRssInternationalUrl,
+  initialMarketplaceEscrowDays,
 }: {
   initialFee: string;
   initialArticleCommentsPerPage: string;
@@ -25,6 +26,7 @@ export function AdminSettingsForm({
   initialHomeNewsPerBlockHomepage: string;
   initialHomeNewsRssDomesticUrl: string;
   initialHomeNewsRssInternationalUrl: string;
+  initialMarketplaceEscrowDays: string;
 }) {
   const router = useRouter();
   const [v, setV] = useState(initialFee);
@@ -41,6 +43,7 @@ export function AdminSettingsForm({
   );
   const [rssDn, setRssDn] = useState(initialHomeNewsRssDomesticUrl);
   const [rssInt, setRssInt] = useState(initialHomeNewsRssInternationalUrl);
+  const [escrowDays, setEscrowDays] = useState(initialMarketplaceEscrowDays);
   const [msg, setMsg] = useState("");
 
   async function save(e: React.FormEvent) {
@@ -59,6 +62,7 @@ export function AdminSettingsForm({
         homeNewsPerBlockHomepage: homeNewsPerBlockHomepage,
         homeNewsRssDomesticUrl: rssDn,
         homeNewsRssInternationalUrl: rssInt,
+        marketplaceEscrowDays: escrowDays,
       }),
     });
     setMsg(res.ok ? "Disimpan." : "Gagal");
@@ -67,6 +71,21 @@ export function AdminSettingsForm({
 
   return (
     <form onSubmit={save} className="space-y-3">
+      <label className="block text-sm">
+        <span className="text-gray-600">Hari escrow marketplace (1–30)</span>
+        <input
+          type="number"
+          min={1}
+          max={30}
+          className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm"
+          value={escrowDays}
+          onChange={(e) => setEscrowDays(e.target.value)}
+        />
+        <span className="mt-1 block text-xs text-gray-500">
+          Setelah pembelian berbayar, dana penjual ditahan selama N hari kecuali pembeli mengonfirmasi lebih awal atau ada
+          komplain. Cron harus memanggil endpoint pencairan otomatis.
+        </span>
+      </label>
       <label className="block text-sm">
         <span className="text-gray-600">Platform fee (%)</span>
         <input

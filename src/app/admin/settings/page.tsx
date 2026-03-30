@@ -19,6 +19,7 @@ import {
   HOME_NEWS_RSS_DOMESTIC_URL_KEY,
   HOME_NEWS_RSS_INTERNATIONAL_URL_KEY,
 } from "@/lib/homeNewsRssSettings";
+import { MARKETPLACE_ESCROW_DAYS_KEY } from "@/lib/marketplaceEscrow";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,7 @@ export default async function AdminSettingsPage() {
     newsPerBlockHome,
     rssDn,
     rssInt,
+    escrowDays,
   ] = await Promise.all([
     prisma.systemSetting.findUnique({ where: { key: "platform_fee_percent" } }),
     prisma.systemSetting.findUnique({ where: { key: ARTICLE_COMMENTS_PER_PAGE_KEY } }),
@@ -45,6 +47,7 @@ export default async function AdminSettingsPage() {
     prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_DOMESTIC_URL_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_INTERNATIONAL_URL_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: MARKETPLACE_ESCROW_DAYS_KEY } }),
   ]);
 
   return (
@@ -69,6 +72,7 @@ export default async function AdminSettingsPage() {
           )}
           initialHomeNewsRssDomesticUrl={rssDn?.value ?? ""}
           initialHomeNewsRssInternationalUrl={rssInt?.value ?? ""}
+          initialMarketplaceEscrowDays={escrowDays?.value ?? "3"}
         />
       </div>
     </div>
