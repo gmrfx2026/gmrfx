@@ -161,6 +161,9 @@ model User {
   communityMtWatchesAsFollower MtCommunityActivityWatch[] @relation("CommunityMtWatchFollower")
   communityMtWatchesAsPublisher MtCommunityActivityWatch[] @relation("CommunityMtWatchPublisher")
   mtTradingActivities        MtTradingActivity[]
+
+  /** Berita beranda (DN / internasional); kosong = tampil sebagai redaksi default GMR Fx. */
+  authoredHomeNewsItems HomeNewsItem[] @relation("HomeNewsAuthor")
 }
 
 /// Token untuk EA MT — verifikasi pakai hash; plaintext disimpan terenkripsi agar pemilik bisa salin lagi.
@@ -533,11 +536,15 @@ model HomeNewsItem {
   sourceName  String?
   status      HomeNewsStatus @default(PUBLISHED)
   publishedAt DateTime?
+  /// Null = penulis tampil sebagai akun default redaksi (GMR Fx). Isi jika member menulis berita.
+  authorId    String?
+  author      User?          @relation("HomeNewsAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
   @@index([scope, status, publishedAt(sort: Desc)])
   @@index([scope, sourceUrl])
+  @@index([authorId])
 }
 
 model MemberRating {

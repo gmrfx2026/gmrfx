@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { HomeNewsScope, HomeNewsStatus } from "@prisma/client";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
+import { homeNewsAuthorForDisplay } from "@/lib/homeNewsAuthor";
 
 export const metadata: Metadata = {
   title: "Berita — GMR FX",
@@ -41,6 +42,7 @@ export default async function BeritaListPage({
     },
     orderBy: { publishedAt: "desc" },
     take: 120,
+    include: { author: { select: { id: true, name: true, memberSlug: true } } },
   });
 
   const tab = (active: ScopeFilter, label: string, href: string) => (
@@ -70,36 +72,50 @@ export default async function BeritaListPage({
       </div>
 
       <ul className="mt-10 space-y-4">
-        {items.map((n) => (
-          <li key={n.id}>
-            <Link
-              href={`/berita/${n.slug}`}
-              className="flex flex-col gap-3 rounded-xl border border-broker-border bg-broker-surface/40 p-5 transition hover:border-broker-accent/50 sm:flex-row"
+        {items.map((n) => {
+          const penulis = homeNewsAuthorForDisplay(n.author);
+          return (
+            <li
+              key={n.id}
+              className="overflow-hidden rounded-xl border border-broker-border bg-broker-surface/40 transition hover:border-broker-accent/50"
             >
-              {n.imageUrl ? (
-                <div className="shrink-0 overflow-hidden rounded-lg border border-broker-border sm:w-40">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={n.imageUrl}
-                    alt=""
-                    className="h-28 w-full object-cover sm:h-24 sm:w-40"
-                    loading="lazy"
-                  />
+              <Link
+                href={`/berita/${n.slug}`}
+                className="flex flex-col gap-3 p-5 sm:flex-row"
+              >
+                {n.imageUrl ? (
+                  <div className="shrink-0 overflow-hidden rounded-lg border border-broker-border sm:w-40">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={n.imageUrl}
+                      alt=""
+                      className="h-28 w-full object-cover sm:h-24 sm:w-40"
+                      loading="lazy"
+                    />
+                  </div>
+                ) : null}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium uppercase tracking-wide text-broker-accent">
+                    {n.scope === "DOMESTIC" ? "Dalam negeri" : "Internasional"}
+                  </p>
+                  <h2 className="mt-1 font-semibold text-white">{n.title}</h2>
+                  {n.excerpt ? <p className="mt-2 line-clamp-2 text-sm text-broker-muted">{n.excerpt}</p> : null}
                 </div>
-              ) : null}
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium uppercase tracking-wide text-broker-accent">
-                  {n.scope === "DOMESTIC" ? "Dalam negeri" : "Internasional"}
-                </p>
-                <h2 className="mt-1 font-semibold text-white">{n.title}</h2>
-                {n.excerpt ? <p className="mt-2 line-clamp-2 text-sm text-broker-muted">{n.excerpt}</p> : null}
-                <p className="mt-3 text-xs text-broker-muted">
-                  {n.publishedAt ? formatJakarta(n.publishedAt, { dateStyle: "long" }) : ""}
-                </p>
+              </Link>
+              <div className="border-t border-broker-border px-5 py-3 text-xs text-broker-muted">
+                <Link href={penulis.href} className="text-broker-accent hover:underline">
+                  {penulis.label}
+                </Link>
+                {n.publishedAt ? (
+                  <>
+                    {" · "}
+                    {formatJakarta(n.publishedAt, { dateStyle: "long" })}
+                  </>
+                ) : null}
               </div>
-            </Link>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
       {items.length === 0 && (
         <p className="mt-8 text-center text-broker-muted">Belum ada berita untuk filter ini.</p>

@@ -3,6 +3,7 @@ import {
   HOME_NEWS_RSS_DOMESTIC_URL_KEY,
   HOME_NEWS_RSS_INTERNATIONAL_URL_KEY,
 } from "@/lib/homeNewsRssSettings";
+import { homeNewsAuthorForDisplay } from "@/lib/homeNewsAuthor";
 import { AdminHomeNewsRssImport } from "@/components/admin/AdminHomeNewsRssImport";
 import { AdminHomeNewsRow } from "@/components/admin/AdminHomeNewsRow";
 
@@ -13,6 +14,7 @@ export default async function AdminHomeNewsPage() {
     prisma.homeNewsItem.findMany({
       orderBy: { publishedAt: "desc" },
       take: 80,
+      include: { author: { select: { id: true, name: true, memberSlug: true } } },
     }),
     prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_DOMESTIC_URL_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_INTERNATIONAL_URL_KEY } }),
@@ -37,7 +39,17 @@ export default async function AdminHomeNewsPage() {
         {items.length === 0 ? (
           <p className="text-sm text-gray-500">Belum ada berita.</p>
         ) : (
-          items.map((it) => <AdminHomeNewsRow key={it.id} item={it} />)
+          items.map((it) => {
+            const p = homeNewsAuthorForDisplay(it.author);
+            return (
+              <AdminHomeNewsRow
+                key={it.id}
+                item={it}
+                authorLabel={p.label}
+                authorHref={p.href}
+              />
+            );
+          })
         )}
       </div>
     </div>

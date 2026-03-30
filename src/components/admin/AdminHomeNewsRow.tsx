@@ -8,7 +8,15 @@ function scopeLabel(s: HomeNewsScope) {
   return s === "DOMESTIC" ? "DN" : "INT";
 }
 
-export function AdminHomeNewsRow({ item }: { item: HomeNewsItem }) {
+export function AdminHomeNewsRow({
+  item,
+  authorLabel,
+  authorHref,
+}: {
+  item: HomeNewsItem;
+  authorLabel: string;
+  authorHref: string;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -31,6 +39,13 @@ export function AdminHomeNewsRow({ item }: { item: HomeNewsItem }) {
         </span>
         <p className="mt-1 font-medium text-gray-900">{item.title}</p>
         <p className="truncate text-xs text-gray-500">{item.sourceUrl ?? item.slug}</p>
+        <p className="mt-0.5 text-xs text-gray-600">
+          Penulis:{" "}
+          <a href={authorHref} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+            {authorLabel}
+          </a>
+          {item.authorId ? " (member)" : " (default)"}
+        </p>
       </div>
       <div className="flex shrink-0 gap-2">
         <a

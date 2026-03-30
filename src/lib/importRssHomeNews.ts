@@ -121,6 +121,7 @@ export async function importRssHomeNewsFeed(
           sourceName,
           status: HomeNewsStatus.PUBLISHED,
           publishedAt: Number.isFinite(publishedAt.getTime()) ? publishedAt : new Date(),
+          // authorId null → tampilan penulis memakai DEFAULT_HOME_NEWS_AUTHOR_SLUG (GMR Fx)
         },
       });
       created++;

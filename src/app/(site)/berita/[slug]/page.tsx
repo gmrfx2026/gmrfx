@@ -6,6 +6,7 @@ import { HomeNewsStatus } from "@prisma/client";
 import { articleProseTypographyClass } from "@/lib/articleProseClassName";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
+import { homeNewsAuthorForDisplay } from "@/lib/homeNewsAuthor";
 
 export const dynamic = "force-dynamic";
 
@@ -22,18 +23,28 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export default async function BeritaDetailPage({ params }: { params: { slug: string } }) {
   const row = await prisma.homeNewsItem.findFirst({
     where: { slug: params.slug, status: HomeNewsStatus.PUBLISHED },
+    include: { author: { select: { id: true, name: true, memberSlug: true } } },
   });
   if (!row) notFound();
 
   const safeHtml = sanitizeArticleHtml(row.contentHtml);
   const label = row.scope === "DOMESTIC" ? "Berita dalam negeri" : "Berita internasional";
+  const penulis = homeNewsAuthorForDisplay(row.author);
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12">
       <p className="text-xs uppercase tracking-wider text-broker-accent">{label}</p>
       <h1 className="mt-2 text-3xl font-bold text-white md:text-4xl">{row.title}</h1>
       <p className="mt-3 text-sm text-broker-muted">
-        {row.publishedAt ? formatJakarta(row.publishedAt, { dateStyle: "long" }) : ""}
+        <Link href={penulis.href} className="text-broker-accent hover:underline">
+          {penulis.label}
+        </Link>
+        {row.publishedAt ? (
+          <>
+            {" · "}
+            {formatJakarta(row.publishedAt, { dateStyle: "long" })}
+          </>
+        ) : null}
         {row.sourceUrl ? (
           <>
             {" · "}
