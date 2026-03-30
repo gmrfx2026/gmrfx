@@ -9,6 +9,7 @@ import {
   storeMtMarketplaceFile,
 } from "@/lib/mtMarketplaceUpload";
 import { parseMarketplacePlatform } from "@/lib/marketplacePlatform";
+import { normalizeMarketplaceDescriptionHtml } from "@/lib/marketplaceDescription";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -106,8 +107,12 @@ export async function POST(req: Request) {
   }
 
   const descriptionRaw = form.get("description");
-  const description =
-    descriptionRaw == null ? null : String(descriptionRaw).trim().slice(0, 8000) || null;
+  const description = normalizeMarketplaceDescriptionHtml(
+    descriptionRaw == null ? "" : String(descriptionRaw)
+  );
+  if (description && description.length > 200_000) {
+    return NextResponse.json({ error: "Deskripsi terlalu panjang" }, { status: 400 });
+  }
 
   let priceIdr: Decimal;
   let platform: string;
