@@ -131,6 +131,9 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  /// Diperbarui dari klien (member) saat browsing situs; dipakai admin untuk perkiraan "sedang online".
+  memberLastSeenAt DateTime?
+
   accounts               Account[]
   sessions               Session[]
   articles               Article[]          @relation("ArticleAuthor")
@@ -184,6 +187,8 @@ model User {
   eaPurchases          ExpertAdvisorPurchase[] @relation("ExpertAdvisorPurchaseBuyer")
   marketplaceEscrowAsBuyer  MarketplaceEscrowHold[] @relation("MarketplaceEscrowBuyer")
   marketplaceEscrowAsSeller MarketplaceEscrowHold[] @relation("MarketplaceEscrowSeller")
+
+  @@index([memberLastSeenAt])
 }
 
 /// Token untuk EA MT — verifikasi pakai hash; plaintext disimpan terenkripsi agar pemilik bisa salin lagi.

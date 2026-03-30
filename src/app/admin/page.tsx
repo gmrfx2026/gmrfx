@@ -1,16 +1,21 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { CommentTarget } from "@prisma/client";
+import { CommentTarget, Role } from "@prisma/client";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
+import { memberOnlineCutoff } from "@/lib/memberPresence";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminHomePage() {
-  const [users, articles, pending, gallery, recentComments, newMembers] = await Promise.all([
+  const onlineCutoff = memberOnlineCutoff();
+  const [users, articles, pending, gallery, onlineNow, recentComments, newMembers] = await Promise.all([
     prisma.user.count(),
     prisma.article.count(),
     prisma.article.count({ where: { status: "PENDING" } }),
     prisma.galleryImage.count(),
+    prisma.user.count({
+      where: { role: Role.USER, memberLastSeenAt: { gte: onlineCutoff } },
+    }),
     prisma.comment.findMany({
       orderBy: { createdAt: "desc" },
       take: 6,
@@ -30,8 +35,9 @@ export default async function AdminHomePage() {
     <div>
       <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
       <p className="mt-1 text-sm text-gray-600">Ringkasan cepat — gaya Bootstrap / admin klasik.</p>
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard title="Member" value={users} href="/admin/members" />
+        <StatCard title="Member online (perkiraan)" value={onlineNow} href="/admin/members/online" />
         <StatCard title="Artikel" value={articles} href="/admin/articles" />
         <StatCard title="Menunggu approval" value={pending} href="/admin/articles" />
         <StatCard title="Gambar galeri" value={gallery} href="/admin/gallery" />

@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { MemberRowActions } from "@/components/admin/MemberRowActions";
 import { AdminListFilterForm, AdminListSummary } from "@/components/admin/AdminListFilterForm";
@@ -38,8 +39,15 @@ export default async function AdminMembersPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-800">Pengelolaan member</h1>
-      <p className="mt-1 text-sm text-gray-600">Update status, saldo, wallet, kontak, dan alamat.</p>
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Pengelolaan member</h1>
+          <p className="mt-1 text-sm text-gray-600">Update status, saldo, wallet, kontak, dan alamat.</p>
+        </div>
+        <Link href="/admin/members/online" className="text-sm font-medium text-green-700 hover:underline">
+          Member sedang online →
+        </Link>
+      </div>
 
       <AdminListFilterForm
         actionPath="/admin/members"

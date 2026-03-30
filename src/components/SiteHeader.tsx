@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/auth";
+import { MemberPresencePing } from "./MemberPresencePing";
 import { HeaderAuth } from "./HeaderAuth";
 import { MobileSiteNav } from "./MobileSiteNav";
 import { NotificationBell } from "./NotificationBell";
@@ -44,6 +45,7 @@ export async function SiteHeader() {
         </nav>
         <div className="flex items-center gap-2">
           <MobileSiteNav links={mobileLinks} />
+          {session?.user?.role === "USER" ? <MemberPresencePing /> : null}
           {session && <NotificationBell />}
           <HeaderAuth session={session} />
         </div>
