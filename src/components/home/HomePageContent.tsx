@@ -79,9 +79,8 @@ export async function HomePageContent() {
             Wadah berkomunikasi, belajar, dan berbagi strategi trading
           </h1>
           <p className="mt-4 max-w-2xl text-broker-muted md:text-lg">
-            GMR FX menghubungkan trader dalam satu tempat: diskusi dan chat antar member, materi edukasi dan
-            artikel, berita pasar, serta marketplace indikator &amp; Expert Advisor. Bukan sinyal investasi —
-            ruang untuk saling menguatkan pemahaman dan ide strategi.
+            Menghubungkan trader dalam satu wadah: diskusi, materi edukasi, berita pasar, indikator &amp;
+            Expert Advisor. Ruang untuk saling menguatkan pemahaman, ide dan strategi.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
