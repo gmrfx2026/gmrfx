@@ -5,6 +5,7 @@ import {
   notifyCommunityMtActivityWatchers,
   resolveCommunityMtDisplayName,
 } from "@/lib/communityMtActivityNotifications";
+import { enrichClosedWithCloseKind } from "@/lib/mt5CloseReason";
 import { diffOpenPositionsForAlerts } from "@/lib/mtTradingActivityPositionDiff";
 import { parseTradingActivityFromDb } from "@/lib/mtTradingActivity";
 import { Prisma } from "@prisma/client";
@@ -69,6 +70,8 @@ const dealSchema = z.object({
       if (!Number.isFinite(n) || n <= 0) return undefined;
       return Math.trunc(n);
     }),
+  /** MT5 DEAL_REASON: 4=SL, 5=TP, 6=SO, 0=client, … */
+  dealReason: z.number().int().optional(),
 });
 
 const openPositionIngestSchema = z.object({
@@ -183,6 +186,7 @@ function mtDealUpsertOp(d: ParsedDeal, userId: string, mtLogin: string) {
       profit: new Prisma.Decimal(d.profit ?? 0),
       magic: d.magic ?? 0,
       comment: d.comment ?? "",
+      dealReason: d.dealReason ?? null,
       positionId: d.positionId ?? null,
       positionOpenTime: positionOpenAt,
     },
@@ -198,6 +202,7 @@ function mtDealUpsertOp(d: ParsedDeal, userId: string, mtLogin: string) {
       profit: new Prisma.Decimal(d.profit ?? 0),
       magic: d.magic ?? 0,
       comment: d.comment ?? "",
+      dealReason: d.dealReason ?? null,
       positionId: d.positionId ?? null,
       positionOpenTime: positionOpenAt,
     },
@@ -298,6 +303,17 @@ export async function POST(req: Request) {
       { maxWait: 10_000, timeout: 15_000 }
     );
 
+    if (deals && deals.length > 0) {
+      for (let i = 0; i < deals.length; i += DEAL_UPSERT_CHUNK) {
+        const slice = deals.slice(i, i + DEAL_UPSERT_CHUNK);
+        const ops = slice
+          .map((d) => mtDealUpsertOp(d, link.userId, mtLogin))
+          .filter((op): op is NonNullable<typeof op> => op != null);
+        if (ops.length === 0) continue;
+        await prisma.$transaction(ops);
+      }
+    }
+
     if (openPositions !== undefined && prevActivityForDiff) {
       const prevPos = parseTradingActivityFromDb(prevActivityForDiff.positions, []).positions;
       const nextLite = openPositions.map((p) => ({
@@ -309,32 +325,33 @@ export async function POST(req: Request) {
       const { opened, closed, sltpChanged } = diffOpenPositionsForAlerts(prevPos, nextLite);
       if (opened.length > 0 || closed.length > 0 || sltpChanged.length > 0) {
         const publisherUserId = link.userId;
+        const dealsForResolve = (deals ?? []).map((d) => ({
+          dealTime: d.dealTime,
+          entryType: d.entryType,
+          positionId: d.positionId ?? null,
+          dealReason: d.dealReason,
+        }));
         void (async () => {
           try {
             const displayName = await resolveCommunityMtDisplayName(publisherUserId, mtLogin);
+            const closedEnriched = await enrichClosedWithCloseKind(
+              publisherUserId,
+              mtLogin,
+              closed,
+              dealsForResolve
+            );
             await notifyCommunityMtActivityWatchers({
               publisherUserId,
               mtLogin,
               displayName,
               opened,
-              closed,
+              closed: closedEnriched,
               sltpChanged,
             });
           } catch (e) {
             console.error("mt5/ingest community watch notify", e);
           }
         })();
-      }
-    }
-
-    if (deals && deals.length > 0) {
-      for (let i = 0; i < deals.length; i += DEAL_UPSERT_CHUNK) {
-        const slice = deals.slice(i, i + DEAL_UPSERT_CHUNK);
-        const ops = slice
-          .map((d) => mtDealUpsertOp(d, link.userId, mtLogin))
-          .filter((op): op is NonNullable<typeof op> => op != null);
-        if (ops.length === 0) continue;
-        await prisma.$transaction(ops);
       }
     }
 

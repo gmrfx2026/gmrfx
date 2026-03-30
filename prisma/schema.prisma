@@ -184,6 +184,8 @@ model MtDeal {
   profit     Decimal  @default(0) @db.Decimal(18, 8)
   magic      Int      @default(0)
   comment    String   @default("")
+  /// MT5 DEAL_REASON (4=SL, 5=TP, 6=SO, …); dari EA ingest.
+  dealReason Int?
   /// ID posisi MT5 (DEAL_POSITION_ID); untuk menjodohkan IN/OUT & hitung durasi nanti.
   positionId         String?
   /// Waktu buka posisi (Unix deal IN pertama), diisi EA untuk kaki penutupan.

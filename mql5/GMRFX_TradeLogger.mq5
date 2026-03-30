@@ -305,6 +305,7 @@ string BuildJsonBody()
 
          int dtype = (int)HistoryDealGetInteger(ticket, DEAL_TYPE);
          int entry = (int)HistoryDealGetInteger(ticket, DEAL_ENTRY);
+         int dreason = (int)HistoryDealGetInteger(ticket, DEAL_REASON);
          double vol = HistoryDealGetDouble(ticket, DEAL_VOLUME);
          double price = HistoryDealGetDouble(ticket, DEAL_PRICE);
          double comm = HistoryDealGetDouble(ticket, DEAL_COMMISSION);
@@ -328,6 +329,7 @@ string BuildJsonBody()
          json += "\"symbol\":\"" + sym + "\",";
          json += "\"dealType\":" + IntegerToString(dtype) + ",";
          json += "\"entryType\":" + IntegerToString(entry) + ",";
+         json += "\"dealReason\":" + IntegerToString(dreason) + ",";
          json += "\"volume\":" + DoubleToString(vol, 8) + ",";
          json += "\"price\":" + DoubleToString(price, 8) + ",";
          json += "\"commission\":" + DoubleToString(comm, 8) + ",";

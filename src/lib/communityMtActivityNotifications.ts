@@ -1,6 +1,10 @@
 import { NotificationType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { closeKindLabelId, type Mt5CloseKind } from "@/lib/mt5CloseReason";
 import type { PositionCloseAlert, PositionOpenAlert, PositionSltpChangeAlert } from "@/lib/mtTradingActivityPositionDiff";
+
+/** Penutupan dari diff + alasan (SL/TP/…) dari deal MT5. */
+export type PositionCloseAlertEnriched = PositionCloseAlert & { closeKind: Mt5CloseKind };
 
 function communityAccountPath(publisherUserId: string, mtLogin: string): string {
   return `/profil/portfolio/community/account/${encodeURIComponent(publisherUserId)}/${encodeURIComponent(mtLogin)}`;
@@ -37,8 +41,21 @@ function bodyOpen(o: PositionOpenAlert): string {
   return `Buka ${posRef(o.symbol, o.ticket)} · SL ${formatMtSltpForNotification(o.sl)} · TP ${formatMtSltpForNotification(o.tp)}`;
 }
 
-function bodyClose(c: PositionCloseAlert): string {
-  return `Tutup ${posRef(c.symbol, c.ticket)}`;
+function closeAlertTitle(accountLabel: string, kind: Mt5CloseKind): string {
+  switch (kind) {
+    case "tp":
+      return `${accountLabel}: Take Profit`;
+    case "sl":
+      return `${accountLabel}: Stop Loss`;
+    case "stop_out":
+      return `${accountLabel}: Stop out`;
+    default:
+      return `${accountLabel}: posisi ditutup`;
+  }
+}
+
+function bodyClose(c: PositionCloseAlertEnriched): string {
+  return `Tutup ${posRef(c.symbol, c.ticket)} · ${closeKindLabelId(c.closeKind)}`;
 }
 
 function bodySltp(u: PositionSltpChangeAlert): string {
@@ -60,7 +77,7 @@ export async function notifyCommunityMtActivityWatchers(params: {
   mtLogin: string;
   displayName: string;
   opened: PositionOpenAlert[];
-  closed: PositionCloseAlert[];
+  closed: PositionCloseAlertEnriched[];
   sltpChanged: PositionSltpChangeAlert[];
 }): Promise<void> {
   const { opened, closed, sltpChanged } = params;
@@ -104,7 +121,7 @@ export async function notifyCommunityMtActivityWatchers(params: {
         userId: w.followerUserId,
         actorId: params.publisherUserId,
         type: NotificationType.COMMUNITY_MT_TRADE_ALERT,
-        title: `${label}: posisi ditutup`,
+        title: closeAlertTitle(label, c.closeKind),
         body: bodyClose(c),
         linkUrl,
       }))
