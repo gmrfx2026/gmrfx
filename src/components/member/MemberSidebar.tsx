@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { playChatIncomingBeep, readChatBeepPreference } from "@/lib/chatBeep";
-import { PortfolioNavEmbedded } from "@/components/portfolio/PortfolioSubNav";
+import { CommunityNavEmbedded, PortfolioNavEmbedded } from "@/components/portfolio/PortfolioSubNav";
 import type { MemberMenuResolvedItem } from "@/lib/memberMenu";
 import type { PortfolioNavConfig } from "@/lib/portfolioMenu";
 import clsx from "clsx";
@@ -187,6 +187,7 @@ export function MemberSidebar({
               })}
             </nav>
 
+            <CommunityNavEmbedded menu={portfolioMenu} />
             <PortfolioNavEmbedded menu={portfolioMenu} />
           </div>
 

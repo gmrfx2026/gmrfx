@@ -102,6 +102,52 @@ function hrefForPortfolioKey(
   }
 }
 
+/** Sub-menu Komunitas di kartu Member menu (desktop), terpisah dari blok Portofolio MT. */
+export function CommunityNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
+  const pathname = usePathname();
+
+  const commSorted = useMemo(
+    () =>
+      COMM_KEYS.filter((k) => menu[k].enabled).sort(
+        (a, b) => menu[a].sortOrder - menu[b].sortOrder || a.localeCompare(b)
+      ),
+    [menu]
+  );
+
+  const commAccountsActive = pathname.startsWith("/profil/portfolio/community/accounts");
+  const commFollowingActive = pathname.startsWith("/profil/portfolio/community/following");
+  const commMyFollowersActive = pathname.startsWith("/profil/portfolio/community/pengikut");
+  const commPublishActive = pathname.startsWith("/profil/portfolio/community/publish");
+
+  function isCommActive(k: CommKey): boolean {
+    if (k === "community_accounts") return commAccountsActive;
+    if (k === "community_following") return commFollowingActive;
+    if (k === "community_my_followers") return commMyFollowersActive;
+    return commPublishActive;
+  }
+
+  if (commSorted.length === 0) return null;
+
+  return (
+    <div className="mt-3 border-t border-broker-border/50 pt-3">
+      <div className="px-2 pb-2">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-accent">Komunitas</p>
+      </div>
+      <nav className="space-y-0.5" aria-label="Submenu komunitas">
+        {commSorted.map((k) => (
+          <SubNavLink
+            key={k}
+            href={hrefForPortfolioKey(k)}
+            label={menu[k].label}
+            isActive={isCommActive(k)}
+            compact
+          />
+        ))}
+      </nav>
+    </div>
+  );
+}
+
 /** Sub-menu portofolio di dalam kartu Member menu (desktop). */
 export function PortfolioNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
   const pathname = usePathname();
@@ -111,14 +157,9 @@ export function PortfolioNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
   const [mtLogins, setMtLogins] = useState<string[] | null>(null);
 
   const showPortfolioBlock = menu.summary.enabled || menu.mt_linked_logins.enabled;
-  const commEnabled = COMM_KEYS.filter((k) => menu[k].enabled);
-  const showCommunityBlock = commEnabled.length > 0;
 
   const [portfolioOpen, setPortfolioOpen] = useState(() =>
     pathname.startsWith("/profil/portfolio/summary")
-  );
-  const [communityOpen, setCommunityOpen] = useState(() =>
-    pathname.startsWith("/profil/portfolio/community")
   );
 
   const inPortfolio = pathname.startsWith("/profil/portfolio");
@@ -128,22 +169,9 @@ export function PortfolioNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
   const tradeLogActive = pathname.startsWith("/profil/portfolio/trade-log");
   const tradeLogAllActive = tradeLogActive && selectedMtLogin.length === 0;
   const playbookActive = pathname.startsWith("/profil/portfolio/playbook");
-  const commAccountsActive = pathname.startsWith("/profil/portfolio/community/accounts");
-  const commFollowingActive = pathname.startsWith("/profil/portfolio/community/following");
-  const commMyFollowersActive = pathname.startsWith("/profil/portfolio/community/pengikut");
-  const commPublishActive = pathname.startsWith("/profil/portfolio/community/publish");
-
   const midSorted = useMemo(
     () =>
       MID_KEYS.filter((k) => menu[k].enabled).sort(
-        (a, b) => menu[a].sortOrder - menu[b].sortOrder || a.localeCompare(b)
-      ),
-    [menu]
-  );
-
-  const commSorted = useMemo(
-    () =>
-      COMM_KEYS.filter((k) => menu[k].enabled).sort(
         (a, b) => menu[a].sortOrder - menu[b].sortOrder || a.localeCompare(b)
       ),
     [menu]
@@ -183,13 +211,6 @@ export function PortfolioNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
     return playbookActive;
   }
 
-  function isCommActive(k: CommKey): boolean {
-    if (k === "community_accounts") return commAccountsActive;
-    if (k === "community_following") return commFollowingActive;
-    if (k === "community_my_followers") return commMyFollowersActive;
-    return commPublishActive;
-  }
-
   return (
     <div className="mt-3 border-t border-broker-border/50 pt-3">
       <div className="px-2 pb-2">
@@ -217,22 +238,13 @@ export function PortfolioNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
             {portfolioOpen && (
               <div className="mt-0.5 space-y-0.5 border-l border-broker-border/40 pl-1.5">
                 {menu.summary.enabled ? (
-                  <>
-                    <p className="px-2.5 py-0.5 text-[9px] uppercase tracking-wide text-broker-muted/70">
-                      Akun MT (EA)
-                    </p>
-                    <SubNavLink
-                      href={hrefForPortfolioKey("summary")}
-                      label={menu.summary.label}
-                      indent
-                      isActive={summaryActive}
-                      compact
-                    />
-                  </>
-                ) : menu.mt_linked_logins.enabled ? (
-                  <p className="px-2.5 py-0.5 text-[9px] uppercase tracking-wide text-broker-muted/70">
-                    Akun MT
-                  </p>
+                  <SubNavLink
+                    href={hrefForPortfolioKey("summary")}
+                    label={menu.summary.label}
+                    indent
+                    isActive={summaryActive}
+                    compact
+                  />
                 ) : null}
                 {menu.mt_linked_logins.enabled ? (
                   mtLogins === null ? (
@@ -245,9 +257,6 @@ export function PortfolioNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
                     </p>
                   ) : (
                     <div className="mt-0.5 space-y-0.5">
-                      <p className="px-2.5 py-0.5 text-[9px] uppercase tracking-wide text-broker-muted/70">
-                        {menu.mt_linked_logins.label}
-                      </p>
                       {mtLogins.map((login) => (
                         <SubNavLink
                           key={login}
@@ -277,31 +286,6 @@ export function PortfolioNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
             compact
           />
         ))}
-
-        {showCommunityBlock ? (
-          <div className="pt-0.5">
-            <SectionToggle
-              open={communityOpen}
-              onToggle={() => setCommunityOpen((o) => !o)}
-              label="Komunitas"
-              compact
-            />
-            {communityOpen && (
-              <div className="mt-0.5 space-y-0.5 border-l border-broker-border/40 pl-1.5">
-                {commSorted.map((k) => (
-                  <SubNavLink
-                    key={k}
-                    href={hrefForPortfolioKey(k)}
-                    label={menu[k].label}
-                    indent
-                    isActive={isCommActive(k)}
-                    compact
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        ) : null}
       </nav>
     </div>
   );
@@ -320,11 +304,6 @@ export function PortfolioNavMobileStrip({ menu }: { menu: PortfolioNavConfig }) 
     links.push({ href: hrefForPortfolioKey("summary"), label: menu.summary.label });
   }
   for (const k of MID_KEYS.filter((x) => menu[x].enabled).sort(
-    (a, b) => menu[a].sortOrder - menu[b].sortOrder
-  )) {
-    links.push({ href: hrefForPortfolioKey(k), label: menu[k].label });
-  }
-  for (const k of COMM_KEYS.filter((x) => menu[x].enabled).sort(
     (a, b) => menu[a].sortOrder - menu[b].sortOrder
   )) {
     links.push({ href: hrefForPortfolioKey(k), label: menu[k].label });

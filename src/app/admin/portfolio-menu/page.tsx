@@ -8,11 +8,14 @@ export default async function AdminPortfolioMenuPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-800">Menu portofolio member</h1>
+      <h1 className="text-2xl font-bold text-gray-800">Menu portofolio & komunitas member</h1>
       <p className="mt-1 text-sm text-gray-600">
-        Mengatur item submenu di bawah <strong className="text-gray-800">Portofolio MT</strong> (sidebar desktop
-        dan strip navigasi mobile di area <code className="rounded bg-gray-100 px-1">/profil/portfolio</code>).
-        Nonaktifkan item yang tidak ingin ditampilkan kepada member.
+        Mengatur label, urutan, dan aktif/nonaktif untuk submenu{" "}
+        <strong className="text-gray-800">Portofolio MT</strong> (sidebar desktop saat membuka portofolio) serta
+        blok <strong className="text-gray-800">Komunitas</strong> di sidebar member (Copy / Ikuti, pengikut,
+        publikasi). Strip navigasi horizontal mobile di{" "}
+        <code className="rounded bg-gray-100 px-1">/profil/portfolio</code> memuat item portofolio (bukan
+        komunitas).
       </p>
       <p className="mt-2 text-sm text-amber-800">
         Catatan: menonaktifkan menu tidak memblokir URL secara tegas — member masih bisa membuka alamat jika

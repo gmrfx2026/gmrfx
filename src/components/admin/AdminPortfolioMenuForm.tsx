@@ -52,7 +52,7 @@ export function AdminPortfolioMenuForm({ initialItems }: { initialItems: AdminPo
       setErr(typeof data.error === "string" ? data.error : "Gagal menyimpan");
       return;
     }
-    setMsg("Menu portofolio disimpan. Sidebar member akan memuat ulang setelah navigasi.");
+    setMsg("Menu portofolio & komunitas disimpan. Sidebar member akan memuat ulang setelah navigasi.");
     router.refresh();
   }
 
