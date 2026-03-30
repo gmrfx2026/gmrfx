@@ -33,6 +33,16 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/indikator" className="hover:text-broker-accent">
+                  Indikator
+                </Link>
+              </li>
+              <li>
+                <Link href="/ea" className="hover:text-broker-accent">
+                  Expert Advisor (EA)
+                </Link>
+              </li>
+              <li>
                 <Link href="/galeri" className="hover:text-broker-accent">
                   Galeri
                 </Link>
