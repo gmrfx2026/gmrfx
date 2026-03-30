@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateMt5ApiToken } from "@/lib/mt5Token";
+import { encryptMtLinkTokenPlain } from "@/lib/mtLinkTokenCrypto";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -21,10 +22,16 @@ export async function GET() {
       label: true,
       createdAt: true,
       lastUsedAt: true,
+      tokenCipher: true,
     },
   });
 
-  return NextResponse.json({ items: rows });
+  const items = rows.map(({ tokenCipher, ...rest }) => ({
+    ...rest,
+    canCopy: Boolean(tokenCipher),
+  }));
+
+  return NextResponse.json({ items });
 }
 
 const postSchema = z.object({
@@ -43,11 +50,13 @@ export async function POST(req: Request) {
   }
 
   const { plain, hash, hint } = generateMt5ApiToken();
+  const tokenCipher = encryptMtLinkTokenPlain(plain);
   const row = await prisma.mtLinkToken.create({
     data: {
       userId: session.user.id,
       tokenHash: hash,
       tokenHint: hint,
+      tokenCipher,
       label: parsed.data.label?.trim() || null,
     },
     select: { id: true, createdAt: true },

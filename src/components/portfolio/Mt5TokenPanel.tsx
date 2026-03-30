@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
+import { useToast } from "@/components/ToastProvider";
 
 type Row = {
   id: string;
@@ -9,6 +10,7 @@ type Row = {
   label: string | null;
   createdAt: string;
   lastUsedAt: string | null;
+  canCopy?: boolean;
 };
 
 function mt4IngestUrlFromMt5(mt5Url: string): string {
@@ -16,6 +18,7 @@ function mt4IngestUrlFromMt5(mt5Url: string): string {
 }
 
 export function Mt5TokenPanel({ ingestPath }: { ingestPath: string }) {
+  const { show } = useToast();
   const ingestPathMt4 = mt4IngestUrlFromMt5(ingestPath);
   const [items, setItems] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +26,7 @@ export function Mt5TokenPanel({ ingestPath }: { ingestPath: string }) {
   const [busy, setBusy] = useState(false);
   const [newToken, setNewToken] = useState<string | null>(null);
   const [err, setErr] = useState("");
+  const [copyingId, setCopyingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -64,6 +68,37 @@ export function Mt5TokenPanel({ ingestPath }: { ingestPath: string }) {
       setErr("Jaringan error");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function copyPlainToClipboard(plain: string) {
+    try {
+      await navigator.clipboard.writeText(plain);
+      show("Token disalin.");
+    } catch {
+      show("Gagal menyalin (izin clipboard?).", "err");
+    }
+  }
+
+  async function copyTokenById(id: string) {
+    setCopyingId(id);
+    try {
+      const r = await fetch("/api/profile/mt5-token/reveal", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const j = (await r.json()) as { token?: string; error?: string };
+      if (!r.ok) {
+        show(typeof j.error === "string" ? j.error : "Gagal mengambil token.", "err");
+        return;
+      }
+      if (j.token) await copyPlainToClipboard(j.token);
+    } catch {
+      show("Jaringan error.", "err");
+    } finally {
+      setCopyingId(null);
     }
   }
 
@@ -145,7 +180,16 @@ export function Mt5TokenPanel({ ingestPath }: { ingestPath: string }) {
 
       {newToken && (
         <div className="mt-4 rounded-xl border border-broker-accent/40 bg-broker-accent/10 p-4">
-          <p className="text-sm font-medium text-broker-accent">Salin sekarang — tidak ditampilkan lagi</p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <p className="text-sm font-medium text-broker-accent">Simpan token — tampilan penuh hanya sekali</p>
+            <button
+              type="button"
+              onClick={() => void copyPlainToClipboard(newToken)}
+              className="shrink-0 rounded-lg bg-broker-accent px-3 py-1.5 text-xs font-semibold text-broker-bg hover:opacity-90"
+            >
+              Salin 1 klik
+            </button>
+          </div>
           <code className="mt-2 block break-all rounded-lg bg-broker-bg/60 p-3 text-xs text-white">{newToken}</code>
         </div>
       )}
@@ -163,7 +207,7 @@ export function Mt5TokenPanel({ ingestPath }: { ingestPath: string }) {
                 key={t.id}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-broker-border/60 bg-broker-bg/25 px-3 py-2 text-sm"
               >
-                <span className="text-broker-muted">
+                <span className="min-w-0 text-broker-muted">
                   <span className="font-mono text-white">{t.tokenHint}</span>
                   {t.label ? ` · ${t.label}` : ""}
                   <span className="mt-0.5 block text-xs text-broker-muted/70">
@@ -175,14 +219,29 @@ export function Mt5TokenPanel({ ingestPath }: { ingestPath: string }) {
                       : "Belum pernah dipakai"}
                   </span>
                 </span>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => void revoke(t.id)}
-                  className="text-xs font-medium text-broker-danger hover:underline disabled:opacity-50"
-                >
-                  Cabut
-                </button>
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={busy || copyingId === t.id || !t.canCopy}
+                    title={
+                      t.canCopy
+                        ? "Salin token lengkap ke clipboard"
+                        : "Token lama: cabut lalu buat baru untuk salin 1 klik"
+                    }
+                    onClick={() => void copyTokenById(t.id)}
+                    className="rounded-lg border border-broker-accent/50 bg-broker-accent/15 px-3 py-1.5 text-xs font-semibold text-broker-accent hover:bg-broker-accent/25 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {copyingId === t.id ? "…" : "Salin"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void revoke(t.id)}
+                    className="text-xs font-medium text-broker-danger hover:underline disabled:opacity-50"
+                  >
+                    Cabut
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

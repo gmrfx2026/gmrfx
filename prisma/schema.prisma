@@ -145,16 +145,18 @@ model User {
   mtTradingActivities        MtTradingActivity[]
 }
 
-/// Token untuk EA MetaTrader 5 — hanya hash yang disimpan; plaintext ditampilkan sekali saat dibuat.
+/// Token untuk EA MT — verifikasi pakai hash; plaintext disimpan terenkripsi agar pemilik bisa salin lagi.
 model MtLinkToken {
-  id         String    @id @default(cuid())
-  userId     String
-  tokenHash  String    @unique
-  tokenHint  String
-  label      String?
-  createdAt  DateTime  @default(now())
-  lastUsedAt DateTime?
-  revokedAt  DateTime?
+  id          String    @id @default(cuid())
+  userId      String
+  tokenHash   String    @unique
+  tokenHint   String
+  /// AES-256-GCM (base64url), nullable untuk token lama sebelum migrasi.
+  tokenCipher String?
+  label       String?
+  createdAt   DateTime  @default(now())
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
