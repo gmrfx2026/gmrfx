@@ -20,7 +20,9 @@ seedEducationalArticles(prisma)
     console.log(
       "Artikel edukasi forex:",
       r.count,
-      "judul · status PUBLISHED · penulis:",
+      "judul · mode:",
+      r.mode,
+      "· penulis:",
       r.penulis,
       "(" + r.authorDisplay + ")"
     );

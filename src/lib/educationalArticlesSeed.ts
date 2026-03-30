@@ -1,5 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { ArticleStatus, Role } from "@prisma/client";
+import { injectBrokerAffiliateLinks } from "@/lib/brokerAffiliateLinks";
+import { sanitizeArticleHtml } from "@/lib/sanitize";
 
 export type EducationalArticleRow = { slug: string; title: string; excerpt: string; contentHtml: string };
 
@@ -178,12 +180,35 @@ export async function resolveSeedArticleAuthor(prisma: PrismaClient) {
   return prisma.user.findFirst({ where: { role: Role.ADMIN } });
 }
 
+export type SeedEducationalArticlesMode = "upsert" | "create_new";
+
 export type SeedEducationalArticlesResult =
-  | { ok: true; count: number; penulis: "piphunter" | "admin"; authorDisplay: string }
+  | {
+      ok: true;
+      count: number;
+      penulis: "piphunter" | "admin";
+      authorDisplay: string;
+      mode: SeedEducationalArticlesMode;
+    }
   | { ok: false; error: string };
 
-/** Upsert 8 artikel edukasi (status PUBLISHED). */
-export async function seedEducationalArticles(prisma: PrismaClient): Promise<SeedEducationalArticlesResult> {
+export type SeedEducationalArticlesOptions = {
+  mode?: SeedEducationalArticlesMode;
+};
+
+function prepareArticleHtml(rawHtml: string): string {
+  return sanitizeArticleHtml(injectBrokerAffiliateLinks(rawHtml));
+}
+
+/**
+ * Upsert atau tambah 8 artikel edukasi (PUBLISHED), dengan tautan /go pada istilah broker/pialang.
+ */
+export async function seedEducationalArticles(
+  prisma: PrismaClient,
+  options?: SeedEducationalArticlesOptions
+): Promise<SeedEducationalArticlesResult> {
+  const mode: SeedEducationalArticlesMode = options?.mode === "create_new" ? "create_new" : "upsert";
+
   const articleAuthor = await resolveSeedArticleAuthor(prisma);
   if (!articleAuthor) {
     return { ok: false, error: "Tidak ada user admin atau piphunter. Buat admin dulu atau daftarkan akun piphunter." };
@@ -200,28 +225,47 @@ export async function seedEducationalArticles(prisma: PrismaClient): Promise<See
   const now = new Date();
 
   for (const a of rows) {
-    await prisma.article.upsert({
-      where: { slug: a.slug },
-      create: {
-        title: a.title,
-        slug: a.slug,
-        excerpt: a.excerpt,
-        contentHtml: a.contentHtml,
-        status: ArticleStatus.PUBLISHED,
-        authorId: articleAuthor.id,
-        publishedAt: now,
-      },
-      update: {
-        title: a.title,
-        excerpt: a.excerpt,
-        contentHtml: a.contentHtml,
-        status: ArticleStatus.PUBLISHED,
-        authorId: articleAuthor.id,
-        publishedAt: now,
-      },
-    });
+    const contentHtml = prepareArticleHtml(a.contentHtml);
+
+    if (mode === "create_new") {
+      const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 9)}`;
+      const slug = `${a.slug}-${suffix}`;
+      const titleSuffix = now.toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
+      await prisma.article.create({
+        data: {
+          title: `${a.title} · ${titleSuffix}`,
+          slug,
+          excerpt: a.excerpt,
+          contentHtml,
+          status: ArticleStatus.PUBLISHED,
+          authorId: articleAuthor.id,
+          publishedAt: now,
+        },
+      });
+    } else {
+      await prisma.article.upsert({
+        where: { slug: a.slug },
+        create: {
+          title: a.title,
+          slug: a.slug,
+          excerpt: a.excerpt,
+          contentHtml,
+          status: ArticleStatus.PUBLISHED,
+          authorId: articleAuthor.id,
+          publishedAt: now,
+        },
+        update: {
+          title: a.title,
+          excerpt: a.excerpt,
+          contentHtml,
+          status: ArticleStatus.PUBLISHED,
+          authorId: articleAuthor.id,
+          publishedAt: now,
+        },
+      });
+    }
   }
 
   const authorDisplay = articleAuthor.name?.trim() || articleAuthor.email;
-  return { ok: true, count: rows.length, penulis, authorDisplay };
+  return { ok: true, count: rows.length, penulis, authorDisplay, mode };
 }

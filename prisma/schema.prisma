@@ -500,6 +500,16 @@ model Comment {
   createdAt     DateTime      @default(now())
 }
 
+/// Kunjungan ke halaman /go (pintu keluar ke mitra afiliasi).
+model AffiliateGoClick {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  /// ID dari cookie browser (perkiraan pengunjung unik, bukan identitas pasti).
+  visitorId  String?
+  referer    String?
+  userAgent  String?
+}
+
 model MemberRating {
   id        String   @id @default(cuid())
   memberId  String

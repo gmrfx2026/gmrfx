@@ -35,7 +35,9 @@ async function main() {
     console.log(
       "Artikel edukasi forex:",
       edu.count,
-      "judul · status PUBLISHED · penulis:",
+      "judul · mode:",
+      edu.mode,
+      "· penulis:",
       edu.penulis,
       "(" + edu.authorDisplay + ")"
     );
