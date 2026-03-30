@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -81,14 +80,13 @@ export default async function IndikatorDetailPage({ params }: Props) {
 
       {cover ? (
         <div className="relative mt-4 aspect-[16/9] w-full overflow-hidden rounded-xl border border-broker-border/80 bg-broker-bg">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element -- sampul SVG; next/image memblokir SVG di production */}
+          <img
             src={cover}
             alt=""
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 42rem"
-            priority
-            unoptimized
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="eager"
+            decoding="async"
           />
         </div>
       ) : null}

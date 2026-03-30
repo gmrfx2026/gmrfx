@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
 import { marketplaceDescriptionPlainExcerpt } from "@/lib/marketplaceDescription";
@@ -58,14 +57,14 @@ export default async function IndikatorCatalogPage() {
                   className="block overflow-hidden rounded-xl border border-broker-border bg-broker-surface/40 transition hover:border-broker-accent/40 hover:bg-broker-surface/60"
                 >
                   {cover ? (
-                    <div className="relative aspect-[16/9] w-full border-b border-broker-border/60 bg-broker-bg">
-                      <Image
+                    <div className="relative aspect-[16/9] w-full overflow-hidden border-b border-broker-border/60 bg-broker-bg">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- sampul SVG; next/image memblokir SVG di production */}
+                      <img
                         src={cover}
                         alt=""
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 640px) 100vw, 50vw"
-                        unoptimized
+                        className="absolute inset-0 h-full w-full object-cover"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </div>
                   ) : null}
