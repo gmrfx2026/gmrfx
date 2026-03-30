@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { AdminArticleRow } from "@/components/admin/AdminArticleRow";
+import { AdminImportEducationalArticles } from "@/components/admin/AdminImportEducationalArticles";
 import { AdminListFilterForm, AdminListSummary } from "@/components/admin/AdminListFilterForm";
 import { AdminPaginationNav } from "@/components/admin/AdminPaginationNav";
 import { parseAdminListQuery, resolvePagedWindow } from "@/lib/adminListParams";
@@ -58,6 +59,8 @@ export default async function AdminArticlesPage({
         searchPlaceholder="Judul, slug, ringkasan, penulis…"
       />
       <AdminListSummary total={total} page={page} pageSize={lp.pageSize} totalPages={totalPages} />
+
+      <AdminImportEducationalArticles />
 
       <div className="mt-6 space-y-3">
         {articles.map((a) => (

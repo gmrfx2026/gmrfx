@@ -1,6 +1,6 @@
 import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { seedEducationalArticles } from "./educationalArticlesSeed";
+import { seedEducationalArticles } from "../src/lib/educationalArticlesSeed";
 
 const prisma = new PrismaClient();
 
@@ -30,7 +30,18 @@ async function main() {
     console.log("Admin dibuat:", admin.email, "/ password: admin123");
   }
 
-  await seedEducationalArticles(prisma);
+  const edu = await seedEducationalArticles(prisma);
+  if (edu.ok) {
+    console.log(
+      "Artikel edukasi forex:",
+      edu.count,
+      "judul · status PUBLISHED · penulis:",
+      edu.penulis,
+      "(" + edu.authorDisplay + ")"
+    );
+  } else {
+    console.log("Lewati artikel:", edu.error);
+  }
 
   const cat = await prisma.galleryCategory.upsert({
     where: { slug: "edukasi-chart" },

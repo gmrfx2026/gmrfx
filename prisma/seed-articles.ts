@@ -7,11 +7,24 @@
  * Pastikan DATABASE_URL mengarah ke DB yang sama dengan deployment (Neon/Vercel).
  */
 import { PrismaClient } from "@prisma/client";
-import { seedEducationalArticles } from "./educationalArticlesSeed";
+import { seedEducationalArticles } from "../src/lib/educationalArticlesSeed";
 
 const prisma = new PrismaClient();
 
 seedEducationalArticles(prisma)
+  .then((r) => {
+    if (!r.ok) {
+      console.error(r.error);
+      process.exit(1);
+    }
+    console.log(
+      "Artikel edukasi forex:",
+      r.count,
+      "judul · status PUBLISHED · penulis:",
+      r.penulis,
+      "(" + r.authorDisplay + ")"
+    );
+  })
   .catch((e) => {
     console.error(e);
     process.exit(1);
