@@ -5,7 +5,7 @@ import {
   notifyCommunityMtActivityWatchers,
   resolveCommunityMtDisplayName,
 } from "@/lib/communityMtActivityNotifications";
-import { diffOpenPositionsByTicket } from "@/lib/mtTradingActivityPositionDiff";
+import { diffOpenPositionsForAlerts } from "@/lib/mtTradingActivityPositionDiff";
 import { parseTradingActivityFromDb } from "@/lib/mtTradingActivity";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
@@ -300,9 +300,14 @@ export async function POST(req: Request) {
 
     if (openPositions !== undefined && prevActivityForDiff) {
       const prevPos = parseTradingActivityFromDb(prevActivityForDiff.positions, []).positions;
-      const nextTickets = openPositions.map((p) => ({ ticket: p.ticket, symbol: p.symbol }));
-      const { opened, closed } = diffOpenPositionsByTicket(prevPos, nextTickets);
-      if (opened.length > 0 || closed.length > 0) {
+      const nextLite = openPositions.map((p) => ({
+        ticket: p.ticket,
+        symbol: p.symbol,
+        sl: p.sl,
+        tp: p.tp,
+      }));
+      const { opened, closed, sltpChanged } = diffOpenPositionsForAlerts(prevPos, nextLite);
+      if (opened.length > 0 || closed.length > 0 || sltpChanged.length > 0) {
         const publisherUserId = link.userId;
         void (async () => {
           try {
@@ -313,6 +318,7 @@ export async function POST(req: Request) {
               displayName,
               opened,
               closed,
+              sltpChanged,
             });
           } catch (e) {
             console.error("mt5/ingest community watch notify", e);

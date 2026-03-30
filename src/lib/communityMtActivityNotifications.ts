@@ -1,8 +1,57 @@
 import { NotificationType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import type { PositionCloseAlert, PositionOpenAlert, PositionSltpChangeAlert } from "@/lib/mtTradingActivityPositionDiff";
 
 function communityAccountPath(publisherUserId: string, mtLogin: string): string {
   return `/profil/portfolio/community/account/${encodeURIComponent(publisherUserId)}/${encodeURIComponent(mtLogin)}`;
+}
+
+/** Format harga level untuk teks notifikasi (SL/TP). */
+export function formatMtSltpForNotification(n: number | null): string {
+  if (n == null || !Number.isFinite(n)) return "—";
+  const abs = Math.abs(n);
+  const maxFrac = abs >= 1000 ? 2 : abs >= 10 ? 3 : 5;
+  let s = n.toLocaleString("id-ID", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maxFrac,
+  });
+  return s.length > 0 ? s : String(n);
+}
+
+/** Tampilan tiket di notifikasi: tidak full, cukup beberapa digit akhir. */
+function formatMtTicketHint(ticket: string, tailDigits = 4): string {
+  const t = String(ticket).trim();
+  if (!t) return "—";
+  const n = Math.min(Math.max(2, tailDigits), 8);
+  if (t.length <= n) return t;
+  return `…${t.slice(-n)}`;
+}
+
+/** Pair + petunjuk tiket — membedakan beberapa posisi pada symbol yang sama tanpa menampilkan tiket penuh. */
+function posRef(symbol: string, ticket: string): string {
+  const sym = symbol || "(internal)";
+  return `${sym} · tiket ${formatMtTicketHint(ticket)}`;
+}
+
+function bodyOpen(o: PositionOpenAlert): string {
+  return `Buka ${posRef(o.symbol, o.ticket)} · SL ${formatMtSltpForNotification(o.sl)} · TP ${formatMtSltpForNotification(o.tp)}`;
+}
+
+function bodyClose(c: PositionCloseAlert): string {
+  return `Tutup ${posRef(c.symbol, c.ticket)}`;
+}
+
+function bodySltp(u: PositionSltpChangeAlert): string {
+  const slPart = mtSltpPart("SL", u.wasSl, u.sl);
+  const tpPart = mtSltpPart("TP", u.wasTp, u.tp);
+  return `Perubahan ${posRef(u.symbol, u.ticket)} · ${slPart} · ${tpPart}`;
+}
+
+function mtSltpPart(label: string, was: number | null, now: number | null): string {
+  const a = formatMtSltpForNotification(was);
+  const b = formatMtSltpForNotification(now);
+  if (a === b) return `${label} ${b}`;
+  return `${label} ${a} → ${b}`;
 }
 
 /** Kirim notifikasi ke member yang menekan "Ikuti" pada akun komunitas ini. */
@@ -10,11 +59,12 @@ export async function notifyCommunityMtActivityWatchers(params: {
   publisherUserId: string;
   mtLogin: string;
   displayName: string;
-  opened: { symbol: string }[];
-  closed: { symbol: string }[];
+  opened: PositionOpenAlert[];
+  closed: PositionCloseAlert[];
+  sltpChanged: PositionSltpChangeAlert[];
 }): Promise<void> {
-  const { opened, closed } = params;
-  if (opened.length === 0 && closed.length === 0) return;
+  const { opened, closed, sltpChanged } = params;
+  if (opened.length === 0 && closed.length === 0 && sltpChanged.length === 0) return;
 
   const watchers = await prisma.mtCommunityActivityWatch.findMany({
     where: { publisherUserId: params.publisherUserId, mtLogin: params.mtLogin },
@@ -37,27 +87,37 @@ export async function notifyCommunityMtActivityWatchers(params: {
   const rows: Row[] = [];
 
   for (const o of opened) {
-    const sym = o.symbol || "(internal)";
     rows.push(
       ...watchers.map((w) => ({
         userId: w.followerUserId,
         actorId: params.publisherUserId,
         type: NotificationType.COMMUNITY_MT_TRADE_ALERT,
         title: `${label}: posisi baru`,
-        body: `Buka ${sym}`,
+        body: bodyOpen(o),
         linkUrl,
       }))
     );
   }
   for (const c of closed) {
-    const sym = c.symbol || "(internal)";
     rows.push(
       ...watchers.map((w) => ({
         userId: w.followerUserId,
         actorId: params.publisherUserId,
         type: NotificationType.COMMUNITY_MT_TRADE_ALERT,
         title: `${label}: posisi ditutup`,
-        body: `Tutup ${sym}`,
+        body: bodyClose(c),
+        linkUrl,
+      }))
+    );
+  }
+  for (const u of sltpChanged) {
+    rows.push(
+      ...watchers.map((w) => ({
+        userId: w.followerUserId,
+        actorId: params.publisherUserId,
+        type: NotificationType.COMMUNITY_MT_TRADE_ALERT,
+        title: `${label}: ubah SL/TP`,
+        body: bodySltp(u),
         linkUrl,
       }))
     );
