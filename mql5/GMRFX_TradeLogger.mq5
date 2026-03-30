@@ -5,8 +5,11 @@
 //+------------------------------------------------------------------+
 #property copyright "GMR FX"
 #property link      "https://github.com/"
-#property version   "1.06"
+#property version   "1.07"
 #property strict
+
+// Basis URL API (tanpa slash akhir). Tidak pakai `input` agar tidak tampil di tab Inputs.
+#define GMRFX_API_BASE "https://gmrfx.app"
 
 ulong  g_gmrfx_pos_ids[];
 long   g_gmrfx_pos_times[];
@@ -48,7 +51,6 @@ long GmrfxPosOpenTime(const ulong pid)
    return 0;
 }
 
-input string InpApiBase    = "https://your-domain.com"; // URL situs (tanpa slash akhir)
 input string InpApiToken   = "";                        // Token dari dashboard (Bearer)
 input int    InpIntervalSec = 300;                       // Interval sinkron (detik), min 60
 input int    InpHistoryDays = 14;                        // Riwayat deal (hari ke belakang)
@@ -364,7 +366,7 @@ string BuildJsonBody()
 
 bool PostToServer(const string json_body, string &response)
 {
-   string url = InpApiBase;
+   string url = GMRFX_API_BASE;
    if(StringSubstr(url, StringLen(url) - 1, 1) == "/")
       url = StringSubstr(url, 0, StringLen(url) - 1);
    url += "/api/mt5/ingest";
