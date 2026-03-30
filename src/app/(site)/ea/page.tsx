@@ -27,10 +27,6 @@ export default async function EaCatalogPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <h1 className="text-3xl font-bold text-white">Expert Advisor (EA)</h1>
-      <p className="mt-2 max-w-2xl text-sm text-broker-muted">
-        Robot trading dari member GMR FX. EA gratis diunduh setelah login; yang berbayar memakai saldo wallet
-        IDR ke penjual.
-      </p>
       <p className="mt-2 text-sm text-broker-muted">
         Lihat juga{" "}
         <Link href="/indikator" className="text-broker-accent hover:underline">

@@ -29,10 +29,6 @@ export default async function IndikatorCatalogPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <h1 className="text-3xl font-bold text-white">Indikator & file strategi</h1>
-      <p className="mt-2 max-w-2xl text-sm text-broker-muted">
-        File dari member GMR FX. Indikator gratis bisa diunduh setelah login; yang berbayar memakai saldo wallet
-        IDR ke penjual.
-      </p>
       <p className="mt-2 text-sm text-broker-muted">
         Untuk{" "}
         <Link href="/ea" className="text-broker-accent hover:underline">
