@@ -65,7 +65,7 @@ export default async function IndikatorDetailPage({ params }: Props) {
     ? sanitizeArticleHtml(ind.description)
     : "";
 
-  const cover = resolveMarketplaceIndicatorCoverUrl(ind.coverImageUrl);
+  const cover = resolveMarketplaceIndicatorCoverUrl(ind.coverImageUrl, ind.slug);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">

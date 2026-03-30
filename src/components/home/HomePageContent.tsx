@@ -148,7 +148,7 @@ export async function HomePageContent() {
               {homeIndicators.map((r) => {
                 const price = Number(r.priceIdr);
                 const excerpt = marketplaceDescriptionPlainExcerpt(r.description, 120);
-                const cover = resolveMarketplaceIndicatorCoverUrl(r.coverImageUrl);
+                const cover = resolveMarketplaceIndicatorCoverUrl(r.coverImageUrl, r.slug);
                 return (
                   <li key={r.id}>
                     <Link

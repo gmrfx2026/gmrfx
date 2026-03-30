@@ -44,7 +44,7 @@ export default async function IndikatorCatalogPage() {
           {rows.map((r) => {
             const price = Number(r.priceIdr);
             const excerpt = marketplaceDescriptionPlainExcerpt(r.description, 160);
-            const cover = resolveMarketplaceIndicatorCoverUrl(r.coverImageUrl);
+            const cover = resolveMarketplaceIndicatorCoverUrl(r.coverImageUrl, r.slug);
             return (
               <li key={r.id}>
                 <Link
