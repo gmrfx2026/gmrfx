@@ -1,6 +1,6 @@
 import { FilterXSS } from "xss";
 import type { IFilterXSSOptions } from "xss";
-import { isAllowedArticleImageSrc } from "./articleImagePolicy";
+import { isAllowedArticleOrNewsImageSrc } from "./articleImagePolicy";
 
 const CLS = ["class"];
 
@@ -54,7 +54,7 @@ const articleXssOptions: IFilterXSSOptions = {
   onTag(tag, html, options) {
     if (tag === "img" && !options.isClosing) {
       const src = extractImgSrc(html);
-      if (!src || !isAllowedArticleImageSrc(src)) {
+      if (!src || !isAllowedArticleOrNewsImageSrc(src)) {
         return "";
       }
     }

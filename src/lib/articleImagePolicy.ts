@@ -1,14 +1,28 @@
 /** Folder di bawah `public/uploads/` untuk gambar artikel (hanya file yang lolos validasi). */
 export const ARTICLE_IMAGES_SUBDIR = "article-images";
 
+/** Gambar berita beranda (impor RSS). */
+export const NEWS_IMAGES_SUBDIR = "news-images";
+
 export const ARTICLE_IMAGE_MAX_BYTES = 2.5 * 1024 * 1024;
 
 /** Path publik yang boleh dipakai di atribut `src` gambar artikel (UUID v4 + ekstensi). */
 export const ARTICLE_IMAGE_SRC_RE =
   /^\/uploads\/article-images\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|jpeg|png|webp)$/i;
 
+export const NEWS_IMAGE_SRC_RE =
+  /^\/uploads\/news-images\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|jpeg|png|webp)$/i;
+
 export function isAllowedArticleImageSrc(src: string): boolean {
   return ARTICLE_IMAGE_SRC_RE.test(String(src ?? "").trim());
+}
+
+export function isAllowedNewsImageSrc(src: string): boolean {
+  return NEWS_IMAGE_SRC_RE.test(String(src ?? "").trim());
+}
+
+export function isAllowedArticleOrNewsImageSrc(src: string): boolean {
+  return isAllowedArticleImageSrc(src) || isAllowedNewsImageSrc(src);
 }
 
 /** Deteksi tipe dari isi file (bukan dari header Content-Type / nama file). */

@@ -9,6 +9,7 @@ const links = [
   { href: "/admin/portfolio-menu", label: "Menu portofolio" },
   { href: "/admin/transfers", label: "Transfer wallet" },
   { href: "/admin/articles", label: "Artikel" },
+  { href: "/admin/home-news", label: "Berita beranda" },
   { href: "/admin/affiliate-go", label: "Statistik /go" },
   { href: "/admin/comments", label: "Komentar" },
   { href: "/admin/gallery", label: "Galeri" },

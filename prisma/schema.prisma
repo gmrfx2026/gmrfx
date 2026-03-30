@@ -28,6 +28,16 @@ enum ArticleStatus {
   REJECTED
 }
 
+enum HomeNewsScope {
+  DOMESTIC
+  INTERNATIONAL
+}
+
+enum HomeNewsStatus {
+  DRAFT
+  PUBLISHED
+}
+
 enum OtpPurpose {
   PHONE_UPDATE
   PASSWORD_CHANGE
@@ -508,6 +518,26 @@ model AffiliateGoClick {
   visitorId  String?
   referer    String?
   userAgent  String?
+}
+
+/// Berita beranda (dalam negeri / internasional), impor RSS + opsi parafrase.
+model HomeNewsItem {
+  id          String         @id @default(cuid())
+  scope       HomeNewsScope
+  title       String
+  slug        String         @unique
+  excerpt     String?
+  contentHtml String         @default("")
+  imageUrl    String?
+  sourceUrl   String?
+  sourceName  String?
+  status      HomeNewsStatus @default(PUBLISHED)
+  publishedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([scope, status, publishedAt(sort: Desc)])
+  @@index([scope, sourceUrl])
 }
 
 model MemberRating {
