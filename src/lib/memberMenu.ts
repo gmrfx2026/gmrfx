@@ -4,6 +4,7 @@ export const MEMBER_MENU_TAB_KEYS = [
   "home",
   "artikel",
   "indikator",
+  "expert",
   "portfolio",
   "notifications",
   "wallet",
@@ -23,11 +24,12 @@ const DEFAULTS: Record<MemberMenuTabKey, { label: string; sortOrder: number }> =
   home: { label: "Home", sortOrder: 0 },
   artikel: { label: "Artikel", sortOrder: 1 },
   indikator: { label: "Indikator", sortOrder: 2 },
-  portfolio: { label: "Portofolio", sortOrder: 3 },
-  notifications: { label: "Notifikasi", sortOrder: 4 },
-  wallet: { label: "Wallet & Transfer", sortOrder: 5 },
-  chat: { label: "Chat", sortOrder: 6 },
-  security: { label: "Keamanan", sortOrder: 7 },
+  expert: { label: "Expert Advisor (EA)", sortOrder: 3 },
+  portfolio: { label: "Portofolio", sortOrder: 4 },
+  notifications: { label: "Notifikasi", sortOrder: 5 },
+  wallet: { label: "Wallet & Transfer", sortOrder: 6 },
+  chat: { label: "Chat", sortOrder: 7 },
+  security: { label: "Keamanan", sortOrder: 8 },
 };
 
 function isTabKey(s: string): s is MemberMenuTabKey {

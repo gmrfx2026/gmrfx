@@ -165,8 +165,10 @@ model User {
   /** Berita beranda (DN / internasional); kosong = tampil sebagai redaksi default GMR Fx. */
   authoredHomeNewsItems HomeNewsItem[] @relation("HomeNewsAuthor")
 
-  sharedIndicatorsSold SharedIndicator[]   @relation("SharedIndicatorSeller")
-  indicatorPurchases   IndicatorPurchase[] @relation("IndicatorPurchaseBuyer")
+  sharedIndicatorsSold SharedIndicator[]     @relation("SharedIndicatorSeller")
+  indicatorPurchases   IndicatorPurchase[]   @relation("IndicatorPurchaseBuyer")
+  sharedEasSold        SharedExpertAdvisor[] @relation("SharedExpertAdvisorSeller")
+  eaPurchases          ExpertAdvisorPurchase[] @relation("ExpertAdvisorPurchaseBuyer")
 }
 
 /// Token untuk EA MT — verifikasi pakai hash; plaintext disimpan terenkripsi agar pemilik bisa salin lagi.
@@ -646,6 +648,41 @@ model IndicatorPurchase {
   createdAt   DateTime        @default(now())
 
   @@unique([indicatorId, buyerId])
+  @@index([buyerId])
+}
+
+/// Expert Advisor (EA) / robot trading yang dijual member (gratis atau berbayar IDR).
+model SharedExpertAdvisor {
+  id          String   @id @default(cuid())
+  sellerId    String
+  seller      User     @relation("SharedExpertAdvisorSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  title       String
+  slug        String   @unique
+  description String?  @db.Text
+  priceIdr    Decimal  @default(0) @db.Decimal(18, 2)
+  fileUrl     String
+  fileName    String
+  platform    String   @default("mt5") @db.VarChar(8)
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  purchases ExpertAdvisorPurchase[]
+
+  @@index([sellerId])
+  @@index([published])
+}
+
+model ExpertAdvisorPurchase {
+  id        String              @id @default(cuid())
+  eaId      String
+  ea        SharedExpertAdvisor @relation(fields: [eaId], references: [id], onDelete: Cascade)
+  buyerId   String
+  buyer     User                @relation("ExpertAdvisorPurchaseBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  amountIdr Decimal             @db.Decimal(18, 2)
+  createdAt DateTime            @default(now())
+
+  @@unique([eaId, buyerId])
   @@index([buyerId])
 }
 

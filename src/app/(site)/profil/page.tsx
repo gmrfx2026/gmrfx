@@ -22,6 +22,7 @@ import { ProfilSecurityForms } from "@/components/ProfilSecurityForms";
 import { ProfilAvatarUpload } from "@/components/ProfilAvatarUpload";
 import { ProfilArticlesSection } from "@/components/ProfilArticlesSection";
 import { ProfilIndicatorsPanel } from "@/components/member/ProfilIndicatorsPanel";
+import { ProfilEaPanel } from "@/components/member/ProfilEaPanel";
 import { MemberFollowStatsLinks } from "@/components/member/MemberFollowStatsLinks";
 import { parsePrefixedListQuery, resolvePagedWindow } from "@/lib/adminListParams";
 import { listablePublicMemberWhere } from "@/lib/memberFollowListable";
@@ -97,6 +98,7 @@ export default async function ProfilPage({
   const showSecurity = tab === "security";
   const showNotifications = tab === "notifications";
   const showIndicators = tab === "indikator";
+  const showExpert = tab === "expert";
   const showArticles = tab === "home" || tab === "artikel";
 
   const onlineWindowMinutes = 5;
@@ -392,6 +394,12 @@ export default async function ProfilPage({
       {showIndicators && (
         <section className="border-t border-broker-border pt-10">
           <ProfilIndicatorsPanel />
+        </section>
+      )}
+
+      {showExpert && (
+        <section className="border-t border-broker-border pt-10">
+          <ProfilEaPanel />
         </section>
       )}
 

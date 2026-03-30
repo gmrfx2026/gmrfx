@@ -29,6 +29,13 @@ export default async function IndikatorCatalogPage() {
         File dari member GMR FX. Indikator gratis bisa diunduh setelah login; yang berbayar memakai saldo wallet
         IDR ke penjual.
       </p>
+      <p className="mt-2 text-sm text-broker-muted">
+        Untuk{" "}
+        <Link href="/ea" className="text-broker-accent hover:underline">
+          Expert Advisor (EA)
+        </Link>{" "}
+        buka katalog terpisah.
+      </p>
 
       {rows.length === 0 ? (
         <p className="mt-10 text-sm text-broker-muted">Belum ada indikator yang dipublikasikan.</p>
