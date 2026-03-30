@@ -69,10 +69,10 @@ const items: { q: string; a: ReactNode }[] = [
     a: "Konten bersifat edukasi dan informasi umum. Bukan nasihat investasi yang disesuaikan dengan situasi pribadi Anda. Trading berisiko tinggi; putuskan sendiri dengan mempertimbangkan tujuan dan kemampuan finansial Anda.",
   },
   {
-    q: "Di mana panduan langkah demi langkah?",
+    q: "Di mana petunjuk penggunaan lengkap?",
     a: (
       <>
-        Lihat halaman <Link href="/cara-pemakaian">Cara pemakaian</Link> untuk uraian fitur utama.
+        Lihat halaman <Link href="/cara-pemakaian">Petunjuk &amp; Penggunaan</Link> untuk uraian fitur utama.
       </>
     ),
   },
@@ -87,14 +87,14 @@ export default function FaqPage() {
         </Link>
         {" · "}
         <Link href="/cara-pemakaian" className="text-broker-accent hover:underline">
-          Cara pemakaian
+          Petunjuk &amp; Penggunaan
         </Link>
       </p>
       <h1 className="mt-4 text-2xl font-bold text-white">Pertanyaan umum (FAQ)</h1>
       <p className="mt-2 text-sm text-broker-muted">
         Jawaban singkat untuk topik yang sering ditanyakan. Belum menemukan jawaban? Periksa juga{" "}
         <Link href="/cara-pemakaian" className="text-broker-accent hover:underline">
-          Cara pemakaian
+          Petunjuk &amp; Penggunaan
         </Link>
         , <Link href="/syarat-ketentuan" className="text-broker-accent hover:underline">
           Syarat &amp; ketentuan

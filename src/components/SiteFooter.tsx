@@ -64,7 +64,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link href="/cara-pemakaian" className="hover:text-broker-accent">
-                  Cara pemakaian
+                  Petunjuk &amp; Penggunaan
                 </Link>
               </li>
               <li>
