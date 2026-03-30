@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -8,6 +9,7 @@ import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
 import { articleProseTypographyClass } from "@/lib/articleProseClassName";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { Decimal } from "@prisma/client/runtime/library";
+import { isAllowedMarketplaceCoverSrc } from "@/lib/marketplaceCoverImage";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +29,7 @@ export default async function IndikatorDetailPage({ params }: Props) {
       priceIdr: true,
       platform: true,
       fileName: true,
+      coverImageUrl: true,
       updatedAt: true,
       sellerId: true,
       seller: {
@@ -63,6 +66,9 @@ export default async function IndikatorDetailPage({ params }: Props) {
     ? sanitizeArticleHtml(ind.description)
     : "";
 
+  const cover =
+    ind.coverImageUrl && isAllowedMarketplaceCoverSrc(ind.coverImageUrl) ? ind.coverImageUrl : null;
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <p className="text-xs text-broker-muted">
@@ -73,7 +79,21 @@ export default async function IndikatorDetailPage({ params }: Props) {
         <span className="text-broker-muted/80">{ind.title}</span>
       </p>
 
-      <h1 className="mt-3 text-3xl font-bold text-white">{ind.title}</h1>
+      {cover ? (
+        <div className="relative mt-4 aspect-[16/9] w-full overflow-hidden rounded-xl border border-broker-border/80 bg-broker-bg">
+          <Image
+            src={cover}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 42rem"
+            priority
+            unoptimized
+          />
+        </div>
+      ) : null}
+
+      <h1 className={`text-3xl font-bold text-white ${cover ? "mt-4" : "mt-3"}`}>{ind.title}</h1>
       <p className="mt-2 text-sm text-broker-muted">
         Penjual:{" "}
         <Link href={`/${sellerSlug}`} className="font-medium text-broker-accent hover:underline">

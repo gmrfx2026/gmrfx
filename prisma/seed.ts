@@ -1,6 +1,7 @@
 import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { seedEducationalArticles } from "../src/lib/educationalArticlesSeed";
+import { seedPiphunterIndicators } from "./seed-piphunter-indicators";
 
 const prisma = new PrismaClient();
 
@@ -60,6 +61,9 @@ async function main() {
     create: { key: "platform_fee_percent", value: "2.5" },
     update: {},
   });
+
+  const ph = await seedPiphunterIndicators(prisma);
+  console.log(ph.ok ? ph.message : "PipHunter:", ph.message);
 
   console.log("Seed selesai. Galeri kategori:", cat.name);
 }

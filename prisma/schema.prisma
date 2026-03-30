@@ -646,6 +646,8 @@ model SharedIndicator {
   fileName    String
   /// mt4 | mt5 | tradingview | other
   platform    String   @default("mt5") @db.VarChar(16)
+  /// Sampul katalog (path publik aman, mis. /indikator-assets/covers/…).
+  coverImageUrl String? @db.VarChar(1024)
   published   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

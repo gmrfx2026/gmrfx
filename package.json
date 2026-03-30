@@ -20,6 +20,7 @@
     "db:push": "prisma db push",
     "db:seed": "npx tsx prisma/seed.ts",
     "db:seed:articles": "npx tsx prisma/seed-articles.ts",
+    "db:seed:piphunter": "npx tsx prisma/run-seed-piphunter.ts",
     "db:seed-wilayah": "node prisma/seed-wilayah.cjs",
     "db:generate": "node scripts/prisma-generate.cjs",
     "db:generate:force": "node scripts/prisma-generate-force.cjs"
