@@ -11,6 +11,8 @@ export type MtCommunityPublishRow = {
   allowCopy: boolean;
   copyFree: boolean;
   copyPriceIdr: number;
+  watchAlertFree: boolean;
+  watchAlertPriceIdr: number;
   platform: string;
 };
 
@@ -84,6 +86,8 @@ export async function loadMtCommunityPublishRows(userId: string): Promise<MtComm
       allowCopy: pub?.allowCopy ?? false,
       copyFree: pub?.copyFree ?? true,
       copyPriceIdr: pub ? Number(pub.copyPriceIdr) : 0,
+      watchAlertFree: pub?.watchAlertFree ?? true,
+      watchAlertPriceIdr: pub ? Number(pub.watchAlertPriceIdr) : 0,
       platform: plat === "mt4" ? "mt4" : "mt5",
     };
   });

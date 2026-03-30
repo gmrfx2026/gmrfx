@@ -12,6 +12,8 @@ const putSchema = z.object({
   allowCopy: z.boolean(),
   copyFree: z.boolean(),
   copyPriceIdr: z.number().min(0).default(0),
+  watchAlertFree: z.boolean(),
+  watchAlertPriceIdr: z.number().min(0).default(0),
   platform: z.enum(["mt4", "mt5"]),
 });
 
@@ -44,7 +46,8 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Data tidak valid", details: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { mtLogin, allowCopy, copyFree, copyPriceIdr, platform } = parsed.data;
+  const { mtLogin, allowCopy, copyFree, copyPriceIdr, watchAlertFree, watchAlertPriceIdr, platform } =
+    parsed.data;
   const userId = session.user.id;
 
   if (!(await userOwnsMtLogin(userId, mtLogin))) {
@@ -54,13 +57,23 @@ export async function PUT(req: Request) {
   if (allowCopy && !copyFree) {
     if (!Number.isFinite(copyPriceIdr) || copyPriceIdr < MIN_PAID_IDR) {
       return NextResponse.json(
-        { error: `Harga berbayar minimal Rp ${MIN_PAID_IDR.toLocaleString("id-ID")}` },
+        { error: `Harga copy berbayar minimal Rp ${MIN_PAID_IDR.toLocaleString("id-ID")}` },
+        { status: 400 }
+      );
+    }
+  }
+
+  if (allowCopy && !watchAlertFree) {
+    if (!Number.isFinite(watchAlertPriceIdr) || watchAlertPriceIdr < MIN_PAID_IDR) {
+      return NextResponse.json(
+        { error: `Harga alert Ikuti minimal Rp ${MIN_PAID_IDR.toLocaleString("id-ID")}` },
         { status: 400 }
       );
     }
   }
 
   const priceDec = new Prisma.Decimal(copyFree ? 0 : copyPriceIdr.toFixed(2));
+  const watchPriceDec = new Prisma.Decimal(watchAlertFree ? 0 : watchAlertPriceIdr.toFixed(2));
 
   try {
     await prisma.mtCommunityPublishedAccount.upsert({
@@ -73,12 +86,16 @@ export async function PUT(req: Request) {
         allowCopy,
         copyFree,
         copyPriceIdr: priceDec,
+        watchAlertFree,
+        watchAlertPriceIdr: watchPriceDec,
         platform,
       },
       update: {
         allowCopy,
         copyFree,
         copyPriceIdr: priceDec,
+        watchAlertFree,
+        watchAlertPriceIdr: watchPriceDec,
         platform,
       },
     });

@@ -29,6 +29,9 @@ export type CommunityPublishedAccountView = {
   currency: string | null;
   copyFree: boolean;
   copyPriceIdr: number;
+  /** Harga sekali daftar alert Ikuti (jika tidak gratis). */
+  watchAlertFree: boolean;
+  watchAlertPriceIdr: number;
   alreadyFollowing: boolean;
   /** Mengikuti alert buka/tutup posisi (tombol Ikuti). */
   activityWatching: boolean;
@@ -256,6 +259,8 @@ export async function fetchCommunityPublishedAccounts(
       currency: lastSnap?.currency ?? null,
       copyFree: row.copyFree,
       copyPriceIdr: Number(row.copyPriceIdr),
+      watchAlertFree: row.watchAlertFree,
+      watchAlertPriceIdr: Number(row.watchAlertPriceIdr),
       alreadyFollowing: followSet.has(k),
       activityWatching: watchSet.has(k),
       gainTone: pctTone(absGain),

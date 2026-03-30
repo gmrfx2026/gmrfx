@@ -182,6 +182,8 @@ export default async function PortfolioCommunityAccountsPage({
                               publisherUserId={r.publisherUserId}
                               mtLogin={r.mtLogin}
                               initiallyWatching={r.activityWatching}
+                              watchAlertFree={r.watchAlertFree}
+                              watchAlertPriceIdr={r.watchAlertPriceIdr}
                             />
                             <CommunityCopyFollowButton
                               publisherUserId={r.publisherUserId}
@@ -247,8 +249,13 @@ export default async function PortfolioCommunityAccountsPage({
       <p className="text-xs text-broker-muted">
         <strong className="text-broker-muted">Skor</strong> adalah ringkasan internal (bukan rating pihak ketiga).
         Metrik gain/harian/drawdown mengikuti agregasi yang sama dengan dashboard portofolio (zona waktu UTC untuk
-        periode harian). <strong className="text-broker-muted">Ikuti</strong> memberi toast dan notifikasi saat akun
-        tersebut membuka atau menutup posisi (bunyi beep mengikuti pengaturan beep chat di kotak chat).{" "}
+        periode harian).         <strong className="text-broker-muted">Ikuti</strong> memberi toast dan notifikasi saat akun
+        tersebut membuka atau menutup posisi (bunyi beep mengikuti pengaturan beep chat di kotak chat).
+        Harga Ikuti bisa gratis atau berbayar — diatur pemilik di{" "}
+        <Link href="/profil/portfolio/community/publish" className="text-broker-accent hover:underline">
+          Publikasi copy trade
+        </Link>{" "}
+        dan terpisah dari harga Copy.{" "}
         <strong className="text-broker-muted">Copy</strong> menyimpan relasi di situs; mirror order di terminal tetap
         lewat EA terpisah jika Anda tambahkan nanti.
       </p>

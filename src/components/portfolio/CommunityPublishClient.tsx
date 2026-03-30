@@ -12,6 +12,10 @@ function PublishRowForm({ row }: { row: MtCommunityPublishRow }) {
   const [copyPriceIdr, setCopyPriceIdr] = useState(
     row.copyPriceIdr > 0 ? String(Math.round(row.copyPriceIdr)) : "10000"
   );
+  const [watchAlertFree, setWatchAlertFree] = useState(row.watchAlertFree);
+  const [watchAlertPriceIdr, setWatchAlertPriceIdr] = useState(
+    row.watchAlertPriceIdr > 0 ? String(Math.round(row.watchAlertPriceIdr)) : "5000"
+  );
   const [platform, setPlatform] = useState<"mt4" | "mt5">(row.platform === "mt4" ? "mt4" : "mt5");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -21,7 +25,12 @@ function PublishRowForm({ row }: { row: MtCommunityPublishRow }) {
     setMsg(null);
     const priceNum = Number.parseFloat(copyPriceIdr.replace(/,/g, "."));
     if (allowCopy && !copyFree && (!Number.isFinite(priceNum) || priceNum < 1000)) {
-      setMsg("Harga minimal Rp 1.000");
+      setMsg("Harga copy minimal Rp 1.000");
+      return;
+    }
+    const watchPriceNum = Number.parseFloat(watchAlertPriceIdr.replace(/,/g, "."));
+    if (allowCopy && !watchAlertFree && (!Number.isFinite(watchPriceNum) || watchPriceNum < 1000)) {
+      setMsg("Harga alert Ikuti minimal Rp 1.000");
       return;
     }
 
@@ -35,6 +44,8 @@ function PublishRowForm({ row }: { row: MtCommunityPublishRow }) {
           allowCopy,
           copyFree,
           copyPriceIdr: copyFree ? 0 : priceNum,
+          watchAlertFree,
+          watchAlertPriceIdr: watchAlertFree ? 0 : watchPriceNum,
           platform,
         }),
       });
@@ -138,6 +149,50 @@ function PublishRowForm({ row }: { row: MtCommunityPublishRow }) {
                 Member yang copy membayar dari saldo wallet IDR mereka (wajib punya alamat wallet di profil).
                 Dana masuk ke saldo wallet Anda.
               </p>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="sm:col-span-2">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-broker-muted">
+            Biaya alert posisi (tombol &quot;Ikuti&quot;)
+          </p>
+          <p className="mb-2 text-xs text-broker-muted">
+            Terpisah dari harga Copy. Member yang menekan Ikuti membayar sekali (wallet IDR) jika Anda set
+            berbayar — mereka mendapat toast/notifikasi saat posisi buka/tutup.
+          </p>
+          <div className="flex flex-wrap gap-4">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-white">
+              <input
+                type="radio"
+                name={`watch-free-${row.mtLogin}`}
+                checked={watchAlertFree}
+                onChange={() => setWatchAlertFree(true)}
+              />
+              Gratis untuk member lain
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-white">
+              <input
+                type="radio"
+                name={`watch-free-${row.mtLogin}`}
+                checked={!watchAlertFree}
+                onChange={() => setWatchAlertFree(false)}
+              />
+              Berbayar (wallet IDR, harga sendiri)
+            </label>
+          </div>
+          {!watchAlertFree ? (
+            <div className="mt-2">
+              <label className="text-xs text-broker-muted">
+                Harga sekali aktifkan alert Ikuti (IDR)
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={watchAlertPriceIdr}
+                  onChange={(e) => setWatchAlertPriceIdr(e.target.value)}
+                  className="mt-1 block w-full max-w-xs rounded-lg border border-broker-border/70 bg-broker-bg/60 px-2 py-1.5 font-mono text-sm text-white"
+                />
+              </label>
             </div>
           ) : null}
         </div>

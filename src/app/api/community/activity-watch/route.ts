@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { Decimal } from "@prisma/client/runtime/library";
+import { newTransactionId } from "@/lib/txid";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -34,33 +36,86 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Tidak bisa mengikuti akun sendiri" }, { status: 400 });
   }
 
-  const pub = await prisma.mtCommunityPublishedAccount.findUnique({
-    where: { userId_mtLogin: { userId: publisherUserId, mtLogin } },
-    select: { allowCopy: true },
-  });
-  if (!pub?.allowCopy) {
-    return NextResponse.json({ error: "Akun tidak dipublikasikan di komunitas" }, { status: 400 });
-  }
-
   try {
-    await prisma.mtCommunityActivityWatch.create({
-      data: { followerUserId, publisherUserId, mtLogin },
-    });
-    return NextResponse.json({ ok: true });
-  } catch {
-    const dup = await prisma.mtCommunityActivityWatch.findUnique({
-      where: {
-        followerUserId_publisherUserId_mtLogin: {
+    await prisma.$transaction(async (tx) => {
+      const pub = await tx.mtCommunityPublishedAccount.findUnique({
+        where: { userId_mtLogin: { userId: publisherUserId, mtLogin } },
+      });
+      if (!pub?.allowCopy) {
+        throw new Error("Akun tidak dipublikasikan di komunitas");
+      }
+
+      const dup = await tx.mtCommunityActivityWatch.findUnique({
+        where: {
+          followerUserId_publisherUserId_mtLogin: {
+            followerUserId,
+            publisherUserId,
+            mtLogin,
+          },
+        },
+      });
+      if (dup) {
+        throw new Error("DUPLICATE_WATCH");
+      }
+
+      const price = pub.watchAlertFree ? new Decimal(0) : new Decimal(pub.watchAlertPriceIdr.toString());
+
+      if (!pub.watchAlertFree) {
+        if (price.lte(0)) throw new Error("Harga alert tidak valid");
+
+        const follower = await tx.user.findUnique({ where: { id: followerUserId } });
+        if (!follower?.walletAddress) {
+          throw new Error("Lengkapi alamat wallet di profil untuk berlangganan alert berbayar");
+        }
+
+        const bal = new Decimal(follower.walletBalance.toString());
+        if (bal.lt(price)) {
+          throw new Error("Saldo wallet IDR tidak mencukupi");
+        }
+
+        const publisher = await tx.user.findUnique({ where: { id: publisherUserId } });
+        if (!publisher) throw new Error("Penerbit tidak ditemukan");
+
+        const txId = newTransactionId("WA");
+        await tx.user.update({
+          where: { id: followerUserId },
+          data: { walletBalance: bal.minus(price) },
+        });
+        await tx.user.update({
+          where: { id: publisherUserId },
+          data: {
+            walletBalance: new Decimal(publisher.walletBalance.toString()).plus(price),
+          },
+        });
+        await tx.walletTransfer.create({
+          data: {
+            transactionId: txId,
+            fromUserId: followerUserId,
+            toUserId: publisherUserId,
+            amount: price,
+            note: `Alert posisi (Ikuti): MT ${mtLogin}`,
+          },
+        });
+      }
+
+      await tx.mtCommunityActivityWatch.create({
+        data: {
           followerUserId,
           publisherUserId,
           mtLogin,
+          paidAmountIdr: price,
         },
-      },
+      });
     });
-    if (dup) {
+
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Gagal menyimpan";
+    if (msg === "DUPLICATE_WATCH") {
       return NextResponse.json({ error: "Anda sudah mengikuti aktivitas akun ini" }, { status: 409 });
     }
-    return NextResponse.json({ error: "Gagal menyimpan" }, { status: 500 });
+    console.error("activity-watch POST", e);
+    return NextResponse.json({ error: msg }, { status: 400 });
   }
 }
 

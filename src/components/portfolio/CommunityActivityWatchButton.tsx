@@ -8,9 +8,17 @@ type Props = {
   publisherUserId: string;
   mtLogin: string;
   initiallyWatching: boolean;
+  watchAlertFree: boolean;
+  watchAlertPriceIdr: number;
 };
 
-export function CommunityActivityWatchButton({ publisherUserId, mtLogin, initiallyWatching }: Props) {
+export function CommunityActivityWatchButton({
+  publisherUserId,
+  mtLogin,
+  initiallyWatching,
+  watchAlertFree,
+  watchAlertPriceIdr,
+}: Props) {
   const router = useRouter();
   const [watching, setWatching] = useState(initiallyWatching);
   const [loading, setLoading] = useState(false);
@@ -99,7 +107,11 @@ export function CommunityActivityWatchButton({ publisherUserId, mtLogin, initial
             : "border border-sky-500/45 bg-sky-500/15 text-sky-300 hover:bg-sky-500/25"
         )}
       >
-        {loading ? "…" : "Ikuti"}
+        {loading
+          ? "…"
+          : watchAlertFree
+            ? "Ikuti — Gratis"
+            : `Ikuti — Rp ${Math.round(watchAlertPriceIdr).toLocaleString("id-ID")}`}
       </button>
       {err ? <p className="max-w-[14rem] text-right text-[10px] text-broker-danger">{err}</p> : null}
     </div>

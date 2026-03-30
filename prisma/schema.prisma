@@ -245,6 +245,9 @@ model MtCommunityPublishedAccount {
   /// true = member lain boleh copy gratis; false = wajib bayar copyPriceIdr.
   copyFree     Boolean  @default(true)
   copyPriceIdr Decimal  @default(0) @db.Decimal(18, 2)
+  /// Alert "Ikuti" (buka/tutup posisi): terpisah dari harga Copy.
+  watchAlertFree     Boolean  @default(true)
+  watchAlertPriceIdr Decimal  @default(0) @db.Decimal(18, 2)
   /// "mt5" | "mt4" — dari payload ingest / EA.
   platform     String   @default("mt5") @db.VarChar(8)
   createdAt    DateTime @default(now())
@@ -279,6 +282,7 @@ model MtCommunityActivityWatch {
   followerUserId  String
   publisherUserId String
   mtLogin         String
+  paidAmountIdr   Decimal  @default(0) @db.Decimal(18, 2)
   createdAt       DateTime @default(now())
 
   follower  User @relation("CommunityMtWatchFollower", fields: [followerUserId], references: [id], onDelete: Cascade)
