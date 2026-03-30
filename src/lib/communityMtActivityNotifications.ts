@@ -3,8 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { closeKindLabelId, type Mt5CloseKind } from "@/lib/mt5CloseReason";
 import type { PositionCloseAlert, PositionOpenAlert, PositionSltpChangeAlert } from "@/lib/mtTradingActivityPositionDiff";
 
-/** Penutupan dari diff + alasan (SL/TP/…) dari deal MT5. */
-export type PositionCloseAlertEnriched = PositionCloseAlert & { closeKind: Mt5CloseKind };
+/** Penutupan dari diff + alasan (SL/TP/…) + komentar deal (jika ada). */
+export type PositionCloseAlertEnriched = PositionCloseAlert & {
+  closeKind: Mt5CloseKind;
+  dealComment?: string | null;
+};
 
 function communityAccountPath(publisherUserId: string, mtLogin: string): string {
   return `/profil/portfolio/community/account/${encodeURIComponent(publisherUserId)}/${encodeURIComponent(mtLogin)}`;
@@ -65,7 +68,10 @@ function closeAlertTitle(accountLabel: string, kind: Mt5CloseKind): string {
 }
 
 function bodyClose(c: PositionCloseAlertEnriched): string {
-  return `Tutup ${posRef(c.symbol, c.ticket)} · ${closeKindLabelId(c.closeKind)}`;
+  const base = `Tutup ${posRef(c.symbol, c.ticket)} · ${closeKindLabelId(c.closeKind)}`;
+  const note = c.dealComment?.trim();
+  if (!note) return base;
+  return `${base} · komentar: ${note}`;
 }
 
 function bodySltp(u: PositionSltpChangeAlert): string {

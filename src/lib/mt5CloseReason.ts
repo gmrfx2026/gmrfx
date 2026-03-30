@@ -86,7 +86,21 @@ export type DealRowForCloseResolve = {
   dealReason?: number | null;
   /** Profit deal penutupan (account currency); untuk membedakan SL vs SL+. */
   profit?: number | null;
+  /** DEAL_COMMENT dari terminal (alasan/komentar saat tutup). */
+  comment?: string | null;
 };
+
+const MAX_DEAL_COMMENT_IN_ALERT = 220;
+
+/** Teks komentar deal untuk notifikasi (aman & pendek). */
+export function sanitizeDealCommentForAlert(raw: string | null | undefined): string | null {
+  if (raw == null) return null;
+  let s = String(raw).trim().replace(/\s+/g, " ");
+  s = s.replace(/[\u0000-\u001F\u007F]/g, "");
+  if (!s) return null;
+  if (s.length > MAX_DEAL_COMMENT_IN_ALERT) s = `${s.slice(0, MAX_DEAL_COMMENT_IN_ALERT)}…`;
+  return s;
+}
 
 function isExitEntry(entryType: number): boolean {
   return entryType === DEAL_ENTRY_OUT || entryType === DEAL_ENTRY_OUT_BY;
@@ -114,6 +128,8 @@ function profitToNumber(p: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+type ResolvedClose = { closeKind: Mt5CloseKind; dealComment: string | null };
+
 /**
  * Untuk setiap posisi yang hilang dari snapshot: cari deal penutupan di batch ini lalu DB.
  */
@@ -122,19 +138,25 @@ export async function enrichClosedWithCloseKind(
   mtLogin: string,
   closed: { ticket: string; symbol: string }[],
   dealsInBatch: DealRowForCloseResolve[]
-): Promise<Array<{ ticket: string; symbol: string; closeKind: Mt5CloseKind }>> {
+): Promise<
+  Array<{ ticket: string; symbol: string; closeKind: Mt5CloseKind; dealComment: string | null }>
+> {
   if (closed.length === 0) return [];
 
-  const kindByTicket = new Map<string, Mt5CloseKind>();
+  const resolvedByTicket = new Map<string, ResolvedClose>();
   const needDb = new Set<string>();
 
   for (const c of closed) {
     const ex = latestExitForPosition(c.ticket, dealsInBatch);
-    if (ex && typeof ex.dealReason === "number") {
-      kindByTicket.set(
-        c.ticket,
-        closeKindFromDealReason(ex.dealReason, ex.profit ?? null)
-      );
+    if (ex) {
+      const closeKind =
+        typeof ex.dealReason === "number"
+          ? closeKindFromDealReason(ex.dealReason, ex.profit ?? null)
+          : "unknown";
+      resolvedByTicket.set(c.ticket, {
+        closeKind,
+        dealComment: sanitizeDealCommentForAlert(ex.comment),
+      });
     } else {
       needDb.add(c.ticket);
     }
@@ -149,24 +171,28 @@ export async function enrichClosedWithCloseKind(
         positionId: { in: Array.from(needDb) },
       },
       orderBy: { dealTime: "desc" },
-      select: { positionId: true, dealReason: true, profit: true },
+      select: { positionId: true, dealReason: true, profit: true, comment: true },
     });
     const seen = new Set<string>();
     for (const r of rows) {
       if (!r.positionId || seen.has(r.positionId)) continue;
       seen.add(r.positionId);
-      if (!kindByTicket.has(r.positionId)) {
-        kindByTicket.set(
-          r.positionId,
-          closeKindFromDealReason(r.dealReason, profitToNumber(r.profit))
-        );
+      if (!resolvedByTicket.has(r.positionId)) {
+        resolvedByTicket.set(r.positionId, {
+          closeKind: closeKindFromDealReason(r.dealReason, profitToNumber(r.profit)),
+          dealComment: sanitizeDealCommentForAlert(r.comment),
+        });
       }
     }
   }
 
-  return closed.map((c) => ({
-    ticket: c.ticket,
-    symbol: c.symbol,
-    closeKind: kindByTicket.get(c.ticket) ?? "unknown",
-  }));
+  return closed.map((c) => {
+    const r = resolvedByTicket.get(c.ticket);
+    return {
+      ticket: c.ticket,
+      symbol: c.symbol,
+      closeKind: r?.closeKind ?? "unknown",
+      dealComment: r?.dealComment ?? null,
+    };
+  });
 }
