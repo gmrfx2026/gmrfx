@@ -93,7 +93,7 @@ export default async function PortfolioCommunityAccountsPage({
       ) : (
         <>
           <div className="overflow-x-auto rounded-2xl border border-broker-border/80 bg-broker-surface/40 shadow-inner shadow-black/20">
-            <table className="w-full min-w-[1180px] border-collapse text-left text-sm">
+            <table className="w-full min-w-[1080px] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-broker-border/80 bg-broker-bg/40 text-[10px] uppercase tracking-wide text-broker-muted sm:text-xs">
                   <th className="px-2 py-3 font-medium sm:px-3">Nama akun</th>
@@ -168,14 +168,6 @@ export default async function PortfolioCommunityAccountsPage({
                     </td>
                     <td className="px-2 py-2.5 text-right align-top sm:px-3">
                       <div className="flex flex-col items-end gap-2 sm:flex-row sm:justify-end">
-                        <button
-                          type="button"
-                          disabled
-                          title="Perbandingan beberapa akun akan ditambahkan kemudian"
-                          className="cursor-not-allowed rounded-lg border border-broker-border/50 px-2 py-1 text-[10px] font-medium text-broker-muted sm:text-xs"
-                        >
-                          Bandingkan
-                        </button>
                         {viewerId ? (
                           <>
                             <CommunityActivityWatchButton
