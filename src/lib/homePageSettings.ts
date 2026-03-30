@@ -7,6 +7,15 @@ export const HOME_NEWS_DOMESTIC_VISIBLE_KEY = "home_news_domestic_visible";
 /** Blok berita internasional di beranda. Default = tampil. */
 export const HOME_NEWS_INTERNATIONAL_VISIBLE_KEY = "home_news_international_visible";
 
+/** Jumlah item berita per blok (dalam negeri & internasional) di beranda. Default 6, clamp 1–24. */
+export const HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY = "home_news_per_block_homepage";
+
+export function parseHomeNewsHomepagePerBlock(value: string | null | undefined): number {
+  const n = Number.parseInt(String(value ?? "6"), 10);
+  if (!Number.isFinite(n)) return 6;
+  return Math.min(24, Math.max(1, n));
+}
+
 /** Kosong/tidak ada = tampil; "0"/false/no/off = sembunyikan; "1"/true/yes = tampil. */
 export function isHomeSectionVisibleBySetting(value: string | null | undefined): boolean {
   if (value == null || value === "") return true;

@@ -11,6 +11,7 @@ export function AdminSettingsForm({
   initialHomeMemberTickerVisible,
   initialHomeNewsDomesticVisible,
   initialHomeNewsInternationalVisible,
+  initialHomeNewsPerBlockHomepage,
   initialHomeNewsRssDomesticUrl,
   initialHomeNewsRssInternationalUrl,
 }: {
@@ -21,6 +22,7 @@ export function AdminSettingsForm({
   initialHomeMemberTickerVisible: boolean;
   initialHomeNewsDomesticVisible: boolean;
   initialHomeNewsInternationalVisible: boolean;
+  initialHomeNewsPerBlockHomepage: string;
   initialHomeNewsRssDomesticUrl: string;
   initialHomeNewsRssInternationalUrl: string;
 }) {
@@ -33,6 +35,9 @@ export function AdminSettingsForm({
   const [homeNewsDomesticVisible, setHomeNewsDomesticVisible] = useState(initialHomeNewsDomesticVisible);
   const [homeNewsInternationalVisible, setHomeNewsInternationalVisible] = useState(
     initialHomeNewsInternationalVisible
+  );
+  const [homeNewsPerBlockHomepage, setHomeNewsPerBlockHomepage] = useState(
+    initialHomeNewsPerBlockHomepage
   );
   const [rssDn, setRssDn] = useState(initialHomeNewsRssDomesticUrl);
   const [rssInt, setRssInt] = useState(initialHomeNewsRssInternationalUrl);
@@ -51,6 +56,7 @@ export function AdminSettingsForm({
         homeMemberTickerVisible: memberTickerVisible,
         homeNewsDomesticVisible: homeNewsDomesticVisible,
         homeNewsInternationalVisible: homeNewsInternationalVisible,
+        homeNewsPerBlockHomepage: homeNewsPerBlockHomepage,
         homeNewsRssDomesticUrl: rssDn,
         homeNewsRssInternationalUrl: rssInt,
       }),
@@ -138,6 +144,21 @@ export function AdminSettingsForm({
           <span className="mt-1 block text-xs text-gray-500">
             Sama seperti di atas — hanya mengatur tampilan di beranda.
           </span>
+        </span>
+      </label>
+      <label className="block text-sm">
+        <span className="text-gray-600">Jumlah berita per blok di beranda (1–24)</span>
+        <input
+          type="number"
+          min={1}
+          max={24}
+          className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm"
+          value={homeNewsPerBlockHomepage}
+          onChange={(e) => setHomeNewsPerBlockHomepage(e.target.value)}
+        />
+        <span className="mt-1 block text-xs text-gray-500">
+          Berlaku terpisah untuk &quot;Berita dalam negeri&quot; dan &quot;Berita internasional&quot; (masing-masing
+          menampilkan hingga nilai ini). Default 6.
         </span>
       </label>
       <div className="border-t border-gray-200 pt-4">

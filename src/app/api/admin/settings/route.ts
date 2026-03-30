@@ -11,6 +11,8 @@ import {
   HOME_MEMBER_TICKER_VISIBLE_KEY,
   HOME_NEWS_DOMESTIC_VISIBLE_KEY,
   HOME_NEWS_INTERNATIONAL_VISIBLE_KEY,
+  HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY,
+  parseHomeNewsHomepagePerBlock,
 } from "@/lib/homePageSettings";
 import {
   HOME_NEWS_RSS_DOMESTIC_URL_KEY,
@@ -25,14 +27,16 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const [fee, commentsPer, timelinePer, statusCommentsPer, rssDn, rssInt] = await Promise.all([
-    prisma.systemSetting.findUnique({ where: { key: "platform_fee_percent" } }),
-    prisma.systemSetting.findUnique({ where: { key: ARTICLE_COMMENTS_PER_PAGE_KEY } }),
-    prisma.systemSetting.findUnique({ where: { key: MEMBER_TIMELINE_PER_PAGE_KEY } }),
-    prisma.systemSetting.findUnique({ where: { key: MEMBER_STATUS_COMMENTS_PER_PAGE_KEY } }),
-    prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_DOMESTIC_URL_KEY } }),
-    prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_INTERNATIONAL_URL_KEY } }),
-  ]);
+  const [fee, commentsPer, timelinePer, statusCommentsPer, rssDn, rssInt, newsPerBlock] =
+    await Promise.all([
+      prisma.systemSetting.findUnique({ where: { key: "platform_fee_percent" } }),
+      prisma.systemSetting.findUnique({ where: { key: ARTICLE_COMMENTS_PER_PAGE_KEY } }),
+      prisma.systemSetting.findUnique({ where: { key: MEMBER_TIMELINE_PER_PAGE_KEY } }),
+      prisma.systemSetting.findUnique({ where: { key: MEMBER_STATUS_COMMENTS_PER_PAGE_KEY } }),
+      prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_DOMESTIC_URL_KEY } }),
+      prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_INTERNATIONAL_URL_KEY } }),
+      prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY } }),
+    ]);
   return NextResponse.json({
     platformFeePercent: fee?.value ?? "0",
     articleCommentsPerPage: commentsPer?.value ?? "10",
@@ -40,6 +44,7 @@ export async function GET() {
     memberStatusCommentsPerPage: statusCommentsPer?.value ?? "10",
     homeNewsRssDomesticUrl: rssDn?.value ?? "",
     homeNewsRssInternationalUrl: rssInt?.value ?? "",
+    homeNewsPerBlockHomepage: String(parseHomeNewsHomepagePerBlock(newsPerBlock?.value ?? null)),
   });
 }
 
@@ -113,6 +118,15 @@ export async function PATCH(req: Request) {
       where: { key: HOME_NEWS_INTERNATIONAL_VISIBLE_KEY },
       create: { key: HOME_NEWS_INTERNATIONAL_VISIBLE_KEY, value: on ? "1" : "0" },
       update: { value: on ? "1" : "0" },
+    });
+  }
+
+  if (body.homeNewsPerBlockHomepage !== undefined) {
+    const clamped = parseHomeNewsHomepagePerBlock(String(body.homeNewsPerBlockHomepage ?? "6"));
+    await prisma.systemSetting.upsert({
+      where: { key: HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY },
+      create: { key: HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY, value: String(clamped) },
+      update: { value: String(clamped) },
     });
   }
 

@@ -6,9 +6,11 @@ import {
   HOME_MEMBER_TICKER_VISIBLE_KEY,
   HOME_NEWS_DOMESTIC_VISIBLE_KEY,
   HOME_NEWS_INTERNATIONAL_VISIBLE_KEY,
+  HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY,
   isHomeMemberTickerVisible,
   isHomeNewsDomesticVisible,
   isHomeNewsInternationalVisible,
+  parseHomeNewsHomepagePerBlock,
 } from "@/lib/homePageSettings";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 import { homeNewsAuthorForDisplay } from "@/lib/homeNewsAuthor";
@@ -22,6 +24,7 @@ export async function HomePageContent() {
           HOME_MEMBER_TICKER_VISIBLE_KEY,
           HOME_NEWS_DOMESTIC_VISIBLE_KEY,
           HOME_NEWS_INTERNATIONAL_VISIBLE_KEY,
+          HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY,
         ],
       },
     },
@@ -30,6 +33,7 @@ export async function HomePageContent() {
   const showMemberTicker = isHomeMemberTickerVisible(vis(HOME_MEMBER_TICKER_VISIBLE_KEY));
   const showDomesticNews = isHomeNewsDomesticVisible(vis(HOME_NEWS_DOMESTIC_VISIBLE_KEY));
   const showIntlNews = isHomeNewsInternationalVisible(vis(HOME_NEWS_INTERNATIONAL_VISIBLE_KEY));
+  const newsPerBlock = parseHomeNewsHomepagePerBlock(vis(HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY));
 
   const [articles, domesticNews, intlNews, members] = await Promise.all([
     prisma.article.findMany({
@@ -42,7 +46,7 @@ export async function HomePageContent() {
       ? prisma.homeNewsItem.findMany({
           where: { scope: HomeNewsScope.DOMESTIC, status: HomeNewsStatus.PUBLISHED },
           orderBy: { publishedAt: "desc" },
-          take: 6,
+          take: newsPerBlock,
           include: { author: { select: { id: true, name: true, memberSlug: true } } },
         })
       : Promise.resolve([]),
@@ -50,7 +54,7 @@ export async function HomePageContent() {
       ? prisma.homeNewsItem.findMany({
           where: { scope: HomeNewsScope.INTERNATIONAL, status: HomeNewsStatus.PUBLISHED },
           orderBy: { publishedAt: "desc" },
-          take: 6,
+          take: newsPerBlock,
           include: { author: { select: { id: true, name: true, memberSlug: true } } },
         })
       : Promise.resolve([]),

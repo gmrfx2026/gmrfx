@@ -9,9 +9,11 @@ import {
   HOME_MEMBER_TICKER_VISIBLE_KEY,
   HOME_NEWS_DOMESTIC_VISIBLE_KEY,
   HOME_NEWS_INTERNATIONAL_VISIBLE_KEY,
+  HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY,
   isHomeMemberTickerVisible,
   isHomeNewsDomesticVisible,
   isHomeNewsInternationalVisible,
+  parseHomeNewsHomepagePerBlock,
 } from "@/lib/homePageSettings";
 import {
   HOME_NEWS_RSS_DOMESTIC_URL_KEY,
@@ -21,18 +23,29 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function AdminSettingsPage() {
-  const [fee, commentsPer, timelinePer, statusCommentsPer, memberTicker, newsDnVis, newsIntVis, rssDn, rssInt] =
-    await Promise.all([
-      prisma.systemSetting.findUnique({ where: { key: "platform_fee_percent" } }),
-      prisma.systemSetting.findUnique({ where: { key: ARTICLE_COMMENTS_PER_PAGE_KEY } }),
-      prisma.systemSetting.findUnique({ where: { key: MEMBER_TIMELINE_PER_PAGE_KEY } }),
-      prisma.systemSetting.findUnique({ where: { key: MEMBER_STATUS_COMMENTS_PER_PAGE_KEY } }),
-      prisma.systemSetting.findUnique({ where: { key: HOME_MEMBER_TICKER_VISIBLE_KEY } }),
-      prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_DOMESTIC_VISIBLE_KEY } }),
-      prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_INTERNATIONAL_VISIBLE_KEY } }),
-      prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_DOMESTIC_URL_KEY } }),
-      prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_INTERNATIONAL_URL_KEY } }),
-    ]);
+  const [
+    fee,
+    commentsPer,
+    timelinePer,
+    statusCommentsPer,
+    memberTicker,
+    newsDnVis,
+    newsIntVis,
+    newsPerBlockHome,
+    rssDn,
+    rssInt,
+  ] = await Promise.all([
+    prisma.systemSetting.findUnique({ where: { key: "platform_fee_percent" } }),
+    prisma.systemSetting.findUnique({ where: { key: ARTICLE_COMMENTS_PER_PAGE_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: MEMBER_TIMELINE_PER_PAGE_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: MEMBER_STATUS_COMMENTS_PER_PAGE_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: HOME_MEMBER_TICKER_VISIBLE_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_DOMESTIC_VISIBLE_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_INTERNATIONAL_VISIBLE_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_DOMESTIC_URL_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_INTERNATIONAL_URL_KEY } }),
+  ]);
 
   return (
     <div>
@@ -51,6 +64,9 @@ export default async function AdminSettingsPage() {
           initialHomeMemberTickerVisible={isHomeMemberTickerVisible(memberTicker?.value ?? null)}
           initialHomeNewsDomesticVisible={isHomeNewsDomesticVisible(newsDnVis?.value ?? null)}
           initialHomeNewsInternationalVisible={isHomeNewsInternationalVisible(newsIntVis?.value ?? null)}
+          initialHomeNewsPerBlockHomepage={String(
+            parseHomeNewsHomepagePerBlock(newsPerBlockHome?.value ?? null)
+          )}
           initialHomeNewsRssDomesticUrl={rssDn?.value ?? ""}
           initialHomeNewsRssInternationalUrl={rssInt?.value ?? ""}
         />
