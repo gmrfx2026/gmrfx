@@ -30,6 +30,8 @@ export type CommunityPublishedAccountView = {
   copyFree: boolean;
   copyPriceIdr: number;
   alreadyFollowing: boolean;
+  /** Mengikuti alert buka/tutup posisi (tombol Ikuti). */
+  activityWatching: boolean;
   gainTone: MetricTone;
   dailyTone: MetricTone;
   pnlTone: MetricTone;
@@ -120,7 +122,7 @@ export async function fetchCommunityPublishedAccounts(
 
   const pairs = published.map((p) => ({ userId: p.userId, mtLogin: p.mtLogin }));
 
-  const [allSnaps, allDeals, follows] = await Promise.all([
+  const [allSnaps, allDeals, follows, activityWatches] = await Promise.all([
     prisma.mtAccountSnapshot.findMany({
       where: { OR: pairs },
       orderBy: { recordedAt: "asc" },
@@ -159,6 +161,12 @@ export async function fetchCommunityPublishedAccounts(
           select: { publisherUserId: true, mtLogin: true },
         })
       : Promise.resolve([]),
+    viewerUserId
+      ? prisma.mtCommunityActivityWatch.findMany({
+          where: { followerUserId: viewerUserId },
+          select: { publisherUserId: true, mtLogin: true },
+        })
+      : Promise.resolve([]),
   ]);
 
   const snapsByKey = new Map<string, (typeof allSnaps)[number][]>();
@@ -188,6 +196,7 @@ export async function fetchCommunityPublishedAccounts(
   }
 
   const followSet = new Set(follows.map((f) => `${f.publisherUserId}\t${f.mtLogin}`));
+  const watchSet = new Set(activityWatches.map((w) => `${w.publisherUserId}\t${w.mtLogin}`));
 
   const now = new Date();
   const rows: CommunityPublishedAccountView[] = published.map((row) => {
@@ -248,6 +257,7 @@ export async function fetchCommunityPublishedAccounts(
       copyFree: row.copyFree,
       copyPriceIdr: Number(row.copyPriceIdr),
       alreadyFollowing: followSet.has(k),
+      activityWatching: watchSet.has(k),
       gainTone: pctTone(absGain),
       dailyTone: pctTone(daily),
       pnlTone: plTone(netPl),

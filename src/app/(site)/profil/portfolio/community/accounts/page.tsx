@@ -5,6 +5,7 @@ import {
   type CommunityPublishedAccountView,
   type MetricTone,
 } from "@/lib/communityCopyAccounts";
+import { CommunityActivityWatchButton } from "@/components/portfolio/CommunityActivityWatchButton";
 import { CommunityCopyFollowButton } from "@/components/portfolio/CommunityCopyFollowButton";
 import clsx from "clsx";
 
@@ -176,13 +177,20 @@ export default async function PortfolioCommunityAccountsPage({
                           Bandingkan
                         </button>
                         {viewerId ? (
-                          <CommunityCopyFollowButton
-                            publisherUserId={r.publisherUserId}
-                            mtLogin={r.mtLogin}
-                            copyFree={r.copyFree}
-                            copyPriceIdr={r.copyPriceIdr}
-                            alreadyFollowing={r.alreadyFollowing}
-                          />
+                          <>
+                            <CommunityActivityWatchButton
+                              publisherUserId={r.publisherUserId}
+                              mtLogin={r.mtLogin}
+                              initiallyWatching={r.activityWatching}
+                            />
+                            <CommunityCopyFollowButton
+                              publisherUserId={r.publisherUserId}
+                              mtLogin={r.mtLogin}
+                              copyFree={r.copyFree}
+                              copyPriceIdr={r.copyPriceIdr}
+                              alreadyFollowing={r.alreadyFollowing}
+                            />
+                          </>
                         ) : (
                           <Link
                             href={`/login?callbackUrl=/profil/portfolio/community/accounts`}
@@ -239,8 +247,10 @@ export default async function PortfolioCommunityAccountsPage({
       <p className="text-xs text-broker-muted">
         <strong className="text-broker-muted">Skor</strong> adalah ringkasan internal (bukan rating pihak ketiga).
         Metrik gain/harian/drawdown mengikuti agregasi yang sama dengan dashboard portofolio (zona waktu UTC untuk
-        periode harian). <strong className="text-broker-muted">Copy</strong> menyimpan relasi di situs; mirror order
-        di terminal tetap lewat EA terpisah jika Anda tambahkan nanti.
+        periode harian). <strong className="text-broker-muted">Ikuti</strong> memberi toast dan notifikasi saat akun
+        tersebut membuka atau menutup posisi (bunyi beep mengikuti pengaturan beep chat di kotak chat).{" "}
+        <strong className="text-broker-muted">Copy</strong> menyimpan relasi di situs; mirror order di terminal tetap
+        lewat EA terpisah jika Anda tambahkan nanti.
       </p>
     </div>
   );

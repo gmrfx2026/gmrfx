@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashMt5ApiToken } from "@/lib/mt5Token";
+import {
+  notifyCommunityMtActivityWatchers,
+  resolveCommunityMtDisplayName,
+} from "@/lib/communityMtActivityNotifications";
+import { diffOpenPositionsByTicket } from "@/lib/mtTradingActivityPositionDiff";
+import { parseTradingActivityFromDb } from "@/lib/mtTradingActivity";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
@@ -236,6 +242,14 @@ export async function POST(req: Request) {
   const mtLogin = String(login);
   const shouldUpsertActivity = openPositions !== undefined || pendingOrders !== undefined;
 
+  const prevActivityForDiff =
+    shouldUpsertActivity && openPositions !== undefined
+      ? await prisma.mtTradingActivity.findUnique({
+          where: { userId_mtLogin: { userId: link.userId, mtLogin } },
+          select: { positions: true },
+        })
+      : null;
+
   try {
     await prisma.$transaction(
       async (tx) => {
@@ -283,6 +297,29 @@ export async function POST(req: Request) {
       },
       { maxWait: 10_000, timeout: 15_000 }
     );
+
+    if (openPositions !== undefined && prevActivityForDiff) {
+      const prevPos = parseTradingActivityFromDb(prevActivityForDiff.positions, []).positions;
+      const nextTickets = openPositions.map((p) => ({ ticket: p.ticket, symbol: p.symbol }));
+      const { opened, closed } = diffOpenPositionsByTicket(prevPos, nextTickets);
+      if (opened.length > 0 || closed.length > 0) {
+        const publisherUserId = link.userId;
+        void (async () => {
+          try {
+            const displayName = await resolveCommunityMtDisplayName(publisherUserId, mtLogin);
+            await notifyCommunityMtActivityWatchers({
+              publisherUserId,
+              mtLogin,
+              displayName,
+              opened,
+              closed,
+            });
+          } catch (e) {
+            console.error("mt5/ingest community watch notify", e);
+          }
+        })();
+      }
+    }
 
     if (deals && deals.length > 0) {
       for (let i = 0; i < deals.length; i += DEAL_UPSERT_CHUNK) {

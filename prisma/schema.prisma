@@ -56,6 +56,8 @@ enum NotificationType {
   NEW_STATUS
   NEW_ARTICLE
   CHAT_DM_REQUEST
+  /// Buka/tutup posisi pada akun komunitas yang di-"Ikuti" (bukan Copy trade).
+  COMMUNITY_MT_TRADE_ALERT
 }
 
 enum ChatDmRequestStatus {
@@ -142,6 +144,8 @@ model User {
   mtCommunityPublishedAccounts MtCommunityPublishedAccount[]
   copyFollowsAsFollower      MtCopyFollow[] @relation("CopyFollowFollower")
   copyFollowsAsPublisher     MtCopyFollow[] @relation("CopyFollowPublisher")
+  communityMtWatchesAsFollower MtCommunityActivityWatch[] @relation("CommunityMtWatchFollower")
+  communityMtWatchesAsPublisher MtCommunityActivityWatch[] @relation("CommunityMtWatchPublisher")
   mtTradingActivities        MtTradingActivity[]
 }
 
@@ -263,6 +267,22 @@ model MtCopyFollow {
 
   followerUser  User @relation("CopyFollowFollower", fields: [followerUserId], references: [id], onDelete: Cascade)
   publisherUser User @relation("CopyFollowPublisher", fields: [publisherUserId], references: [id], onDelete: Cascade)
+
+  @@unique([followerUserId, publisherUserId, mtLogin])
+  @@index([followerUserId])
+  @@index([publisherUserId, mtLogin])
+}
+
+/// Member mengikuti aktivitas posisi (buka/tutup) akun komunitas — terpisah dari Copy trade.
+model MtCommunityActivityWatch {
+  id              String   @id @default(cuid())
+  followerUserId  String
+  publisherUserId String
+  mtLogin         String
+  createdAt       DateTime @default(now())
+
+  follower  User @relation("CommunityMtWatchFollower", fields: [followerUserId], references: [id], onDelete: Cascade)
+  publisher User @relation("CommunityMtWatchPublisher", fields: [publisherUserId], references: [id], onDelete: Cascade)
 
   @@unique([followerUserId, publisherUserId, mtLogin])
   @@index([followerUserId])
