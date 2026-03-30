@@ -52,6 +52,8 @@ export default async function AdminArticlesPage({
         Artikel member menunggu approval. Admin dapat mengedit dan menerbitkan.
       </p>
 
+      <AdminImportEducationalArticles />
+
       <AdminListFilterForm
         actionPath="/admin/articles"
         qDefault={lp.q}
@@ -59,8 +61,6 @@ export default async function AdminArticlesPage({
         searchPlaceholder="Judul, slug, ringkasan, penulis…"
       />
       <AdminListSummary total={total} page={page} pageSize={lp.pageSize} totalPages={totalPages} />
-
-      <AdminImportEducationalArticles />
 
       <div className="mt-6 space-y-3">
         {articles.map((a) => (
