@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { GoOutClient } from "./GoOutClient";
 
 export const metadata: Metadata = {
@@ -9,7 +10,9 @@ export const metadata: Metadata = {
 export default function GoPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 py-12">
-      <GoOutClient />
+      <Suspense fallback={<p className="text-center text-sm text-zinc-400">Memuat…</p>}>
+        <GoOutClient />
+      </Suspense>
     </div>
   );
 }

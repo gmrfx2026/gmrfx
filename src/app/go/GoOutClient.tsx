@@ -1,7 +1,9 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AFFILIATE_EXNESS_URL, AFFILIATE_TICKMILL_URL } from "@/lib/affiliatePartners";
+import { parseGoPageDownloadPath } from "@/lib/goPageDownloadPath";
 
 const VISITOR_COOKIE = "gmrfx_go_vid";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 400;
@@ -30,6 +32,9 @@ function tryOpenUrl(url: string): boolean {
 }
 
 export function GoOutClient() {
+  const searchParams = useSearchParams();
+  const downloadPath = parseGoPageDownloadPath(searchParams.get("download"));
+
   const [logged, setLogged] = useState(false);
   const [autoOpened, setAutoOpened] = useState<boolean | null>(null);
 
@@ -45,18 +50,39 @@ export function GoOutClient() {
 
     const ex = tryOpenUrl(AFFILIATE_EXNESS_URL);
     const tk = tryOpenUrl(AFFILIATE_TICKMILL_URL);
-    setAutoOpened(ex && tk);
-  }, []);
+    let dl = true;
+    if (downloadPath) {
+      const origin = window.location.origin;
+      dl = tryOpenUrl(`${origin}${downloadPath}`);
+    }
+    setAutoOpened(ex && tk && (!downloadPath || dl));
+  }, [downloadPath]);
 
   return (
     <div className="mx-auto max-w-md text-center">
       <p className="text-lg font-medium text-white">Mitra broker edukasi</p>
       <p className="mt-2 text-sm text-zinc-400">
-        Kami mengarahkan Anda ke dua mitra (Exness & Tickmill) di tab baru. Jika tab tidak muncul, gunakan tombol di
-        bawah — browser kadang memblokir beberapa jendela sekaligus.
+        Kami mengarahkan Anda ke dua mitra (Exness & Tickmill) di tab baru.
+        {downloadPath
+          ? " Unduhan file indikator/EA gratis juga dibuka di tab tambahan."
+          : null}{" "}
+        Jika tab tidak muncul, gunakan tombol di bawah — browser kadang memblokir beberapa jendela sekaligus.
       </p>
       {autoOpened === false ? (
         <p className="mt-2 text-xs text-amber-200/90">Popup diblokir: silakan klik tautan secara manual.</p>
+      ) : null}
+      {downloadPath ? (
+        <p className="mt-3 text-xs text-zinc-500">
+          Unduhan tidak mulai?{" "}
+          <a
+            href={downloadPath}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-emerald-400 underline hover:text-emerald-300"
+          >
+            Buka unduhan file
+          </a>
+        </p>
       ) : null}
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
         <a

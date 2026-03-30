@@ -68,12 +68,24 @@ export function EaMarketActions({ eaId, slug, priceIdr, canDownload, isLoggedIn,
   }
 
   if (canDownload) {
+    const downloadPath = `/api/eas/${eaId}/download`;
+    if (!paid) {
+      const goHref = `/go?${new URLSearchParams({ download: downloadPath }).toString()}`;
+      return (
+        <a
+          href={goHref}
+          className="inline-flex rounded-lg bg-broker-accent px-4 py-2 text-sm font-semibold text-broker-bg transition hover:opacity-90"
+        >
+          Unduh gratis
+        </a>
+      );
+    }
     return (
       <a
-        href={`/api/eas/${eaId}/download`}
+        href={downloadPath}
         className="inline-flex rounded-lg bg-broker-accent px-4 py-2 text-sm font-semibold text-broker-bg transition hover:opacity-90"
       >
-        {paid ? "Unduh file" : "Unduh gratis"}
+        Unduh file
       </a>
     );
   }
