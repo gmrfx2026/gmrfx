@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { toMemberSlug } from "@/lib/memberSlug";
 import { IndicatorMarketActions } from "@/components/indikator/IndicatorMarketActions";
+import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
 import { Decimal } from "@prisma/client/runtime/library";
 
 export const dynamic = "force-dynamic";
@@ -73,7 +74,7 @@ export default async function IndikatorDetailPage({ params }: Props) {
           {ind.seller.name ?? "Member"}
         </Link>
         {" · "}
-        {ind.platform.toUpperCase()}
+        {formatMarketplacePlatformLabel(ind.platform)}
         {" · "}
         {priceNum <= 0 ? (
           <span className="text-emerald-400/90">Gratis</span>

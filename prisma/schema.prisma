@@ -625,8 +625,8 @@ model SharedIndicator {
   fileUrl     String
   /// Nama file saat unduh.
   fileName    String
-  /// mt4 | mt5
-  platform    String   @default("mt5") @db.VarChar(8)
+  /// mt4 | mt5 | tradingview | other
+  platform    String   @default("mt5") @db.VarChar(16)
   published   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -662,7 +662,8 @@ model SharedExpertAdvisor {
   priceIdr    Decimal  @default(0) @db.Decimal(18, 2)
   fileUrl     String
   fileName    String
-  platform    String   @default("mt5") @db.VarChar(8)
+  /// mt4 | mt5 | tradingview | other
+  platform    String   @default("mt5") @db.VarChar(16)
   published   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

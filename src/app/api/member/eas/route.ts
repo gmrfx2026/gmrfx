@@ -8,6 +8,7 @@ import {
   resolveMtMarketplaceExt,
   storeMtMarketplaceFile,
 } from "@/lib/mtMarketplaceUpload";
+import { parseMarketplacePlatform } from "@/lib/marketplacePlatform";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -113,7 +114,7 @@ export async function POST(req: Request) {
   let published: boolean;
   try {
     priceIdr = parsePriceIdr(form.get("priceIdr"));
-    platform = parsePlatform(form.get("platform"));
+    platform = parseMarketplacePlatform(form.get("platform"));
     published = parseBool(form.get("published"));
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Data tidak valid";

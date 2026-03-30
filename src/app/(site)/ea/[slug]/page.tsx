@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { toMemberSlug } from "@/lib/memberSlug";
 import { EaMarketActions } from "@/components/ea/EaMarketActions";
+import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
 import { Decimal } from "@prisma/client/runtime/library";
 
 export const dynamic = "force-dynamic";
@@ -71,7 +72,7 @@ export default async function EaDetailPage({ params }: Props) {
           {ea.seller.name ?? "Member"}
         </Link>
         {" · "}
-        {ea.platform.toUpperCase()}
+        {formatMarketplacePlatformLabel(ea.platform)}
         {" · "}
         {priceNum <= 0 ? (
           <span className="text-emerald-400/90">Gratis</span>

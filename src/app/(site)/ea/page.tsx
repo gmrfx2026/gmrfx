@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +55,7 @@ export default async function EaCatalogPage() {
                   <p className="mt-1 text-xs text-broker-muted">
                     Oleh{" "}
                     <span className="text-broker-accent/90">{r.seller.name ?? "Member"}</span> ·{" "}
-                    {r.platform.toUpperCase()} ·{" "}
+                    {formatMarketplacePlatformLabel(r.platform)} ·{" "}
                     {price <= 0 ? (
                       <span className="text-emerald-400/90">Gratis</span>
                     ) : (

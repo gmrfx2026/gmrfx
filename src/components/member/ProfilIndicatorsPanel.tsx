@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
 import { useCallback, useEffect, useState } from "react";
 
 type Row = {
@@ -244,7 +245,7 @@ export function ProfilIndicatorsPanel() {
                 <div className="min-w-0">
                   <p className="font-medium text-white">{it.title}</p>
                   <p className="text-xs text-broker-muted">
-                    {it.published ? "Publik" : "Draft"} · {it.platform.toUpperCase()} ·{" "}
+                    {it.published ? "Publik" : "Draft"} · {formatMarketplacePlatformLabel(it.platform)} ·{" "}
                     {it.priceIdr <= 0 ? "Gratis" : `Rp ${it.priceIdr.toLocaleString("id-ID")}`} ·{" "}
                     {it.purchaseCount} pembelian
                   </p>

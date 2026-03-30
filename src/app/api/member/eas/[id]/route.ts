@@ -9,6 +9,7 @@ import {
   resolveMtMarketplaceExt,
   storeMtMarketplaceFile,
 } from "@/lib/mtMarketplaceUpload";
+import { parseMarketplacePlatform } from "@/lib/marketplacePlatform";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,12 +28,6 @@ function parsePriceIdr(v: FormDataEntryValue | null): Decimal {
     throw new Error("Harga IDR tidak valid (0–999.999.999)");
   }
   return new Decimal(Math.round(n * 100) / 100);
-}
-
-function parsePlatform(v: FormDataEntryValue | null): string {
-  const s = (v == null ? "mt5" : String(v)).trim().toLowerCase();
-  if (s === "mt4" || s === "mt5") return s;
-  throw new Error('Platform harus "mt4" atau "mt5"');
 }
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -74,7 +69,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   let published: boolean;
   try {
     priceIdr = parsePriceIdr(form.get("priceIdr"));
-    platform = parsePlatform(form.get("platform"));
+    platform = parseMarketplacePlatform(form.get("platform"));
     published = parseBool(form.get("published"));
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Data tidak valid";
