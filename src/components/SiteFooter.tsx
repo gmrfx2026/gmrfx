@@ -28,6 +28,11 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/berita" className="hover:text-broker-accent">
+                  Berita
+                </Link>
+              </li>
+              <li>
                 <Link href="/galeri" className="hover:text-broker-accent">
                   Galeri
                 </Link>

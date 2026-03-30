@@ -58,9 +58,12 @@ export default async function BeritaDetailPage({ params }: { params: { slug: str
         className={`${articleProseTypographyClass} mt-8`}
         dangerouslySetInnerHTML={{ __html: safeHtml }}
       />
-      <p className="mt-10 text-center text-sm text-broker-muted">
+      <p className="mt-10 flex flex-wrap justify-center gap-x-4 gap-y-2 text-center text-sm text-broker-muted">
+        <Link href="/berita" className="text-broker-accent hover:underline">
+          Semua berita
+        </Link>
         <Link href="/" className="text-broker-accent hover:underline">
-          Kembali ke beranda
+          Beranda
         </Link>
       </p>
     </article>

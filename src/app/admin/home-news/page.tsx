@@ -1,14 +1,22 @@
 import { prisma } from "@/lib/prisma";
+import {
+  HOME_NEWS_RSS_DOMESTIC_URL_KEY,
+  HOME_NEWS_RSS_INTERNATIONAL_URL_KEY,
+} from "@/lib/homeNewsRssSettings";
 import { AdminHomeNewsRssImport } from "@/components/admin/AdminHomeNewsRssImport";
 import { AdminHomeNewsRow } from "@/components/admin/AdminHomeNewsRow";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminHomeNewsPage() {
-  const items = await prisma.homeNewsItem.findMany({
-    orderBy: { publishedAt: "desc" },
-    take: 80,
-  });
+  const [items, rssDn, rssInt] = await Promise.all([
+    prisma.homeNewsItem.findMany({
+      orderBy: { publishedAt: "desc" },
+      take: 80,
+    }),
+    prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_DOMESTIC_URL_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_INTERNATIONAL_URL_KEY } }),
+  ]);
 
   return (
     <div>
@@ -18,7 +26,10 @@ export default async function AdminHomeNewsPage() {
       </p>
 
       <div className="mt-6">
-        <AdminHomeNewsRssImport />
+        <AdminHomeNewsRssImport
+          savedDomesticUrl={rssDn?.value ?? ""}
+          savedInternationalUrl={rssInt?.value ?? ""}
+        />
       </div>
 
       <h2 className="mt-10 text-sm font-semibold text-gray-800">Entri terbaru</h2>

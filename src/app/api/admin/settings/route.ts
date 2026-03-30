@@ -8,6 +8,12 @@ import {
 } from "@/lib/memberStatusPagination";
 import { clampPageSize } from "@/lib/walletTransferFilters";
 import { HOME_MEMBER_TICKER_VISIBLE_KEY } from "@/lib/homePageSettings";
+import {
+  HOME_NEWS_RSS_DOMESTIC_URL_KEY,
+  HOME_NEWS_RSS_INTERNATIONAL_URL_KEY,
+  isValidOptionalHttpUrl,
+  normalizeRssFeedUrl,
+} from "@/lib/homeNewsRssSettings";
 
 export async function GET() {
   const session = await auth();
@@ -15,17 +21,21 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const [fee, commentsPer, timelinePer, statusCommentsPer] = await Promise.all([
+  const [fee, commentsPer, timelinePer, statusCommentsPer, rssDn, rssInt] = await Promise.all([
     prisma.systemSetting.findUnique({ where: { key: "platform_fee_percent" } }),
     prisma.systemSetting.findUnique({ where: { key: ARTICLE_COMMENTS_PER_PAGE_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: MEMBER_TIMELINE_PER_PAGE_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: MEMBER_STATUS_COMMENTS_PER_PAGE_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_DOMESTIC_URL_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_INTERNATIONAL_URL_KEY } }),
   ]);
   return NextResponse.json({
     platformFeePercent: fee?.value ?? "0",
     articleCommentsPerPage: commentsPer?.value ?? "10",
     memberTimelinePerPage: timelinePer?.value ?? "10",
     memberStatusCommentsPerPage: statusCommentsPer?.value ?? "10",
+    homeNewsRssDomesticUrl: rssDn?.value ?? "",
+    homeNewsRssInternationalUrl: rssInt?.value ?? "",
   });
 }
 
@@ -82,6 +92,41 @@ export async function PATCH(req: Request) {
       create: { key: HOME_MEMBER_TICKER_VISIBLE_KEY, value: on ? "1" : "0" },
       update: { value: on ? "1" : "0" },
     });
+  }
+
+  if (body.homeNewsRssDomesticUrl !== undefined) {
+    const u = normalizeRssFeedUrl(String(body.homeNewsRssDomesticUrl ?? ""));
+    if (!isValidOptionalHttpUrl(u)) {
+      return NextResponse.json({ error: "URL RSS dalam negeri tidak valid (kosongkan atau pakai http/https)" }, { status: 400 });
+    }
+    if (!u) {
+      await prisma.systemSetting.deleteMany({ where: { key: HOME_NEWS_RSS_DOMESTIC_URL_KEY } });
+    } else {
+      await prisma.systemSetting.upsert({
+        where: { key: HOME_NEWS_RSS_DOMESTIC_URL_KEY },
+        create: { key: HOME_NEWS_RSS_DOMESTIC_URL_KEY, value: u },
+        update: { value: u },
+      });
+    }
+  }
+
+  if (body.homeNewsRssInternationalUrl !== undefined) {
+    const u = normalizeRssFeedUrl(String(body.homeNewsRssInternationalUrl ?? ""));
+    if (!isValidOptionalHttpUrl(u)) {
+      return NextResponse.json(
+        { error: "URL RSS internasional tidak valid (kosongkan atau pakai http/https)" },
+        { status: 400 },
+      );
+    }
+    if (!u) {
+      await prisma.systemSetting.deleteMany({ where: { key: HOME_NEWS_RSS_INTERNATIONAL_URL_KEY } });
+    } else {
+      await prisma.systemSetting.upsert({
+        where: { key: HOME_NEWS_RSS_INTERNATIONAL_URL_KEY },
+        create: { key: HOME_NEWS_RSS_INTERNATIONAL_URL_KEY, value: u },
+        update: { value: u },
+      });
+    }
   }
 
   if (body.memberStatusCommentsPerPage !== undefined) {

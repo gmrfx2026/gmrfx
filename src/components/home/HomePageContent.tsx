@@ -108,6 +108,12 @@ export async function HomePageContent() {
         <div className="mx-auto max-w-6xl px-4 py-14">
           <div className="mb-8 flex items-end justify-between gap-4">
             <h2 className="text-xl font-bold text-white md:text-2xl">Berita dalam negeri</h2>
+            <Link
+              href="/berita?scope=domestic"
+              className="text-sm font-medium text-broker-accent hover:underline"
+            >
+              Lihat semua
+            </Link>
           </div>
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {domesticNews.map((n) => (
@@ -148,6 +154,12 @@ export async function HomePageContent() {
       <section id="berita-internasional" className="mx-auto max-w-6xl px-4 py-14">
         <div className="mb-8 flex items-end justify-between gap-4">
           <h2 className="text-xl font-bold text-white md:text-2xl">Berita internasional</h2>
+          <Link
+            href="/berita?scope=international"
+            className="text-sm font-medium text-broker-accent hover:underline"
+          >
+            Lihat semua
+          </Link>
         </div>
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {intlNews.map((n) => (

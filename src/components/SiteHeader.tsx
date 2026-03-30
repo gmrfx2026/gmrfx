@@ -7,6 +7,7 @@ import { NotificationBell } from "./NotificationBell";
 const nav = [
   { href: "/", label: "Home" },
   { href: "/artikel", label: "Artikel" },
+  { href: "/berita", label: "Berita" },
   { href: "/cari", label: "Cari" },
   { href: "/galeri", label: "Galeri" },
   { href: "/daftar", label: "Daftar" },
