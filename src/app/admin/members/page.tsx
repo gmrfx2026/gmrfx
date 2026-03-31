@@ -44,9 +44,14 @@ export default async function AdminMembersPage({
           <h1 className="text-2xl font-bold text-gray-800">Pengelolaan member</h1>
           <p className="mt-1 text-sm text-gray-600">Update status, saldo, wallet, kontak, dan alamat.</p>
         </div>
-        <Link href="/admin/members/online" className="text-sm font-medium text-green-700 hover:underline">
-          Member sedang online →
-        </Link>
+        <div className="flex flex-wrap gap-4">
+          <Link href="/admin/members/online" className="text-sm font-medium text-green-700 hover:underline">
+            Member sedang online →
+          </Link>
+          <Link href="/admin/members/portfolio" className="text-sm font-medium text-green-700 hover:underline">
+            Member ber-portofolio →
+          </Link>
+        </div>
       </div>
 
       <AdminListFilterForm
