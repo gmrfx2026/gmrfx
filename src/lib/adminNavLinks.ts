@@ -1,0 +1,16 @@
+export const ADMIN_NAV_LINKS = [
+  { href: "/admin", label: "Ringkasan" },
+  { href: "/admin/members", label: "Member" },
+  { href: "/admin/members/online", label: "Member online" },
+  { href: "/admin/site-header-nav", label: "Menu header" },
+  { href: "/admin/member-menu", label: "Menu member" },
+  { href: "/admin/portfolio-menu", label: "Menu portofolio" },
+  { href: "/admin/transfers", label: "Transfer wallet" },
+  { href: "/admin/marketplace-escrow", label: "Escrow marketplace" },
+  { href: "/admin/articles", label: "Artikel" },
+  { href: "/admin/home-news", label: "Berita beranda" },
+  { href: "/admin/affiliate-go", label: "Statistik /go" },
+  { href: "/admin/comments", label: "Komentar" },
+  { href: "/admin/gallery", label: "Galeri" },
+  { href: "/admin/settings", label: "Pengaturan" },
+] as const;
