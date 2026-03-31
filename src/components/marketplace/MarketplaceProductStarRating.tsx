@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useToast } from "@/components/ToastProvider";
-import { ArticleRatingSummary } from "@/components/ArticleRatingSummary";
+import { MarketplaceRatingBadge } from "@/components/marketplace/MarketplaceRatingBadge";
 
 type Kind = "indicator" | "ea";
 
@@ -54,60 +54,46 @@ export function MarketplaceProductStarRating({
   }
 
   const displayPick = hover ?? myStars ?? 0;
+  const showAggregate = count > 0 && avg != null;
 
   return (
-    <div className="rounded-xl border border-broker-border/80 bg-broker-surface/25 px-4 py-4">
-      <p className="text-xs font-semibold uppercase tracking-wider text-broker-muted">Rating</p>
-      <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-broker-muted">
-        <span>Rata-rata:</span>
-        <ArticleRatingSummary avg={avg} count={count} />
-      </p>
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border border-broker-border/80 bg-broker-surface/25 px-4 py-3">
+      {showAggregate ? <MarketplaceRatingBadge avg={avg} count={count} /> : null}
 
       {isOwn ? (
-        <p className="mt-3 text-sm text-broker-muted">Sebagai penjual, Anda tidak dapat menilai produk sendiri.</p>
+        <span className="text-xs text-broker-muted/90">Penjual tidak dapat menilai produk sendiri.</span>
       ) : !isLoggedIn ? (
-        <p className="mt-3 text-sm text-broker-muted">
-          <Link
-            href={`/login?callbackUrl=${encodeURIComponent(pathname)}`}
-            className="font-medium text-broker-accent hover:underline"
-          >
-            Masuk
-          </Link>{" "}
-          untuk memberi rating bintang (1–5).
-        </p>
+        <Link
+          href={`/login?callbackUrl=${encodeURIComponent(pathname)}`}
+          className="text-sm font-medium text-broker-accent hover:underline"
+        >
+          Masuk untuk menilai
+        </Link>
       ) : (
-        <div className="mt-4">
-          <p className="text-sm text-broker-muted">Penilaian Anda — klik bintang:</p>
-          <div
-            className="mt-2 flex items-center gap-1"
-            role="group"
-            aria-label="Beri rating 1 sampai 5 bintang"
-            onMouseLeave={() => setHover(null)}
-          >
-            {[1, 2, 3, 4, 5].map((n) => (
-              <button
-                key={n}
-                type="button"
-                disabled={busy}
-                aria-label={`${n} bintang`}
-                aria-pressed={myStars === n}
-                className={[
-                  "rounded px-1.5 py-1 text-2xl leading-none transition disabled:opacity-50",
-                  n <= displayPick ? "text-broker-gold" : "text-broker-muted/35",
-                  "hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-broker-accent/60",
-                ].join(" ")}
-                onMouseEnter={() => setHover(n)}
-                onClick={() => void submitStars(n)}
-              >
-                <span aria-hidden>★</span>
-              </button>
-            ))}
-          </div>
-          {myStars != null ? (
-            <p className="mt-2 text-xs text-broker-muted">Anda memberi {myStars} bintang. Klik bintang lain untuk mengubah.</p>
-          ) : (
-            <p className="mt-2 text-xs text-broker-muted">Belum ada penilaian dari Anda.</p>
-          )}
+        <div
+          className="flex items-center gap-1"
+          role="group"
+          aria-label="Beri rating 1 sampai 5 bintang"
+          onMouseLeave={() => setHover(null)}
+        >
+          {[1, 2, 3, 4, 5].map((n) => (
+            <button
+              key={n}
+              type="button"
+              disabled={busy}
+              aria-label={`${n} bintang`}
+              aria-pressed={myStars === n}
+              className={[
+                "rounded px-1.5 py-1 text-2xl leading-none transition disabled:opacity-50",
+                n <= displayPick ? "text-broker-gold" : "text-broker-muted/35",
+                "hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-broker-accent/60",
+              ].join(" ")}
+              onMouseEnter={() => setHover(n)}
+              onClick={() => void submitStars(n)}
+            >
+              <span aria-hidden>★</span>
+            </button>
+          ))}
         </div>
       )}
     </div>
