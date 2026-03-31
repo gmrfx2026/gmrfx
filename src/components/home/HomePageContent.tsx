@@ -25,6 +25,7 @@ import {
   HOME_HERO_TITLE_KEY,
   resolveHomeHeroFromSettings,
 } from "@/lib/homeHeroSettings";
+import { FinnhubMarketSection } from "@/components/home/FinnhubMarketSection";
 
 /** Konten beranda (data + JSX). Dipakai dari `app/page.tsx` di luar layout `(site)`. */
 export async function HomePageContent() {
@@ -130,6 +131,8 @@ export async function HomePageContent() {
           </div>
         </div>
       </section>
+
+      <FinnhubMarketSection />
 
       {showMemberTicker ? <MemberTicker members={members} /> : null}
 
