@@ -3,6 +3,7 @@ export const ADMIN_NAV_LINKS = [
   { href: "/admin/members", label: "Member" },
   { href: "/admin/members/online", label: "Member online" },
   { href: "/admin/members/portfolio", label: "Member portofolio" },
+  { href: "/admin/analytics", label: "Trafik situs" },
   { href: "/admin/site-header-nav", label: "Menu header" },
   { href: "/admin/member-menu", label: "Menu member" },
   { href: "/admin/portfolio-menu", label: "Menu portofolio" },

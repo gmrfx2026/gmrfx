@@ -12,13 +12,18 @@ const ACCENT_BAR = {
   violet: "from-violet-500 to-purple-400",
   amber: "from-amber-500 to-orange-400",
   rose: "from-rose-500 to-pink-400",
+  cyan: "from-cyan-500 to-blue-500",
 } as const;
 
 type AccentKey = keyof typeof ACCENT_BAR;
 
 export default async function AdminHomePage() {
   const onlineCutoff = memberOnlineCutoff();
-  const [users, articles, pending, gallery, onlineNow, recentComments, newMembers] = await Promise.all([
+  const since7d = new Date();
+  since7d.setUTCDate(since7d.getUTCDate() - 7);
+
+  const [users, articles, pending, gallery, onlineNow, trafficVisitors7d, recentComments, newMembers] =
+    await Promise.all([
     prisma.user.count(),
     prisma.article.count(),
     prisma.article.count({ where: { status: "PENDING" } }),
@@ -26,6 +31,11 @@ export default async function AdminHomePage() {
     prisma.user.count({
       where: { role: Role.USER, memberLastSeenAt: { gte: onlineCutoff } },
     }),
+    prisma.$queryRaw<Array<{ n: bigint }>>`
+      SELECT COUNT(DISTINCT s."visitorId")::bigint AS n
+      FROM "SiteTrafficPageview" s
+      WHERE s."createdAt" >= ${since7d}
+    `.then((rows) => Number(rows[0]?.n ?? 0)).catch(() => 0),
     prisma.comment.findMany({
       orderBy: { createdAt: "desc" },
       take: 6,
@@ -46,7 +56,7 @@ export default async function AdminHomePage() {
     value: number;
     href: string;
     accent: AccentKey;
-    icon: "users" | "signal" | "doc" | "clock" | "image";
+    icon: "users" | "signal" | "doc" | "clock" | "image" | "chart";
   }[] = [
     { title: "Member", value: users, href: "/admin/members", accent: "emerald", icon: "users" },
     {
@@ -55,6 +65,13 @@ export default async function AdminHomePage() {
       href: "/admin/members/online",
       accent: "sky",
       icon: "signal",
+    },
+    {
+      title: "Pengunjung unik (7 hari)",
+      value: trafficVisitors7d,
+      href: "/admin/analytics",
+      accent: "cyan",
+      icon: "chart",
     },
     { title: "Artikel", value: articles, href: "/admin/articles", accent: "violet", icon: "doc" },
     { title: "Menunggu approval", value: pending, href: "/admin/articles", accent: "amber", icon: "clock" },
@@ -186,7 +203,7 @@ function StatCard({
   value: number;
   href: string;
   accent: AccentKey;
-  icon: "users" | "signal" | "doc" | "clock" | "image";
+  icon: "users" | "signal" | "doc" | "clock" | "image" | "chart";
 }) {
   const bar = ACCENT_BAR[accent];
   return (
@@ -215,7 +232,7 @@ function StatCard({
   );
 }
 
-function StatIcon({ name }: { name: "users" | "signal" | "doc" | "clock" | "image" }) {
+function StatIcon({ name }: { name: "users" | "signal" | "doc" | "clock" | "image" | "chart" }) {
   const cls = "h-5 w-5 text-slate-600";
   switch (name) {
     case "users":
@@ -261,6 +278,16 @@ function StatIcon({ name }: { name: "users" | "signal" | "doc" | "clock" | "imag
             strokeLinecap="round"
             strokeLinejoin="round"
             d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3A1.5 1.5 0 001.5 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008H12V8.25z"
+          />
+        </svg>
+      );
+    case "chart":
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
           />
         </svg>
       );

@@ -837,3 +837,23 @@ model InternalMail {
   fromUser User @relation("MailFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
   toUser   User @relation("MailTo", fields: [toUserId], references: [id], onDelete: Cascade)
 }
+
+/// Kunjungan halaman (first-party) untuk ringkasan trafik di admin — bukan pengganti Google Analytics.
+model SiteTrafficPageview {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  visitorId    String   @db.VarChar(64)
+  path         String   @db.VarChar(2048)
+  referrer     String?  @db.VarChar(2048)
+  referrerHost String?  @db.VarChar(256)
+  utmSource    String?  @db.VarChar(128)
+  utmMedium    String?  @db.VarChar(128)
+  utmCampaign  String?  @db.VarChar(256)
+  /// direct | internal | organic_google | social | other_referral | utm
+  entryType    String   @db.VarChar(32)
+
+  @@index([createdAt])
+  @@index([visitorId, createdAt])
+  @@index([entryType])
+  @@index([referrerHost])
+}
