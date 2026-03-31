@@ -257,7 +257,7 @@ export function CommunityPublishClient({ initialRows }: { initialRows: MtCommuni
       <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-6 text-sm text-amber-100/90">
         <p className="font-medium text-white">Belum ada akun MetaTrader terhubung</p>
         <p className="mt-2 text-broker-muted">
-          Pasang EA dengan token di halaman Ringkasan portofolio, lalu kembali ke sini untuk mengatur publikasi
+          Pasang EA dengan token di halaman Dashboard portofolio, lalu kembali ke sini untuk mengatur publikasi
           Copy dan/atau Ikuti per akun.
         </p>
       </div>

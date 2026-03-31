@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 import clsx from "clsx";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { DeletePortfolioMtAccountButton } from "@/components/portfolio/DeletePortfolioMtAccountButton";
-import { Mt5TokenPanel } from "@/components/portfolio/Mt5TokenPanel";
 import { PortfolioSummaryCards } from "@/components/portfolio/PortfolioSummaryCards";
 import { PortfolioAccountBrokerLine } from "@/components/portfolio/PortfolioAccountBrokerLine";
 import { SummaryDateRangeForm } from "@/components/portfolio/SummaryDateRangeForm";
@@ -21,16 +19,6 @@ import {
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 
 export const dynamic = "force-dynamic";
-
-function siteOrigin(): string {
-  const h = headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? "http";
-  if (host) {
-    return `${proto}://${host}`;
-  }
-  return (process.env.AUTH_URL ?? "http://localhost:3000").replace(/\/$/, "");
-}
 
 async function linkedLogins(userId: string): Promise<string[]> {
   const [fromDeals, fromSnaps] = await Promise.all([
@@ -53,9 +41,6 @@ export default async function PortfolioSummaryPage({
 }: {
   searchParams: { mtLogin?: string; from?: string; to?: string };
 }) {
-  const origin = siteOrigin();
-  const ingestPath = `${origin}/api/mt5/ingest`;
-
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login?callbackUrl=/profil/portfolio/summary");
@@ -91,12 +76,19 @@ export default async function PortfolioSummaryPage({
         <header>
           <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Ringkasan akun</h1>
           <p className="mt-1 text-sm text-broker-muted">
-            Token MetaTrader 5 dan ringkasan angka setelah EA mengirim data.
+            Ringkasan angka setelah EA mengirim data. Kelola token EA di{" "}
+            <Link href="/profil/portfolio/dashboard" className="text-broker-accent hover:underline">
+              Dashboard portofolio
+            </Link>
+            .
           </p>
         </header>
-        <Mt5TokenPanel ingestPath={ingestPath} />
         <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-4 text-sm text-amber-100/90">
-          Belum ada akun MetaTrader di database. Pasang EA dengan token di bawah, lalu refresh halaman ini.
+          Belum ada akun MetaTrader di database. Pasang EA dengan token di halaman{" "}
+          <Link href="/profil/portfolio/dashboard" className="text-broker-accent hover:underline">
+            Dashboard portofolio
+          </Link>
+          , lalu refresh halaman ini.
         </div>
       </div>
     );
@@ -114,7 +106,6 @@ export default async function PortfolioSummaryPage({
           <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Ringkasan akun</h1>
           <p className="mt-1 text-sm text-broker-muted">Pilih akun MetaTrader untuk melihat ringkasan periode.</p>
         </header>
-        <Mt5TokenPanel ingestPath={ingestPath} />
         <div className="grid gap-3 sm:grid-cols-2">
           {logins.map((login) => (
             <div
@@ -245,8 +236,6 @@ export default async function PortfolioSummaryPage({
           />
         </div>
       </header>
-
-      <Mt5TokenPanel ingestPath={ingestPath} />
 
       <div className="rounded-2xl border border-broker-border/80 bg-broker-surface/40 p-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

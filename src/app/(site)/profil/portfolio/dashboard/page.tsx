@@ -3,9 +3,11 @@ import clsx from "clsx";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { siteOriginFromHeaders } from "@/lib/siteOriginFromHeaders";
 import { buildPortfolioStatsModel } from "@/lib/mt5Stats";
 import { tradingActivityFromRow } from "@/lib/mtTradingActivity";
 import { DeletePortfolioMtAccountButton } from "@/components/portfolio/DeletePortfolioMtAccountButton";
+import { Mt5TokenPanel } from "@/components/portfolio/Mt5TokenPanel";
 import { PortfolioAccountStatsBoard } from "@/components/portfolio/PortfolioAccountStatsBoard";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +31,7 @@ export default async function PortfolioDashboardPage({
   const session = await auth();
   if (!session?.user?.id) redirect("/login?callbackUrl=/profil/portfolio/dashboard");
 
+  const ingestPath = `${siteOriginFromHeaders()}/api/mt5/ingest`;
   const userId = session.user.id;
   const logins = await linkedLogins(userId);
 
@@ -43,14 +46,11 @@ export default async function PortfolioDashboardPage({
             Statistik akun muncul setelah EA mengirim deal atau snapshot ke server.
           </p>
         </header>
+        <Mt5TokenPanel ingestPath={ingestPath} />
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm text-amber-100/90">
           <p className="font-medium text-white">Belum ada akun MetaTrader terhubung</p>
           <p className="mt-2 text-broker-muted">
-            Pasang token di{" "}
-            <Link href="/profil/portfolio/summary" className="text-broker-accent hover:underline">
-              Ringkasan
-            </Link>{" "}
-            dan aktifkan EA. Lalu buka{" "}
+            Buat token di atas, pasang di EA, lalu aktifkan. Periksa{" "}
             <Link href="/profil/portfolio/trade-log" className="text-broker-accent hover:underline">
               Trade log
             </Link>{" "}
@@ -90,6 +90,7 @@ export default async function PortfolioDashboardPage({
             Pilih akun MetaTrader untuk melihat statistik agregat (aliran mirip journal trading profesional).
           </p>
         </header>
+        <Mt5TokenPanel ingestPath={ingestPath} />
         <div className="grid gap-3 sm:grid-cols-2">
           {logins.map((login) => {
             const tradeLabel = tradeNameByLogin.get(login);
@@ -191,6 +192,8 @@ export default async function PortfolioDashboardPage({
           </div>
         </div>
       </header>
+
+      <Mt5TokenPanel ingestPath={ingestPath} />
 
       <PortfolioAccountStatsBoard
         model={model}
