@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { DeletePortfolioMtAccountButton } from "@/components/portfolio/DeletePortfolioMtAccountButton";
 import { Mt5TokenPanel } from "@/components/portfolio/Mt5TokenPanel";
 import { PortfolioSummaryCards } from "@/components/portfolio/PortfolioSummaryCards";
 import { PortfolioAccountBrokerLine } from "@/components/portfolio/PortfolioAccountBrokerLine";
@@ -116,15 +117,22 @@ export default async function PortfolioSummaryPage({
         <Mt5TokenPanel ingestPath={ingestPath} />
         <div className="grid gap-3 sm:grid-cols-2">
           {logins.map((login) => (
-            <Link
+            <div
               key={login}
-              href={summaryHref(login, fromKey, toKey)}
-              className="rounded-2xl border border-broker-border/80 bg-broker-surface/50 p-4 shadow-md transition hover:border-broker-accent/40 hover:bg-broker-surface/70"
+              className="flex flex-col overflow-hidden rounded-2xl border border-broker-border/80 bg-broker-surface/50 shadow-md transition hover:border-broker-accent/40"
             >
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-muted">Login MT</p>
-              <p className="mt-2 font-mono text-lg font-semibold text-broker-accent">{login}</p>
-              <p className="mt-2 text-xs text-broker-muted">Buka ringkasan →</p>
-            </Link>
+              <Link
+                href={summaryHref(login, fromKey, toKey)}
+                className="flex-1 p-4 transition hover:bg-broker-surface/70"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-muted">Login MT</p>
+                <p className="mt-2 font-mono text-lg font-semibold text-broker-accent">{login}</p>
+                <p className="mt-2 text-xs text-broker-muted">Buka ringkasan →</p>
+              </Link>
+              <div className="border-t border-broker-border/50 px-4 py-2 text-center">
+                <DeletePortfolioMtAccountButton mtLogin={login} redirectHref="/profil/portfolio/summary" />
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -215,6 +223,13 @@ export default async function PortfolioSummaryPage({
               </>
             ) : null}
           </p>
+          <div className="mt-2">
+            <DeletePortfolioMtAccountButton
+              mtLogin={mtLogin}
+              redirectHref="/profil/portfolio/summary"
+              className="text-xs font-medium text-red-400/90 underline decoration-red-400/40 underline-offset-2 hover:text-red-300 disabled:opacity-50"
+            />
+          </div>
         </div>
         <div className="text-right">
           <p className="font-mono text-xs text-broker-muted">
