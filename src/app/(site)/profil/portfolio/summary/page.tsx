@@ -91,12 +91,12 @@ export default async function PortfolioSummaryPage({
         <header>
           <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Ringkasan akun</h1>
           <p className="mt-1 text-sm text-broker-muted">
-            Token MT5 dan ringkasan angka setelah EA mengirim data.
+            Token MetaTrader 5 dan ringkasan angka setelah EA mengirim data.
           </p>
         </header>
         <Mt5TokenPanel ingestPath={ingestPath} />
         <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-4 text-sm text-amber-100/90">
-          Belum ada akun MT di database. Pasang EA dengan token di bawah, lalu refresh halaman ini.
+          Belum ada akun MetaTrader di database. Pasang EA dengan token di bawah, lalu refresh halaman ini.
         </div>
       </div>
     );
@@ -112,7 +112,7 @@ export default async function PortfolioSummaryPage({
       <div className="space-y-6">
         <header>
           <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Ringkasan akun</h1>
-          <p className="mt-1 text-sm text-broker-muted">Pilih akun MT untuk melihat ringkasan periode.</p>
+          <p className="mt-1 text-sm text-broker-muted">Pilih akun MetaTrader untuk melihat ringkasan periode.</p>
         </header>
         <Mt5TokenPanel ingestPath={ingestPath} />
         <div className="grid gap-3 sm:grid-cols-2">
@@ -125,7 +125,7 @@ export default async function PortfolioSummaryPage({
                 href={summaryHref(login, fromKey, toKey)}
                 className="flex-1 p-4 transition hover:bg-broker-surface/70"
               >
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-muted">Login MT</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-muted">Login MetaTrader</p>
                 <p className="mt-2 font-mono text-lg font-semibold text-broker-accent">{login}</p>
                 <p className="mt-2 text-xs text-broker-muted">Buka ringkasan →</p>
               </Link>

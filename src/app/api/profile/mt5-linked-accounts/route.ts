@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-/** Login MT unik yang sudah pernah mengirim deal atau snapshot (untuk sidebar portofolio). */
+/** Login MetaTrader unik yang sudah pernah mengirim deal atau snapshot (untuk sidebar portofolio). */
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {

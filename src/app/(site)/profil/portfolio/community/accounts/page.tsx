@@ -28,7 +28,7 @@ function communityAccountSummaryHref(r: CommunityPublishedAccountView): string {
   return `/profil/portfolio/community/account/${encodeURIComponent(r.publisherUserId)}/${encodeURIComponent(r.mtLogin)}`;
 }
 
-/** Hanya nama akun (tanpa nomor MT di daftar); klik → ringkasan statistik. */
+/** Hanya nama akun (tanpa nomor MetaTrader di daftar); klik → ringkasan statistik. */
 function AccountNameCell({ row: r }: { row: CommunityPublishedAccountView }) {
   const href = communityAccountSummaryHref(r);
   const hint = [r.displayName, r.publisherSlug ? `@${r.publisherSlug}` : r.publisherName].filter(Boolean).join(" · ");
@@ -63,7 +63,7 @@ export default async function PortfolioCommunityAccountsPage({
         <div>
           <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Akun komunitas</h1>
           <p className="mt-1 text-sm text-broker-muted">
-            Nomor login MT tidak ditampilkan di daftar; klik <strong className="text-white">nama akun</strong> untuk
+            Nomor login MetaTrader tidak ditampilkan di daftar; klik <strong className="text-white">nama akun</strong> untuk
             ringkasan statistik. Untuk mempublikasikan akun Anda, buka{" "}
             <Link href="/profil/portfolio/community/publish" className="text-broker-accent hover:underline">
               Publikasi copy trade

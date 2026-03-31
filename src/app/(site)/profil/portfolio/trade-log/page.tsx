@@ -144,7 +144,7 @@ export default async function PortfolioTradeLogPage({
               <thead>
                 <tr className="border-b border-broker-border/80 bg-broker-bg/50 text-[10px] uppercase tracking-wide text-broker-muted sm:text-xs">
                   <th className="px-2 py-2.5 font-medium">Waktu</th>
-                  <th className="px-2 py-2.5 font-medium">Login MT</th>
+                  <th className="px-2 py-2.5 font-medium">Login MetaTrader</th>
                   <th className="px-2 py-2.5 font-medium">Simbol</th>
                   <th className="px-2 py-2.5 font-medium">Tipe</th>
                   <th className="px-2 py-2.5 font-medium">Entry</th>

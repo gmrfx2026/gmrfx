@@ -71,7 +71,7 @@ async function run(req: Request) {
   for (const row of expiredCopies) {
     const pubName = row.publisherUser.name?.trim() || "Member";
     const title = "Langganan Copy trade berakhir";
-    const body = `Masa langganan Copy untuk akun MT ${row.mtLogin} (${pubName}) telah habis (periode ~30 hari). Anda dapat berlangganan lagi dari halaman Komunitas jika pemilik masih membuka layanan.`;
+    const body = `Masa langganan Copy untuk akun MetaTrader ${row.mtLogin} (${pubName}) telah habis (periode ~30 hari). Anda dapat berlangganan lagi dari halaman Komunitas jika pemilik masih membuka layanan.`;
     try {
       await prisma.$transaction(async (tx) => {
         await tx.notification.create({
@@ -100,7 +100,7 @@ async function run(req: Request) {
   for (const row of expiredWatches) {
     const pubName = row.publisher.name?.trim() || "Member";
     const title = "Langganan alert Ikuti berakhir";
-    const body = `Masa langganan notifikasi posisi (Ikuti) untuk akun MT ${row.mtLogin} (${pubName}) telah habis (periode ~30 hari). Anda dapat berlangganan lagi dari halaman Komunitas jika pemilik menetapkan alert berbayar.`;
+    const body = `Masa langganan notifikasi posisi (Ikuti) untuk akun MetaTrader ${row.mtLogin} (${pubName}) telah habis (periode ~30 hari). Anda dapat berlangganan lagi dari halaman Komunitas jika pemilik menetapkan alert berbayar.`;
     try {
       await prisma.$transaction(async (tx) => {
         await tx.notification.create({

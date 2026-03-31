@@ -104,7 +104,7 @@ export async function POST(req: Request) {
             fromUserId: followerUserId,
             toUserId: publisherUserId,
             amount: price,
-            note: `Copy trade (30 hari): MT ${mtLogin}`,
+            note: `Copy trade (30 hari): MetaTrader ${mtLogin}`,
           },
         });
       }

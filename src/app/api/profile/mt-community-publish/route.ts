@@ -60,7 +60,7 @@ export async function PUT(req: Request) {
   const userId = session.user.id;
 
   if (!(await userOwnsMtLogin(userId, mtLogin))) {
-    return NextResponse.json({ error: "Login MT tidak terhubung ke akun Anda" }, { status: 403 });
+    return NextResponse.json({ error: "Login MetaTrader tidak terhubung ke akun Anda" }, { status: 403 });
   }
 
   if (allowCopy && !copyFree) {

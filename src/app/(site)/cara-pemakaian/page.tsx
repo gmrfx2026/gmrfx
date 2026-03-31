@@ -87,7 +87,7 @@ export default function CaraPemakaianPage() {
           </li>
         </ul>
 
-        <h2>5. Portofolio &amp; komunitas MT</h2>
+        <h2>5. Portofolio &amp; komunitas MetaTrader</h2>
         <p>
           Dari menu portofolio (sidebar member) Anda dapat menghubungkan akun MetaTrader, melihat ringkasan,
           jurnal, dan fitur komunitas seperti berbagi aktivitas atau langganan fitur komunitas — sesuai yang

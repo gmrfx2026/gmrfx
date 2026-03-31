@@ -44,7 +44,7 @@ export default async function PortfolioDashboardPage({
           </p>
         </header>
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm text-amber-100/90">
-          <p className="font-medium text-white">Belum ada akun MT terhubung</p>
+          <p className="font-medium text-white">Belum ada akun MetaTrader terhubung</p>
           <p className="mt-2 text-broker-muted">
             Pasang token di{" "}
             <Link href="/profil/portfolio/summary" className="text-broker-accent hover:underline">
@@ -87,7 +87,7 @@ export default async function PortfolioDashboardPage({
         <header>
           <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Dashboard portofolio</h1>
           <p className="mt-1 text-sm text-broker-muted">
-            Pilih akun MT untuk melihat statistik agregat (aliran mirip journal trading profesional).
+            Pilih akun MetaTrader untuk melihat statistik agregat (aliran mirip journal trading profesional).
           </p>
         </header>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -102,7 +102,7 @@ export default async function PortfolioDashboardPage({
                   href={`/profil/portfolio/dashboard?mtLogin=${encodeURIComponent(login)}`}
                   className="flex-1 p-4 transition hover:bg-broker-surface/70"
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-muted">Akun MT</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-muted">Akun MetaTrader</p>
                   {tradeLabel ? (
                     <p className="mt-2 truncate text-lg font-semibold text-broker-accent" title={tradeLabel}>
                       {tradeLabel}

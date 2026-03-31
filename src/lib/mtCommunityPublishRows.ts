@@ -17,7 +17,7 @@ export type MtCommunityPublishRow = {
   platform: string;
 };
 
-/** Login MT milik user + setelan publikasi komunitas + meta snapshot terakhir. */
+/** Login MetaTrader milik user + setelan publikasi komunitas + meta snapshot terakhir. */
 export async function loadMtCommunityPublishRows(userId: string): Promise<MtCommunityPublishRow[]> {
   const [fromDeals, fromSnaps] = await Promise.all([
     prisma.mtDeal.groupBy({ by: ["mtLogin"], where: { userId } }),

@@ -47,11 +47,11 @@ export default async function PortfolioJournalPage({
         <header>
           <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Jurnal</h1>
           <p className="mt-1 text-sm text-broker-muted">
-            Kalender kinerja harian dari deal penutupan MT5 (zona WIB).
+            Kalender kinerja harian dari deal penutupan MetaTrader 5 (zona WIB).
           </p>
         </header>
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm text-amber-100/90">
-          <p className="font-medium text-white">Belum ada akun MT</p>
+          <p className="font-medium text-white">Belum ada akun MetaTrader</p>
           <p className="mt-2 text-broker-muted">
             Hubungkan EA terlebih dahulu, lalu kembali ke halaman ini.
           </p>
@@ -72,7 +72,7 @@ export default async function PortfolioJournalPage({
       <div className="space-y-6">
         <header>
           <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Jurnal</h1>
-          <p className="mt-1 text-sm text-broker-muted">Pilih akun MT untuk membuka kalender jurnal.</p>
+          <p className="mt-1 text-sm text-broker-muted">Pilih akun MetaTrader untuk membuka kalender jurnal.</p>
         </header>
         <div className="grid gap-3 sm:grid-cols-2">
           {logins.map((login) => (
@@ -81,7 +81,7 @@ export default async function PortfolioJournalPage({
               href={`/profil/portfolio/journal?mtLogin=${encodeURIComponent(login)}`}
               className="rounded-2xl border border-broker-border/80 bg-broker-surface/50 p-4 shadow-md transition hover:border-broker-accent/40 hover:bg-broker-surface/70"
             >
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-muted">Login MT</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-muted">Login MetaTrader</p>
               <p className="mt-2 font-mono text-lg font-semibold text-broker-accent">{login}</p>
               <p className="mt-2 text-xs text-broker-muted">Buka jurnal →</p>
             </Link>

@@ -51,7 +51,7 @@ export default async function PortfolioCommunityFollowingPage() {
             Komunitas → Akun
           </Link>
           . Judul kartu memakai <strong className="text-white/90">nama akun</strong> dari terminal (EA) bila tersedia;
-          nomor login MT tidak ditampilkan di sini.
+          nomor login MetaTrader tidak ditampilkan di sini.
         </p>
       </header>
 

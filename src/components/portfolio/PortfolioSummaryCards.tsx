@@ -185,7 +185,7 @@ export function PortfolioSummaryCards({
           <>
             {" "}
             <span className="font-medium text-broker-muted">Nominal</span> profit, komisi, swap, dan saldo mengikuti
-            mata uang akun MT: <strong className="text-white">{accountCurrency}</strong>.
+            mata uang akun MetaTrader: <strong className="text-white">{accountCurrency}</strong>.
           </>
         ) : (
           <>

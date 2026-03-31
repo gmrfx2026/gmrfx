@@ -58,7 +58,7 @@ export default async function CommunityMyFollowersPage() {
         <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Pengikut akun</h1>
         <p className="mt-1 text-sm text-broker-muted">
           Daftar member yang berlangganan <strong className="text-white">Copy trade</strong> atau{" "}
-          <strong className="text-white">Ikuti</strong> pada login MT Anda. Langganan berbayar tampil status &amp;
+          <strong className="text-white">Ikuti</strong> pada login MetaTrader Anda. Langganan berbayar tampil status &amp;
           tanggal habis (~30 hari per periode).
         </p>
         <p className="mt-2 text-xs text-broker-muted">
@@ -90,7 +90,7 @@ export default async function CommunityMyFollowersPage() {
             <table className="w-full min-w-[640px] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-broker-border/80 bg-broker-bg/40 text-[10px] uppercase tracking-wide text-broker-muted">
-                  <th className="px-3 py-2.5 font-medium">Login MT</th>
+                  <th className="px-3 py-2.5 font-medium">Login MetaTrader</th>
                   <th className="px-3 py-2.5 font-medium">Member</th>
                   <th className="px-3 py-2.5 font-medium">Status</th>
                   <th className="px-3 py-2.5 font-medium">Pembayaran</th>
@@ -148,7 +148,7 @@ export default async function CommunityMyFollowersPage() {
             <table className="w-full min-w-[640px] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-broker-border/80 bg-broker-bg/40 text-[10px] uppercase tracking-wide text-broker-muted">
-                  <th className="px-3 py-2.5 font-medium">Login MT</th>
+                  <th className="px-3 py-2.5 font-medium">Login MetaTrader</th>
                   <th className="px-3 py-2.5 font-medium">Member</th>
                   <th className="px-3 py-2.5 font-medium">Status</th>
                   <th className="px-3 py-2.5 font-medium">Pembayaran</th>

@@ -21,7 +21,7 @@ export default async function PortfolioCommunityPublishPage() {
           Publikasi komunitas
         </h1>
         <p className="mt-1 text-sm text-broker-muted">
-          Per akun MT: aktifkan <strong className="text-white">Copy</strong>,{" "}
+          Per akun MetaTrader: aktifkan <strong className="text-white">Copy</strong>,{" "}
           <strong className="text-white">Ikuti</strong>, atau keduanya. Akun hanya muncul di{" "}
           <Link href="/profil/portfolio/community/accounts" className="text-broker-accent hover:underline">
             daftar komunitas

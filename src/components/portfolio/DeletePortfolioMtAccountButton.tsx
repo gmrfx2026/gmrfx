@@ -22,7 +22,7 @@ export function DeletePortfolioMtAccountButton({
 
   async function onDelete() {
     const ok = window.confirm(
-      `Hapus akun MT ${mtLogin} dari portofolio Anda?\n\n` +
+      `Hapus akun MetaTrader ${mtLogin} dari portofolio Anda?\n\n` +
         "Semua log deal, snapshot, jurnal, trade log, dan data dashboard untuk nomor ini akan dihapus permanen dari situs. " +
         "Jika akun ini dipublikasikan ke komunitas (Copy / Ikuti), publikasi dan pelanggan ke akun ini juga akan dihapus.\n\n" +
         "Tindakan ini tidak bisa dibatalkan."
@@ -42,7 +42,7 @@ export function DeletePortfolioMtAccountButton({
         show(typeof j.error === "string" ? j.error : "Gagal menghapus", "err");
         return;
       }
-      show("Akun MT dan semua log terkait telah dihapus.");
+      show("Akun MetaTrader dan semua log terkait telah dihapus.");
       router.push(redirectHref);
       router.refresh();
     } catch {

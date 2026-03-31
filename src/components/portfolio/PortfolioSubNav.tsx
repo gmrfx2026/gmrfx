@@ -109,7 +109,7 @@ export function getCommunityNavLinks(menu: PortfolioNavConfig): { href: string; 
     .map((k) => ({ href: hrefForPortfolioKey(k), label: menu[k].label }));
 }
 
-/** Sub-menu Komunitas di kartu Member menu (desktop), terpisah dari blok Portofolio MT. */
+/** Sub-menu Komunitas di kartu Member menu (desktop), terpisah dari blok Portofolio MetaTrader. */
 export function CommunityNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
   const pathname = usePathname();
 
@@ -221,7 +221,7 @@ export function PortfolioNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
   return (
     <div className="mt-3 border-t border-broker-border/50 pt-3">
       <div className="px-2 pb-2">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-accent">Portofolio MT</p>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-accent">Portofolio MetaTrader</p>
       </div>
 
       <nav className="space-y-0.5" aria-label="Submenu portofolio">
@@ -321,7 +321,7 @@ export function PortfolioNavMobileStrip({ menu }: { menu: PortfolioNavConfig }) 
   return (
     <div className="rounded-xl border border-broker-border/70 bg-broker-surface/90 p-2 shadow-md shadow-black/30 backdrop-blur-sm">
       <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-widest text-broker-accent">
-        Portofolio MT
+        Portofolio MetaTrader
       </p>
       <div
         className="flex gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"

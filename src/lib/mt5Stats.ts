@@ -134,7 +134,7 @@ export type PortfolioStatsModel = {
   mtLogin: string;
   /** Nama akun di terminal (ACCOUNT_NAME), dari snapshot terakhir yang punya nilai. */
   tradeAccountName: string | null;
-  /** Kode mata uang deposit akun MT dari snapshot terakhir yang punya nilai (mis. USD, IDR). */
+  /** Kode mata uang deposit akun MetaTrader dari snapshot terakhir yang punya nilai (mis. USD, IDR). */
   accountCurrency: string | null;
   /** Nama broker (ACCOUNT_COMPANY) dari snapshot terakhir yang punya nilai. */
   brokerName: string | null;

@@ -320,7 +320,7 @@ export function PortfolioJournalClient({ mtLogin, year, month, day, deals }: Pro
                       <td className={clsx("px-2 py-2 text-right font-mono font-medium", signedClass(r.net))}>
                         {fmtNum(r.net, 2)}
                       </td>
-                      <td className="px-2 py-2 text-broker-muted/80" title="Perlu position ID dari MT5">
+                      <td className="px-2 py-2 text-broker-muted/80" title="Perlu position ID dari MetaTrader 5">
                         —
                       </td>
                       <td className="px-2 py-2 font-mono text-white">{r.magic || "—"}</td>

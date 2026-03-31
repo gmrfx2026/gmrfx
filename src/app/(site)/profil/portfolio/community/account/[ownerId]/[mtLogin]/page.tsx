@@ -7,7 +7,7 @@ import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-/** Ringkasan statistik akun yang dipublikasikan di komunitas (tanpa menampilkan nomor login di daftar). */
+/** Ringkasan statistik akun yang dipublikasikan di komunitas (tanpa menampilkan nomor login MetaTrader di daftar). */
 export default async function CommunityPublishedAccountSummaryPage({
   params,
 }: {

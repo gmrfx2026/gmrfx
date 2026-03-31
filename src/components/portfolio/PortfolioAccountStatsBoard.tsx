@@ -243,7 +243,7 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation, activ
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-accent">
-            {isCommunity ? "Ringkasan publik" : "Akun MT"}
+            {isCommunity ? "Ringkasan publik" : "Akun MetaTrader"}
           </p>
           <h2
             className={clsx(
@@ -270,7 +270,7 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation, activ
             </p>
           ) : model.tradeAccountName?.trim() ? (
             <p className="mt-1 font-mono text-[11px] text-broker-muted sm:text-xs">
-              Login MT <span className="text-white/85">{model.mtLogin}</span>
+              Login MetaTrader <span className="text-white/85">{model.mtLogin}</span>
             </p>
           ) : null}
           <PortfolioAccountBrokerLine
@@ -282,7 +282,7 @@ export function PortfolioAccountStatsBoard({ model, communityPresentation, activ
           <p className="mt-1 text-xs text-broker-muted">
             {model.accountCurrency ? (
               <>
-                Mata uang akun MT (nominal profit/saldo):{" "}
+                Mata uang akun MetaTrader (nominal profit/saldo):{" "}
                 <span className="font-semibold text-white">{model.accountCurrency}</span>
                 <span className="text-broker-border"> · </span>
               </>

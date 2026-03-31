@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 
 export const MT_LOGIN_PARAM_MAX_LEN = 32;
 
-/** Normalisasi login MT dari input API (sama order of magnitude dengan ingest). */
+/** Normalisasi login MetaTrader dari input API (sama order of magnitude dengan ingest). */
 export function parseMtLoginParam(raw: unknown): string | null {
   const s = typeof raw === "string" ? raw.trim() : "";
   if (!s || s.length > MT_LOGIN_PARAM_MAX_LEN) return null;

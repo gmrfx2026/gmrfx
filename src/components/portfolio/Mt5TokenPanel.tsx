@@ -120,9 +120,9 @@ export function Mt5TokenPanel({ ingestPath }: { ingestPath: string }) {
 
   return (
     <section className="rounded-2xl border border-broker-border/80 bg-broker-surface/40 p-5 sm:p-6">
-      <h2 className="text-base font-semibold text-white sm:text-lg">Token EA MetaTrader (MT4 &amp; MT5)</h2>
+      <h2 className="text-base font-semibold text-white sm:text-lg">Token EA (MetaTrader 4 &amp; MetaTrader 5)</h2>
       <div className="mt-3 rounded-xl border border-broker-accent/25 bg-broker-accent/5 px-4 py-3 text-sm leading-relaxed text-broker-muted">
-        <p className="font-medium text-broker-accent">Cara situs mengenali member &amp; akun MT</p>
+        <p className="font-medium text-broker-accent">Cara situs mengenali member &amp; akun MetaTrader</p>
         <ul className="mt-2 list-inside list-disc space-y-1.5">
           <li>
             Token dibuat saat Anda <strong className="text-white">login sebagai member ini</strong> — server
@@ -134,7 +134,7 @@ export function Mt5TokenPanel({ ingestPath }: { ingestPath: string }) {
           </li>
           <li>
             Nomor <strong className="text-white">login MetaTrader</strong> (mis. 12345678) ikut dikirim EA —
-            dipakai membedakan beberapa akun MT milik member yang sama (demo vs live, dll.).
+            dipakai membedakan beberapa akun MetaTrader milik member yang sama (demo vs live, dll.).
           </li>
           <li>
             Jangan bagikan token: siapa pun yang memakainya akan mengirim data ke <strong className="text-white">profil Anda</strong> di situs.
@@ -147,11 +147,11 @@ export function Mt5TokenPanel({ ingestPath }: { ingestPath: string }) {
         <code className="rounded bg-broker-bg/50 px-1 text-xs text-broker-accent">mql4/README.md</code>).
       </p>
       <p className="mt-2 text-sm text-broker-muted">
-        Endpoint <span className="text-broker-muted/80">MT5:</span>{" "}
+        Endpoint <span className="text-broker-muted/80">MetaTrader 5:</span>{" "}
         <code className="break-all rounded bg-broker-bg/50 px-1 text-xs">{ingestPath}</code>
       </p>
       <p className="mt-1 text-sm text-broker-muted">
-        Endpoint <span className="text-broker-muted/80">MT4:</span>{" "}
+        Endpoint <span className="text-broker-muted/80">MetaTrader 4:</span>{" "}
         <code className="break-all rounded bg-broker-bg/50 px-1 text-xs">{ingestPathMt4}</code>
       </p>
 

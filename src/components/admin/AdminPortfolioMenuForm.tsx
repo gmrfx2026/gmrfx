@@ -11,7 +11,7 @@ export type AdminPortfolioMenuRow = {
 };
 
 const HELP: Record<string, string> = {
-  dashboard: "Halaman statistik agregat per akun MT.",
+  dashboard: "Halaman statistik agregat per akun MetaTrader.",
   summary: "Token EA & ringkasan koneksi MetaTrader.",
   mt_linked_logins: "Daftar nomor login terhubung di bawah blok Portofolio (desktop).",
   journal: "Jurnal trading member.",

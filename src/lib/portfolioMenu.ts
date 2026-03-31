@@ -22,7 +22,7 @@ export type PortfolioNavConfig = Record<PortfolioMenuTabKey, { enabled: boolean;
 const DEFAULTS: Record<PortfolioMenuTabKey, { label: string; sortOrder: number }> = {
   dashboard: { label: "Dashboard", sortOrder: 0 },
   summary: { label: "Ringkasan", sortOrder: 10 },
-  mt_linked_logins: { label: "Daftar login MT (EA)", sortOrder: 11 },
+  mt_linked_logins: { label: "Daftar login MetaTrader (EA)", sortOrder: 11 },
   journal: { label: "Jurnal", sortOrder: 20 },
   trade_log: { label: "Trade log", sortOrder: 30 },
   playbook: { label: "Playbook", sortOrder: 40 },
