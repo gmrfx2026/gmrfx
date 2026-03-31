@@ -138,6 +138,8 @@ model User {
   sessions               Session[]
   articles               Article[]          @relation("ArticleAuthor")
   articleRatings         ArticleRating[]
+  indicatorRatings       IndicatorRating[]
+  eaRatings              EaRating[]
   comments               Comment[]
   otpChallenges          OtpChallenge[]
   sentTransfers          WalletTransfer[]   @relation("TransferFrom")
@@ -658,9 +660,25 @@ model SharedIndicator {
   updatedAt   DateTime @updatedAt
 
   purchases IndicatorPurchase[]
+  ratings   IndicatorRating[]
 
   @@index([sellerId])
   @@index([published])
+}
+
+/// Rating bintang 1–5 untuk indikator (satu nilai per user per produk).
+model IndicatorRating {
+  id          String          @id @default(cuid())
+  indicatorId String
+  indicator   SharedIndicator @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stars       Int
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([indicatorId, userId])
+  @@index([indicatorId])
 }
 
 /// Hak unduh untuk indikator berbayar (satu baris per pembeli).
@@ -699,9 +717,25 @@ model SharedExpertAdvisor {
   updatedAt   DateTime @updatedAt
 
   purchases ExpertAdvisorPurchase[]
+  ratings   EaRating[]
 
   @@index([sellerId])
   @@index([published])
+}
+
+/// Rating bintang 1–5 untuk EA (satu nilai per user per produk).
+model EaRating {
+  id        String              @id @default(cuid())
+  eaId      String
+  ea        SharedExpertAdvisor @relation(fields: [eaId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stars     Int
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@unique([eaId, userId])
+  @@index([eaId])
 }
 
 model ExpertAdvisorPurchase {

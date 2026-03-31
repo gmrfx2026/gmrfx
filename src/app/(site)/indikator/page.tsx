@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
 import { marketplaceDescriptionPlainExcerpt } from "@/lib/marketplaceDescription";
 import { resolveMarketplaceIndicatorCoverUrl } from "@/lib/marketplaceCoverImage";
+import { MarketplaceRatingBadge } from "@/components/marketplace/MarketplaceRatingBadge";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,26 @@ export default async function IndikatorCatalogPage() {
       },
     },
   });
+
+  const ids = rows.map((r) => r.id);
+  const ratingGroups =
+    ids.length > 0
+      ? await prisma.indicatorRating.groupBy({
+          by: ["indicatorId"],
+          where: { indicatorId: { in: ids } },
+          _avg: { stars: true },
+          _count: { _all: true },
+        })
+      : [];
+  const ratingById = new Map(
+    ratingGroups.map((g) => [
+      g.indicatorId,
+      {
+        avg: g._avg.stars != null ? Number(g._avg.stars) : null,
+        count: g._count._all,
+      },
+    ]),
+  );
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -75,6 +96,11 @@ export default async function IndikatorCatalogPage() {
                       <>Rp {price.toLocaleString("id-ID")}</>
                     )}
                   </p>
+                  <div className="mt-2">
+                    <MarketplaceRatingBadge
+                      {...(ratingById.get(r.id) ?? { avg: null, count: 0 })}
+                    />
+                  </div>
                   {excerpt ? (
                     <p className="mt-2 line-clamp-3 text-sm text-broker-muted">{excerpt}</p>
                   ) : null}

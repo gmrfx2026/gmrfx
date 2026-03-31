@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
 import { marketplaceDescriptionPlainExcerpt } from "@/lib/marketplaceDescription";
+import { MarketplaceRatingBadge } from "@/components/marketplace/MarketplaceRatingBadge";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,26 @@ export default async function EaCatalogPage() {
       },
     },
   });
+
+  const ids = rows.map((r) => r.id);
+  const ratingGroups =
+    ids.length > 0
+      ? await prisma.eaRating.groupBy({
+          by: ["eaId"],
+          where: { eaId: { in: ids } },
+          _avg: { stars: true },
+          _count: { _all: true },
+        })
+      : [];
+  const ratingById = new Map(
+    ratingGroups.map((g) => [
+      g.eaId,
+      {
+        avg: g._avg.stars != null ? Number(g._avg.stars) : null,
+        count: g._count._all,
+      },
+    ]),
+  );
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -59,6 +80,9 @@ export default async function EaCatalogPage() {
                       <>Rp {price.toLocaleString("id-ID")}</>
                     )}
                   </p>
+                  <div className="mt-2">
+                    <MarketplaceRatingBadge {...(ratingById.get(r.id) ?? { avg: null, count: 0 })} />
+                  </div>
                   {excerpt ? (
                     <p className="mt-2 line-clamp-3 text-sm text-broker-muted">{excerpt}</p>
                   ) : null}

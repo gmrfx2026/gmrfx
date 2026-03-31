@@ -9,6 +9,7 @@ import { articleProseTypographyClass } from "@/lib/articleProseClassName";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { Decimal } from "@prisma/client/runtime/library";
 import { resolveMarketplaceIndicatorCoverUrl } from "@/lib/marketplaceCoverImage";
+import { MarketplaceProductStarRating } from "@/components/marketplace/MarketplaceProductStarRating";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,23 @@ export default async function IndikatorDetailPage({ params }: Props) {
     Boolean(userId) &&
     (isOwn || priceDec.lte(0) || hasPurchase);
 
+  const [ratingAgg, myRatingRow] = await Promise.all([
+    prisma.indicatorRating.aggregate({
+      where: { indicatorId: ind.id },
+      _avg: { stars: true },
+      _count: { _all: true },
+    }),
+    userId
+      ? prisma.indicatorRating.findUnique({
+          where: { indicatorId_userId: { indicatorId: ind.id, userId } },
+          select: { stars: true },
+        })
+      : Promise.resolve(null),
+  ]);
+  const ratingAvg = ratingAgg._avg.stars != null ? Number(ratingAgg._avg.stars) : null;
+  const ratingCount = ratingAgg._count._all;
+  const myStars = myRatingRow?.stars ?? null;
+
   const sellerSlug = ind.seller.memberSlug ?? toMemberSlug(ind.seller.name, ind.seller.id);
 
   const descHtml = ind.description?.trim()
@@ -107,6 +125,18 @@ export default async function IndikatorDetailPage({ params }: Props) {
         {" · "}
         File: <span className="font-mono text-xs text-broker-gold/90">{ind.fileName}</span>
       </p>
+
+      <div className="mt-4">
+        <MarketplaceProductStarRating
+          kind="indicator"
+          productId={ind.id}
+          avg={ratingAvg}
+          count={ratingCount}
+          myStars={myStars}
+          isLoggedIn={Boolean(userId)}
+          isOwn={isOwn}
+        />
+      </div>
 
       {descHtml ? (
         <div className="mt-8 rounded-xl border border-broker-border/80 bg-broker-surface/30 p-4">
