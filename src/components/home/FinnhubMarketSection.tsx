@@ -17,7 +17,8 @@ export async function FinnhubMarketSection() {
 
   const hasQuotes = data.quotes.some((q) => q.current !== null);
   const hasNews = data.news.length > 0;
-  if (!hasQuotes && !hasNews) return null;
+  const newsHeading =
+    data.newsCategory === "forex" ? "Berita forex (eksternal)" : "Berita pasar (eksternal)";
 
   return (
     <section
@@ -41,6 +42,19 @@ export async function FinnhubMarketSection() {
             Data: Finnhub →
           </a>
         </div>
+
+        {!hasQuotes && !hasNews ? (
+          <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm text-amber-100/95">
+            <p className="font-medium text-white">Finnhub sudah dikonfigurasi, data belum tampil</p>
+            <p className="mt-2 text-broker-muted">
+              Bisa karena batas rate, simbol di tier gratis, atau gangguan sementara. Tunggu ±3 menit (cache) lalu
+              refresh halaman. Pastikan nama variabel di Vercel tepat:{" "}
+              <code className="rounded bg-broker-bg/60 px-1.5 py-0.5 text-xs text-broker-accent">FINNHUB_API_KEY</code>{" "}
+              untuk lingkungan <strong className="text-white">Production</strong>, lalu{" "}
+              <strong className="text-white">Redeploy</strong>.
+            </p>
+          </div>
+        ) : null}
 
         {hasQuotes ? (
           <div className="mb-8 overflow-x-auto pb-1">
@@ -85,9 +99,7 @@ export async function FinnhubMarketSection() {
 
         {hasNews ? (
           <div>
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-broker-muted">
-              Berita forex (eksternal)
-            </h3>
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-broker-muted">{newsHeading}</h3>
             <ul className="space-y-2">
               {data.news.map((n) => (
                 <li key={n.id}>

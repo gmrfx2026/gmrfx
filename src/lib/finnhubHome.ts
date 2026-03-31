@@ -28,6 +28,8 @@ export type FinnhubNewsRow = {
 export type FinnhubHomePayload = {
   quotes: FinnhubQuoteRow[];
   news: FinnhubNewsRow[];
+  /** forex | general — jika forex kosong, fallback ke general */
+  newsCategory: "forex" | "general";
   fetchedAt: string;
 };
 
@@ -59,9 +61,13 @@ async function fetchQuote(symbol: string, token: string, label: string): Promise
   };
 }
 
-async function fetchForexNews(token: string, limit: number): Promise<FinnhubNewsRow[]> {
+async function fetchMarketNews(
+  token: string,
+  category: "forex" | "general",
+  limit: number,
+): Promise<FinnhubNewsRow[]> {
   const u = new URL("https://finnhub.io/api/v1/news");
-  u.searchParams.set("category", "forex");
+  u.searchParams.set("category", category);
   u.searchParams.set("token", token);
   const res = await fetch(u.toString(), { headers: { Accept: "application/json" } });
   if (!res.ok) return [];
@@ -87,27 +93,34 @@ async function loadFinnhubHome(): Promise<FinnhubHomePayload | null> {
   const token = process.env.FINNHUB_API_KEY?.trim();
   if (!token) return null;
 
-  const [quotes, news] = await Promise.all([
-    Promise.all(QUOTE_SYMBOLS.map((s) => fetchQuote(s.symbol, token, s.label))),
-    fetchForexNews(token, 5),
-  ]);
+  const quotes = await Promise.all(QUOTE_SYMBOLS.map((s) => fetchQuote(s.symbol, token, s.label)));
+
+  let news = await fetchMarketNews(token, "forex", 5);
+  let newsCategory: "forex" | "general" = "forex";
+  if (news.length === 0) {
+    news = await fetchMarketNews(token, "general", 5);
+    newsCategory = "general";
+  }
 
   return {
     quotes,
     news,
+    newsCategory,
     fetchedAt: new Date().toISOString(),
   };
 }
 
-const FINNHUB_CACHE_KEY = ["finnhub-home-v1"];
 const FINNHUB_REVALIDATE_SEC = 180;
 
 /**
- * Snapshot kutipan + berita forex untuk beranda.
+ * Snapshot kutipan + berita untuk beranda.
  * Di-cache ±3 menit; tanpa FINNHUB_API_KEY mengembalikan null.
+ * Kunci cache memisahkan "ada key" / "tanpa key" agar setelah env Vercel diisi tidak terjebak cache null lama.
  */
 export async function getFinnhubHomeData(): Promise<FinnhubHomePayload | null> {
-  return unstable_cache(loadFinnhubHome, FINNHUB_CACHE_KEY, {
+  const hasKey = Boolean(process.env.FINNHUB_API_KEY?.trim());
+  const cacheKey = ["finnhub-home-v2", hasKey ? "configured" : "missing"];
+  return unstable_cache(loadFinnhubHome, cacheKey, {
     revalidate: FINNHUB_REVALIDATE_SEC,
   })();
 }
