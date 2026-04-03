@@ -142,7 +142,8 @@ string GmrfxMt4PendingOrdersJson()
    int    n;
    int    i;
    int    typ;
-   string sym;
+   string symRaw;
+   string symJson;
    double vol;
    double price;
    double sl;

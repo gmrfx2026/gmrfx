@@ -34,6 +34,7 @@ import {
   ProfilMarketplaceEscrowSection,
   type ProfilEscrowRow,
 } from "@/components/member/ProfilMarketplaceEscrowSection";
+import { WalletUsdtDeposit } from "@/components/WalletUsdtDeposit";
 
 export const dynamic = "force-dynamic";
 
@@ -434,6 +435,9 @@ export default async function ProfilPage({
 
       {showWalletTransfer && (
         <>
+          <section className="border-t border-broker-border pt-10">
+            <WalletUsdtDeposit />
+          </section>
           <section className="border-t border-broker-border pt-10">
             <ProfilWalletTransfer />
           </section>

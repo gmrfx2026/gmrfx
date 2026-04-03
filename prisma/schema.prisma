@@ -93,6 +93,12 @@ enum MarketplaceEscrowProductType {
   EA
 }
 
+enum UsdtDepositStatus {
+  PENDING
+  VERIFIED
+  FAILED
+}
+
 model User {
   id              String       @id @default(cuid())
   name            String?
@@ -189,6 +195,7 @@ model User {
   eaPurchases          ExpertAdvisorPurchase[] @relation("ExpertAdvisorPurchaseBuyer")
   marketplaceEscrowAsBuyer  MarketplaceEscrowHold[] @relation("MarketplaceEscrowBuyer")
   marketplaceEscrowAsSeller MarketplaceEscrowHold[] @relation("MarketplaceEscrowSeller")
+  usdtDeposits              UsdtDepositRequest[]
 
   @@index([memberLastSeenAt])
 }
@@ -796,6 +803,32 @@ model MarketplaceEscrowHold {
   @@index([status, releaseAt])
   @@index([buyerId, status])
   @@index([sellerId, status])
+}
+
+/// Permintaan deposit USDT (BEP-20/BSC) → saldo IDR member.
+model UsdtDepositRequest {
+  id         String            @id @default(cuid())
+  userId     String
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Hash transaksi on-chain (unik: satu TX = satu kredit).
+  txHash     String            @unique @db.VarChar(66)
+  /// Jaringan: "bsc" (BEP-20).
+  network    String            @default("bsc") @db.VarChar(16)
+  /// Jumlah USDT yang diterima admin (dari log on-chain).
+  amountUsdt Decimal           @db.Decimal(18, 6)
+  /// Kurs USDT/IDR saat deposit dikonfirmasi.
+  rateIdr    Decimal           @db.Decimal(18, 2)
+  /// Jumlah IDR yang dikreditkan = amountUsdt × rateIdr.
+  amountIdr  Decimal           @db.Decimal(18, 2)
+  status     UsdtDepositStatus @default(PENDING)
+  /// Diisi jika status = FAILED.
+  failReason String?           @db.VarChar(512)
+  verifiedAt DateTime?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status])
 }
 
 model SystemSetting {
