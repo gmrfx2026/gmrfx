@@ -55,7 +55,6 @@ export default async function JobDetailPage({ params }: Props) {
         autoReleaseAt: job.autoReleaseAt?.toISOString() ?? null,
         completedAt: job.completedAt?.toISOString() ?? null,
         createdAt: job.createdAt.toISOString(),
-        updatedAt: job.updatedAt.toISOString(),
       }}
       comments={comments.map((c) => ({ ...c, createdAt: c.createdAt.toISOString() }))}
       userId={userId}
