@@ -28,6 +28,10 @@ import {
   HOME_HERO_SUBTEXT_KEY,
   HOME_HERO_TITLE_KEY,
 } from "@/lib/homeHeroSettings";
+import {
+  DEPOSIT_USDT_BSC_ADDRESS_KEY,
+  DEPOSIT_USDT_BSC_ENABLED_KEY,
+} from "@/app/api/wallet/usdt-deposit/route";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +52,8 @@ export default async function AdminSettingsPage() {
     heroEyebrow,
     heroTitle,
     heroSubtext,
+    usdtAddr,
+    usdtEnabled,
   ] = await Promise.all([
     prisma.systemSetting.findUnique({ where: { key: "platform_fee_percent" } }),
     prisma.systemSetting.findUnique({ where: { key: ARTICLE_COMMENTS_PER_PAGE_KEY } }),
@@ -64,6 +70,8 @@ export default async function AdminSettingsPage() {
     prisma.systemSetting.findUnique({ where: { key: HOME_HERO_EYEBROW_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: HOME_HERO_TITLE_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: HOME_HERO_SUBTEXT_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: DEPOSIT_USDT_BSC_ADDRESS_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: DEPOSIT_USDT_BSC_ENABLED_KEY } }),
   ]);
 
   return (
@@ -92,6 +100,8 @@ export default async function AdminSettingsPage() {
           initialHomeHeroEyebrow={heroEyebrow?.value ?? HOME_HERO_DEFAULTS.eyebrow}
           initialHomeHeroTitle={heroTitle?.value ?? HOME_HERO_DEFAULTS.title}
           initialHomeHeroSubtext={heroSubtext?.value ?? HOME_HERO_DEFAULTS.subtext}
+          initialDepositUsdtBscAddress={usdtAddr?.value ?? process.env.ADMIN_USDT_BSC_ADDRESS ?? ""}
+          initialDepositUsdtBscEnabled={usdtEnabled ? usdtEnabled.value === "1" : true}
         />
       </div>
     </div>

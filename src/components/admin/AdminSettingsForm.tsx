@@ -19,6 +19,8 @@ export function AdminSettingsForm({
   initialHomeHeroEyebrow,
   initialHomeHeroTitle,
   initialHomeHeroSubtext,
+  initialDepositUsdtBscAddress,
+  initialDepositUsdtBscEnabled,
 }: {
   initialFee: string;
   initialArticleCommentsPerPage: string;
@@ -35,6 +37,8 @@ export function AdminSettingsForm({
   initialHomeHeroEyebrow: string;
   initialHomeHeroTitle: string;
   initialHomeHeroSubtext: string;
+  initialDepositUsdtBscAddress: string;
+  initialDepositUsdtBscEnabled: boolean;
 }) {
   const router = useRouter();
   const [v, setV] = useState(initialFee);
@@ -56,6 +60,8 @@ export function AdminSettingsForm({
   const [homeHeroEyebrow, setHomeHeroEyebrow] = useState(initialHomeHeroEyebrow);
   const [homeHeroTitle, setHomeHeroTitle] = useState(initialHomeHeroTitle);
   const [homeHeroSubtext, setHomeHeroSubtext] = useState(initialHomeHeroSubtext);
+  const [depositUsdtAddr, setDepositUsdtAddr] = useState(initialDepositUsdtBscAddress);
+  const [depositUsdtEnabled, setDepositUsdtEnabled] = useState(initialDepositUsdtBscEnabled);
   const [msg, setMsg] = useState("");
 
   async function save(e: React.FormEvent) {
@@ -79,6 +85,8 @@ export function AdminSettingsForm({
         homeHeroEyebrow,
         homeHeroTitle,
         homeHeroSubtext,
+        depositUsdtBscAddress: depositUsdtAddr,
+        depositUsdtBscEnabled: depositUsdtEnabled,
       }),
     });
     setMsg(res.ok ? "Disimpan." : "Gagal");
@@ -286,6 +294,41 @@ export function AdminSettingsForm({
           Di bawah setiap status: komentar dipecah per halaman (parameter query per status).
         </span>
       </label>
+      <div className="rounded-lg border border-gray-200 bg-gray-50/80 p-4">
+        <p className="text-sm font-medium text-gray-800">Deposit USDT (BSC / BEP-20)</p>
+        <p className="mt-1 text-xs text-gray-500">
+          Alamat wallet admin tempat member mengirim USDT. Kosongkan untuk menghapus. BSCScan API key dikonfigurasi
+          lewat env var <code className="rounded bg-gray-100 px-1">BSCSCAN_API_KEY</code>.
+        </p>
+        <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={depositUsdtEnabled}
+            onChange={(e) => setDepositUsdtEnabled(e.target.checked)}
+            className="mt-1 h-4 w-4 shrink-0"
+          />
+          <span>
+            <span className="font-medium text-gray-800">Aktifkan deposit USDT</span>
+            <span className="mt-0.5 block text-xs text-gray-500">
+              Nonaktifkan untuk menyembunyikan form deposit dari member (misal saat maintenance).
+            </span>
+          </span>
+        </label>
+        <label className="mt-3 block text-sm">
+          <span className="text-gray-600">Alamat BSC admin (0x…)</span>
+          <input
+            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 font-mono text-sm"
+            value={depositUsdtAddr}
+            onChange={(e) => setDepositUsdtAddr(e.target.value)}
+            placeholder="0x…"
+            maxLength={42}
+          />
+          <span className="mt-1 block text-xs text-gray-500">
+            Harus berupa alamat BSC valid (0x + 40 karakter hex). Member mengirim USDT ke alamat ini.
+          </span>
+        </label>
+      </div>
+
       <button type="submit" className="rounded bg-green-600 px-4 py-2 text-sm text-white">
         Simpan
       </button>

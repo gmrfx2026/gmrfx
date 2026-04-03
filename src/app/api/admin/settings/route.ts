@@ -30,6 +30,10 @@ import {
   clampHomeHeroSubtext,
   clampHomeHeroTitle,
 } from "@/lib/homeHeroSettings";
+import {
+  DEPOSIT_USDT_BSC_ADDRESS_KEY,
+  DEPOSIT_USDT_BSC_ENABLED_KEY,
+} from "@/app/api/wallet/usdt-deposit/route";
 
 export async function GET() {
   const session = await auth();
@@ -37,7 +41,7 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const [fee, commentsPer, timelinePer, statusCommentsPer, rssDn, rssInt, newsPerBlock, escrowDays] =
+  const [fee, commentsPer, timelinePer, statusCommentsPer, rssDn, rssInt, newsPerBlock, escrowDays, usdtAddr, usdtEnabled] =
     await Promise.all([
       prisma.systemSetting.findUnique({ where: { key: "platform_fee_percent" } }),
       prisma.systemSetting.findUnique({ where: { key: ARTICLE_COMMENTS_PER_PAGE_KEY } }),
@@ -47,6 +51,8 @@ export async function GET() {
       prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_INTERNATIONAL_URL_KEY } }),
       prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY } }),
       prisma.systemSetting.findUnique({ where: { key: MARKETPLACE_ESCROW_DAYS_KEY } }),
+      prisma.systemSetting.findUnique({ where: { key: DEPOSIT_USDT_BSC_ADDRESS_KEY } }),
+      prisma.systemSetting.findUnique({ where: { key: DEPOSIT_USDT_BSC_ENABLED_KEY } }),
     ]);
   return NextResponse.json({
     platformFeePercent: fee?.value ?? "0",
@@ -56,6 +62,8 @@ export async function GET() {
     homeNewsRssDomesticUrl: rssDn?.value ?? "",
     homeNewsRssInternationalUrl: rssInt?.value ?? "",
     homeNewsPerBlockHomepage: String(parseHomeNewsHomepagePerBlock(newsPerBlock?.value ?? null)),
+    depositUsdtBscAddress: usdtAddr?.value ?? process.env.ADMIN_USDT_BSC_ADDRESS ?? "",
+    depositUsdtBscEnabled: usdtEnabled ? usdtEnabled.value === "1" : true,
   });
 }
 
@@ -211,6 +219,34 @@ export async function PATCH(req: Request) {
       where: { key: MARKETPLACE_ESCROW_DAYS_KEY },
       create: { key: MARKETPLACE_ESCROW_DAYS_KEY, value: String(clamped) },
       update: { value: String(clamped) },
+    });
+  }
+
+  if (body.depositUsdtBscAddress !== undefined) {
+    const addr = String(body.depositUsdtBscAddress ?? "").trim();
+    if (addr && !/^0x[0-9a-fA-F]{40}$/.test(addr)) {
+      return NextResponse.json(
+        { error: "Alamat BSC tidak valid (harus 0x + 40 karakter hex)" },
+        { status: 400 }
+      );
+    }
+    if (!addr) {
+      await prisma.systemSetting.deleteMany({ where: { key: DEPOSIT_USDT_BSC_ADDRESS_KEY } });
+    } else {
+      await prisma.systemSetting.upsert({
+        where: { key: DEPOSIT_USDT_BSC_ADDRESS_KEY },
+        create: { key: DEPOSIT_USDT_BSC_ADDRESS_KEY, value: addr },
+        update: { value: addr },
+      });
+    }
+  }
+
+  if (body.depositUsdtBscEnabled !== undefined) {
+    const on = Boolean(body.depositUsdtBscEnabled);
+    await prisma.systemSetting.upsert({
+      where: { key: DEPOSIT_USDT_BSC_ENABLED_KEY },
+      create: { key: DEPOSIT_USDT_BSC_ENABLED_KEY, value: on ? "1" : "0" },
+      update: { value: on ? "1" : "0" },
     });
   }
 

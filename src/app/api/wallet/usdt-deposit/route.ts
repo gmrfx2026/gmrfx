@@ -3,6 +3,26 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Decimal } from "@prisma/client/runtime/library";
 
+export const DEPOSIT_USDT_BSC_ADDRESS_KEY = "deposit_usdt_bsc_address";
+export const DEPOSIT_USDT_BSC_ENABLED_KEY  = "deposit_usdt_bsc_enabled";
+
+/** Baca alamat admin dari SystemSetting, fallback ke env var. */
+async function getAdminAddress(): Promise<string> {
+  const row = await prisma.systemSetting.findUnique({
+    where: { key: DEPOSIT_USDT_BSC_ADDRESS_KEY },
+  });
+  return (row?.value ?? process.env.ADMIN_USDT_BSC_ADDRESS ?? "").trim();
+}
+
+/** Cek apakah deposit USDT diaktifkan admin (default: aktif jika alamat sudah diisi). */
+async function isDepositEnabled(): Promise<boolean> {
+  const row = await prisma.systemSetting.findUnique({
+    where: { key: DEPOSIT_USDT_BSC_ENABLED_KEY },
+  });
+  // Jika belum pernah diset, anggap aktif selama alamat ada
+  return row ? row.value === "1" : true;
+}
+
 export const dynamic = "force-dynamic";
 
 // USDT BEP-20 on BSC
@@ -104,7 +124,17 @@ export async function POST(req: Request) {
     );
   }
 
-  const adminAddress = (process.env.ADMIN_USDT_BSC_ADDRESS ?? "").trim();
+  const [adminAddress, depositEnabled] = await Promise.all([
+    getAdminAddress(),
+    isDepositEnabled(),
+  ]);
+
+  if (!depositEnabled) {
+    return NextResponse.json(
+      { error: "Fitur deposit USDT sedang dinonaktifkan oleh admin" },
+      { status: 503 }
+    );
+  }
   if (!adminAddress) {
     return NextResponse.json(
       { error: "Alamat deposit belum dikonfigurasi — hubungi admin" },
@@ -219,13 +249,18 @@ export async function GET() {
   });
 
   // Juga kembalikan alamat deposit admin dan saldo sekarang
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { walletBalance: true },
-  });
+  const [user, adminAddress, depositEnabled] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { walletBalance: true },
+    }),
+    getAdminAddress(),
+    isDepositEnabled(),
+  ]);
 
   return NextResponse.json({
-    adminAddress: process.env.ADMIN_USDT_BSC_ADDRESS ?? "",
+    adminAddress: depositEnabled ? adminAddress : "",
+    enabled: depositEnabled,
     network: "bsc",
     usdtContract: USDT_CONTRACT_BSC,
     balance: user?.walletBalance?.toString() ?? "0",
