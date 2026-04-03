@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
+import { AdminDepositCreditButton } from "@/components/admin/AdminDepositCreditButton";
 
 export const dynamic = "force-dynamic";
 
@@ -199,6 +200,7 @@ export default async function AdminDepositsPage({
               <th className="px-4 py-3">IDR dikreditkan</th>
               <th className="px-4 py-3">TxHash</th>
               <th className="px-4 py-3">Keterangan</th>
+              <th className="px-4 py-3">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -253,6 +255,16 @@ export default async function AdminDepositsPage({
                 </td>
                 <td className="max-w-[200px] truncate px-4 py-2.5 text-xs text-red-600" title={r.failReason ?? ""}>
                   {r.failReason ?? "—"}
+                </td>
+                <td className="px-4 py-2.5">
+                  {r.status !== "VERIFIED" && (
+                    <AdminDepositCreditButton
+                      depositId={r.id}
+                      amountUsdt={Number(r.amountUsdt)}
+                      currentRateIdr={Number(r.rateIdr) || 16000}
+                      memberName={r.user.name ?? r.user.email}
+                    />
+                  )}
                 </td>
               </tr>
             ))}
