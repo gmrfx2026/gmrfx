@@ -16,6 +16,7 @@ type Job = {
   bids: Bid[]; deliverables: Deliverable[];
   deliveredAt: string | null; autoReleaseAt: string | null; completedAt: string | null;
   createdAt: string; disputeReason: string | null; adminNote: string | null;
+  attachmentUrl: string | null; attachmentName: string | null;
 };
 
 const CATEGORY_LABEL: Record<string, string> = { EA: "Expert Advisor", INDICATOR: "Indikator", OTHER: "Lainnya" };
@@ -200,8 +201,35 @@ export function JobDetailClient({
           {/* Deskripsi */}
           <section className="rounded-xl border border-broker-border bg-broker-surface/30 p-5">
             <h2 className="text-sm font-semibold text-white mb-3">Deskripsi Pekerjaan</h2>
-            <pre className="whitespace-pre-wrap text-sm text-broker-muted leading-relaxed font-sans">{job.description}</pre>
+            <div
+              className="prose prose-invert prose-sm max-w-none prose-a:text-broker-accent prose-img:rounded-xl prose-img:border prose-img:border-broker-border/40 prose-table:text-xs"
+              dangerouslySetInnerHTML={{ __html: job.description }}
+            />
           </section>
+
+          {/* Lampiran PDF */}
+          {job.attachmentUrl && (
+            <section className="rounded-xl border border-broker-border bg-broker-surface/30 p-5">
+              <h2 className="text-sm font-semibold text-white mb-3">Lampiran Spesifikasi</h2>
+              <a
+                href={job.attachmentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-950/10 px-4 py-3 text-sm text-red-300 hover:bg-red-950/25 transition"
+              >
+                <svg className="h-6 w-6 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <div>
+                  <p className="font-medium">{job.attachmentName ?? "Spesifikasi.pdf"}</p>
+                  <p className="text-xs text-red-400/70">Klik untuk buka / unduh PDF</p>
+                </div>
+                <svg className="ml-auto h-4 w-4 shrink-0 text-red-400/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </section>
+          )}
 
           {/* Deliverables (hanya requester/winner/admin) */}
           {canSeePrivate && job.deliverables.length > 0 && (
