@@ -63,11 +63,15 @@ export async function GET(req: Request) {
       OR: follows.map((f) => ({ userId: f.publisherUserId, mtLogin: f.mtLogin })),
       allowCopy: true,
     },
-    select: { userId: true, mtLogin: true, displayName: true },
+    select: {
+      userId: true,
+      mtLogin: true,
+      user: { select: { name: true } },
+    },
   });
 
   const pubSet = new Set(pubAccounts.map((p) => `${p.userId}:${p.mtLogin}`));
-  const pubNameMap = new Map(pubAccounts.map((p) => [`${p.userId}:${p.mtLogin}`, p.displayName ?? ""]));
+  const pubNameMap = new Map(pubAccounts.map((p) => [`${p.userId}:${p.mtLogin}`, p.user.name?.trim() ?? ""]));
 
   // Filter hanya yang masih publish + ambil trading activity
   const activeFollows = follows.filter((f) => pubSet.has(`${f.publisherUserId}:${f.mtLogin}`));

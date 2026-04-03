@@ -59,7 +59,7 @@ export async function GET(req: Request) {
       mtLogin: follow.mtLogin,
       allowCopy: true,
     },
-    select: { displayName: true },
+    select: { id: true },
   });
 
   if (!pub) {
@@ -84,10 +84,7 @@ export async function GET(req: Request) {
     });
   }
 
-  const displayName =
-    pub.displayName?.trim() ||
-    follow.publisherUser.name?.trim() ||
-    "";
+  const displayName = follow.publisherUser.name?.trim() ?? "";
 
   const body = JSON.stringify({
     ok: true,
