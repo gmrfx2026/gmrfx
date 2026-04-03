@@ -33,7 +33,7 @@ import {
 import {
   DEPOSIT_USDT_BSC_ADDRESS_KEY,
   DEPOSIT_USDT_BSC_ENABLED_KEY,
-} from "@/app/api/wallet/usdt-deposit/route";
+} from "@/lib/depositUsdtSettings";
 
 export async function GET() {
   const session = await auth();

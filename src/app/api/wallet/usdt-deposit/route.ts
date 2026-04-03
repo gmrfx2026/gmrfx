@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Decimal } from "@prisma/client/runtime/library";
-
-export const DEPOSIT_USDT_BSC_ADDRESS_KEY = "deposit_usdt_bsc_address";
-export const DEPOSIT_USDT_BSC_ENABLED_KEY  = "deposit_usdt_bsc_enabled";
+import {
+  DEPOSIT_USDT_BSC_ADDRESS_KEY,
+  DEPOSIT_USDT_BSC_ENABLED_KEY,
+} from "@/lib/depositUsdtSettings";
 
 /** Baca alamat admin dari SystemSetting, fallback ke env var. */
 async function getAdminAddress(): Promise<string> {
