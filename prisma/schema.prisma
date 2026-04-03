@@ -99,6 +99,33 @@ enum UsdtDepositStatus {
   FAILED
 }
 
+enum JobOfferStatus {
+  /// Dana sudah dikunci; menunggu pelamar.
+  OPEN
+  /// Pemenang dipilih; sedang dikerjakan.
+  ASSIGNED
+  /// Pemenang sudah kirim hasil; menunggu konfirmasi pemberi kerja (auto-release 3 hari).
+  DELIVERED
+  /// Selesai — dana dikirim ke pemenang.
+  COMPLETED
+  /// Dibatalkan (expired atau manual) — dana dikembalikan ke pemberi kerja.
+  CANCELLED
+  /// Ada komplain; admin memutuskan.
+  DISPUTED
+}
+
+enum JobBidStatus {
+  PENDING
+  SELECTED
+  REJECTED
+}
+
+enum JobCategory {
+  EA
+  INDICATOR
+  OTHER
+}
+
 model User {
   id              String       @id @default(cuid())
   name            String?
@@ -196,6 +223,12 @@ model User {
   marketplaceEscrowAsBuyer  MarketplaceEscrowHold[] @relation("MarketplaceEscrowBuyer")
   marketplaceEscrowAsSeller MarketplaceEscrowHold[] @relation("MarketplaceEscrowSeller")
   usdtDeposits              UsdtDepositRequest[]
+
+  jobOffersPosted    JobOffer[]       @relation("JobRequester")
+  jobOffersWon       JobOffer[]       @relation("JobWinner")
+  jobBids            JobBid[]         @relation("JobBidder")
+  jobComments        JobComment[]     @relation("JobCommenter")
+  jobDeliverables    JobDeliverable[] @relation("JobDeliverer")
 
   @@index([memberLastSeenAt])
 }
@@ -829,6 +862,85 @@ model UsdtDepositRequest {
 
   @@index([userId, createdAt])
   @@index([status])
+}
+
+/// Penawaran pekerjaan pembuatan EA/indikator antar member; dana dikunci saat posting.
+model JobOffer {
+  id           String         @id @default(cuid())
+  title        String         @db.VarChar(200)
+  description  String         @db.Text
+  category     JobCategory
+  /// Budget IDR yang ditawarkan pemberi kerja; dikunci dari wallet saat posting.
+  budgetIdr    Decimal        @db.Decimal(18, 2)
+  status       JobOfferStatus @default(OPEN)
+  /// Batas waktu penerimaan tawaran (default 30 hari dari posting).
+  expiresAt    DateTime
+  requesterId  String
+  requester    User           @relation("JobRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  winnerId     String?
+  winner       User?          @relation("JobWinner", fields: [winnerId], references: [id], onDelete: SetNull)
+  bids         JobBid[]
+  comments     JobComment[]
+  deliverables JobDeliverable[]
+  /// Timestamp saat pemenang mengumpulkan hasil kerja.
+  deliveredAt  DateTime?
+  /// Auto-release ke pemenang jika tidak ada komplain setelah waktu ini (deliveredAt + 3 hari).
+  autoReleaseAt DateTime?
+  completedAt  DateTime?
+  disputeReason String?       @db.VarChar(1000)
+  adminNote     String?       @db.VarChar(1000)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([status, expiresAt])
+  @@index([status, autoReleaseAt])
+  @@index([requesterId])
+  @@index([winnerId])
+}
+
+/// Tawaran harga dari freelancer untuk sebuah penawaran pekerjaan.
+model JobBid {
+  id        String       @id @default(cuid())
+  jobId     String
+  job       JobOffer     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  bidderId  String
+  bidder    User         @relation("JobBidder", fields: [bidderId], references: [id], onDelete: Cascade)
+  priceIdr  Decimal      @db.Decimal(18, 2)
+  message   String       @db.VarChar(1000)
+  status    JobBidStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+
+  @@unique([jobId, bidderId])
+  @@index([jobId])
+  @@index([bidderId])
+}
+
+/// Komentar privat antara pemberi kerja dan pemenang pada sebuah pekerjaan.
+model JobComment {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       JobOffer @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation("JobCommenter", fields: [authorId], references: [id], onDelete: Cascade)
+  content   String   @db.VarChar(2000)
+  createdAt DateTime @default(now())
+
+  @@index([jobId, createdAt])
+}
+
+/// File hasil kerja yang dikirim pemenang; trigger masa tunggu 3 hari.
+model JobDeliverable {
+  id           String   @id @default(cuid())
+  jobId        String
+  job          JobOffer @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy   User     @relation("JobDeliverer", fields: [uploadedById], references: [id], onDelete: Cascade)
+  fileName     String   @db.VarChar(255)
+  fileUrl      String   @db.VarChar(1000)
+  note         String?  @db.VarChar(500)
+  createdAt    DateTime @default(now())
+
+  @@index([jobId])
 }
 
 model SystemSetting {
