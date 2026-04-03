@@ -11,7 +11,9 @@ export function SiteFooter() {
           <div>
             <p className="font-semibold text-white">GMR FX</p>
             <p className="mt-2 text-sm text-broker-muted">
-              Edukasi dan komunitas forex. Pengembangan ke depan: toko indikator & wallet IDR anggota.
+              Buat Jurnal Trading kamu sekarang disini secara gratis, tingkatkan disiplin, konsistensi, dan
+              profitabilitas. Evaluasi strategi secara objektif, manajemen emosi, perbaikan manajemen risiko, dan
+              peningkatan kemampuan analisis teknikal/fundamental.
             </p>
           </div>
           <div>
