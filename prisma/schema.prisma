@@ -315,9 +315,15 @@ model MtCopyFollow {
   publisherUserId String
   mtLogin         String
   paidAmountIdr   Decimal  @default(0) @db.Decimal(18, 2)
-  /// null = gratis / tidak kedaluwarsa; diisi untuk berbayar (30 hari sejak pembayaran / perpanjang).
+  /// Semua copy berlaku 30 hari (gratis maupun berbayar); null hanya data lama sebelum kebijakan ini.
   expiresAt       DateTime?
   createdAt       DateTime @default(now())
+
+  /// Token unik per langganan — dipakai di EA CopyTrader sebagai Bearer.
+  /// Hash SHA-256 dari plain token (dengan pepper). Null untuk data lama.
+  copyTokenHash     String?   @unique
+  copyTokenHint     String?
+  copyTokenIssuedAt DateTime?
 
   followerUser  User @relation("CopyFollowFollower", fields: [followerUserId], references: [id], onDelete: Cascade)
   publisherUser User @relation("CopyFollowPublisher", fields: [publisherUserId], references: [id], onDelete: Cascade)
@@ -326,6 +332,7 @@ model MtCopyFollow {
   @@index([followerUserId])
   @@index([publisherUserId, mtLogin])
   @@index([expiresAt])
+  @@index([copyTokenHash])
 }
 
 /// Member mengikuti aktivitas posisi (buka/tutup) akun komunitas — terpisah dari Copy trade.

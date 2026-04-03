@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
+import { CopyFollowTokenPanel } from "@/components/portfolio/CopyFollowTokenPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -50,8 +51,11 @@ export default async function PortfolioCommunityFollowingPage() {
           <Link href="/profil/portfolio/community/accounts" className="text-broker-accent hover:underline">
             Komunitas → Akun
           </Link>
-          . Judul kartu memakai <strong className="text-white/90">nama akun</strong> dari terminal (EA) bila tersedia;
-          nomor login MetaTrader tidak ditampilkan di sini.
+          . Setiap langganan memiliki <strong className="text-white/90">token EA unik</strong> — masukkan token ke EA{" "}
+          <code className="rounded bg-broker-bg/80 px-1 font-mono text-[10px] text-broker-accent">
+            GMRFX_CopyTrader
+          </code>{" "}
+          untuk mulai copy trading.
         </p>
       </header>
 
@@ -64,7 +68,7 @@ export default async function PortfolioCommunityFollowingPage() {
           </p>
         </div>
       ) : (
-        <ul className="space-y-3">
+        <ul className="space-y-4">
           {follows.map((f) => {
             const snapKey = `${f.publisherUserId}\t${f.mtLogin}`;
             const tradeName = snapByKey.get(snapKey) ?? null;
@@ -76,63 +80,81 @@ export default async function PortfolioCommunityFollowingPage() {
                   ? ownerName
                   : "Akun trading";
             const summaryHref = `/profil/portfolio/community/account/${encodeURIComponent(f.publisherUserId)}/${encodeURIComponent(f.mtLogin)}`;
+
+            const isExpired = f.expiresAt ? f.expiresAt.getTime() <= Date.now() : false;
+
             return (
-            <li
-              key={f.id}
-              className="flex flex-col gap-2 rounded-2xl border border-broker-border/80 bg-broker-surface/40 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div>
-                <p className="text-lg font-semibold tracking-tight text-white">
-                  <Link href={summaryHref} className="text-broker-accent hover:underline">
-                    {displayTitle}
-                  </Link>
-                </p>
-                <p className="text-sm text-broker-muted">
-                  Pemilik:{" "}
-                  <span className="text-white/90">{f.publisherUser.name ?? "Member"}</span>
-                  {f.publisherUser.memberSlug ? (
-                    <>
-                      {" "}
-                      <Link
-                        href={`/${f.publisherUser.memberSlug}`}
-                        className="text-broker-accent hover:underline"
-                      >
-                        @{f.publisherUser.memberSlug}
-                      </Link>
-                    </>
-                  ) : null}
-                </p>
-                <p className="mt-1 text-xs text-broker-muted">
-                  {Number(f.paidAmountIdr) > 0
-                    ? `Dibayar: Rp ${Number(f.paidAmountIdr).toLocaleString("id-ID")} (wallet) · langganan ~30 hari`
-                    : "Gratis"}
-                  {" · "}
-                  {f.expiresAt
-                    ? `Berlaku s.d. ${formatJakarta(f.expiresAt, { dateStyle: "medium", timeStyle: "short" })}`
-                    : `Mulai ${formatJakarta(f.createdAt, { dateStyle: "medium", timeStyle: "short" })}`}
-                </p>
-              </div>
-              <Link
-                href="/profil/portfolio/community/accounts"
-                className="shrink-0 text-xs font-medium text-broker-accent hover:underline"
+              <li
+                key={f.id}
+                className="rounded-2xl border border-broker-border/80 bg-broker-surface/40 px-4 py-4"
               >
-                Lihat komunitas →
-              </Link>
-            </li>
+                {/* Header kartu */}
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-lg font-semibold tracking-tight text-white">
+                      <Link href={summaryHref} className="text-broker-accent hover:underline">
+                        {displayTitle}
+                      </Link>
+                    </p>
+                    <p className="text-sm text-broker-muted">
+                      Pemilik:{" "}
+                      <span className="text-white/90">{f.publisherUser.name ?? "Member"}</span>
+                      {f.publisherUser.memberSlug ? (
+                        <>
+                          {" "}
+                          <Link
+                            href={`/${f.publisherUser.memberSlug}`}
+                            className="text-broker-accent hover:underline"
+                          >
+                            @{f.publisherUser.memberSlug}
+                          </Link>
+                        </>
+                      ) : null}
+                    </p>
+                    <p className="mt-1 text-xs text-broker-muted">
+                      {Number(f.paidAmountIdr) > 0
+                        ? `Dibayar: Rp ${Number(f.paidAmountIdr).toLocaleString("id-ID")} · `
+                        : "Gratis · "}
+                      {f.expiresAt ? (
+                        isExpired ? (
+                          <span className="text-amber-400">Kadaluarsa {formatJakarta(f.expiresAt, { dateStyle: "medium" })}</span>
+                        ) : (
+                          <>Berlaku s.d. {formatJakarta(f.expiresAt, { dateStyle: "medium", timeStyle: "short" })}</>
+                        )
+                      ) : (
+                        <>Mulai {formatJakarta(f.createdAt, { dateStyle: "medium" })}</>
+                      )}
+                    </p>
+                  </div>
+
+                  <Link
+                    href="/profil/portfolio/community/accounts"
+                    className="shrink-0 text-xs font-medium text-broker-accent hover:underline"
+                  >
+                    Lihat komunitas →
+                  </Link>
+                </div>
+
+                {/* Panel token EA */}
+                <CopyFollowTokenPanel
+                  followId={f.id}
+                  tokenHint={f.copyTokenHint ?? null}
+                  issuedAt={f.copyTokenIssuedAt ?? null}
+                />
+              </li>
             );
           })}
         </ul>
       )}
 
-      <p className="text-xs text-broker-muted">
-        Relasi tersimpan di server untuk langkah berikutnya (EA mirror). Harga berbayar dipotong dari saldo wallet
-        IDR per periode langganan (~30 hari). Saat masa habis, Anda mendapat notifikasi dan email; untuk melanjutkan
-        tekan Copy lagi di daftar komunitas. Jadwalkan pemanggilan harian ke{" "}
-        <code className="rounded bg-broker-bg/80 px-1 font-mono text-[10px] text-broker-accent">
-          /api/cron/community-subscriptions
-        </code>{" "}
-        dengan header Authorization Bearer <code className="font-mono">CRON_SECRET</code> (set di server).
-      </p>
+      <div className="rounded-xl border border-broker-border/40 bg-broker-surface/20 px-4 py-3 text-xs text-broker-muted space-y-1">
+        <p className="font-semibold text-white/80">Cara copy trading dengan token:</p>
+        <p>1. Klik <strong className="text-white">Token EA CopyTrader</strong> di kartu langganan di atas untuk membuka panel token.</p>
+        <p>2. Klik <strong className="text-white">Regenerasi token</strong> untuk mendapatkan token baru (token lama langsung tidak berlaku).</p>
+        <p>3. Pasang EA <code className="text-emerald-400">GMRFX_CopyTrader</code> di MetaTrader — isi <code className="text-emerald-400">InpCopyToken</code> dengan token tersebut.</p>
+        <p>4. Untuk copy beberapa publisher, pasang beberapa EA dengan token dan magic number berbeda.</p>
+        <p>5. Token berlaku selama masa langganan (30 hari). Perpanjang dengan klik tombol Copy lagi di komunitas.</p>
+      </div>
     </div>
   );
 }

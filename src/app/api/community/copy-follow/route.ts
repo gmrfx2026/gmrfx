@@ -5,6 +5,7 @@ import {
   isCommunitySubscriptionActive,
   paidSubscriptionExpiresAt,
 } from "@/lib/communitySubscription";
+import { hashMt5ApiToken, generateMt5ApiToken } from "@/lib/mt5Token";
 import { Decimal } from "@prisma/client/runtime/library";
 import { newTransactionId } from "@/lib/txid";
 import { z } from "zod";
@@ -42,6 +43,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Tidak bisa mengikuti akun sendiri" }, { status: 400 });
   }
 
+  // Generate token baru setiap kali berlangganan / perpanjang
+  const { plain: plainToken, hash: tokenHash, hint: tokenHint } = generateMt5ApiToken();
+  const tokenIssuedAt = new Date();
+
   try {
     await prisma.$transaction(async (tx) => {
       const pub = await tx.mtCommunityPublishedAccount.findUnique({
@@ -69,7 +74,8 @@ export async function POST(req: Request) {
       }
 
       const price = pub.copyFree ? new Decimal(0) : new Decimal(pub.copyPriceIdr.toString());
-      const expiresAt = pub.copyFree ? null : paidSubscriptionExpiresAt();
+      // Semua copy (gratis maupun berbayar) berlaku 30 hari
+      const expiresAt = paidSubscriptionExpiresAt();
 
       if (!pub.copyFree) {
         if (price.lte(0)) throw new Error("Harga langganan tidak valid");
@@ -109,12 +115,19 @@ export async function POST(req: Request) {
         });
       }
 
+      const tokenData = {
+        copyTokenHash: tokenHash,
+        copyTokenHint: tokenHint,
+        copyTokenIssuedAt: tokenIssuedAt,
+      };
+
       if (dup) {
         await tx.mtCopyFollow.update({
           where: { id: dup.id },
           data: {
             paidAmountIdr: price,
             expiresAt,
+            ...tokenData,
           },
         });
       } else {
@@ -125,16 +138,37 @@ export async function POST(req: Request) {
             mtLogin,
             paidAmountIdr: price,
             expiresAt,
+            ...tokenData,
           },
         });
       }
     });
 
-    return NextResponse.json({ ok: true });
+    // Kembalikan plain token — ini satu-satunya kesempatan melihat token penuh
+    return NextResponse.json({ ok: true, copyToken: plainToken, tokenHint });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Gagal mengikuti akun";
     const status = msg.includes("sudah mengikuti") ? 409 : 400;
     console.error("copy-follow", e);
     return NextResponse.json({ error: msg }, { status });
   }
+}
+
+/** Validasi token copy (digunakan oleh copy-feed endpoint). */
+export async function resolveCopyToken(rawToken: string) {
+  if (!rawToken || rawToken.length < 16) return null;
+  const hash = hashMt5ApiToken(rawToken);
+  return prisma.mtCopyFollow.findFirst({
+    where: {
+      copyTokenHash: hash,
+      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+    },
+    select: {
+      id: true,
+      followerUserId: true,
+      publisherUserId: true,
+      mtLogin: true,
+      expiresAt: true,
+    },
+  });
 }
