@@ -889,6 +889,9 @@ model JobOffer {
   completedAt  DateTime?
   disputeReason String?       @db.VarChar(1000)
   adminNote     String?       @db.VarChar(1000)
+  /// URL file lampiran PDF (opsional, untuk spesifikasi detail).
+  attachmentUrl  String?      @db.VarChar(1000)
+  attachmentName String?      @db.VarChar(255)
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 

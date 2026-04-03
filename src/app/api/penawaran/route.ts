@@ -61,7 +61,7 @@ export async function POST(req: Request) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const userId = session.user.id;
 
-  let body: { title?: string; description?: string; category?: string; budgetIdr?: number; expireDays?: number };
+  let body: { title?: string; description?: string; category?: string; budgetIdr?: number; expireDays?: number; attachmentUrl?: string; attachmentName?: string };
   try {
     body = (await req.json()) as typeof body;
   } catch {
@@ -73,9 +73,13 @@ export async function POST(req: Request) {
   const category = (body.category ?? "").toUpperCase();
   const budgetIdr = Number(body.budgetIdr ?? 0);
   const expireDays = Math.min(90, Math.max(7, Number(body.expireDays ?? JOB_EXPIRE_DAYS)));
+  const attachmentUrl = (body.attachmentUrl ?? "").trim() || null;
+  const attachmentName = (body.attachmentName ?? "").trim().slice(0, 255) || null;
 
   if (!title || title.length > 200) return NextResponse.json({ error: "Judul tidak valid (maks 200 karakter)" }, { status: 400 });
-  if (!description || description.length < 20) return NextResponse.json({ error: "Deskripsi terlalu pendek (min 20 karakter)" }, { status: 400 });
+  // Deskripsi bisa berupa HTML (dari rich text editor) — cek panjang teks minimal
+  const descriptionText = description.replace(/<[^>]*>/g, "").trim();
+  if (descriptionText.length < 20) return NextResponse.json({ error: "Deskripsi terlalu pendek (min 20 karakter konten)" }, { status: 400 });
   if (!["EA", "INDICATOR", "OTHER"].includes(category)) return NextResponse.json({ error: "Kategori tidak valid" }, { status: 400 });
   if (!Number.isFinite(budgetIdr) || budgetIdr < MIN_BUDGET) return NextResponse.json({ error: `Budget minimum Rp ${MIN_BUDGET.toLocaleString("id-ID")}` }, { status: 400 });
 
@@ -99,6 +103,8 @@ export async function POST(req: Request) {
         budgetIdr: new Decimal(budgetIdr.toFixed(2)),
         expiresAt,
         requesterId: userId,
+        attachmentUrl,
+        attachmentName,
       },
     }),
     prisma.user.update({
