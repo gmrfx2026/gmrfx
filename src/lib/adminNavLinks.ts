@@ -8,6 +8,7 @@ export const ADMIN_NAV_LINKS = [
   { href: "/admin/member-menu", label: "Menu member" },
   { href: "/admin/portfolio-menu", label: "Menu portofolio" },
   { href: "/admin/transfers", label: "Transfer wallet" },
+  { href: "/admin/deposits",  label: "Deposit USDT" },
   { href: "/admin/marketplace-escrow", label: "Escrow marketplace" },
   { href: "/admin/articles", label: "Artikel" },
   { href: "/admin/home-news", label: "Berita beranda" },
