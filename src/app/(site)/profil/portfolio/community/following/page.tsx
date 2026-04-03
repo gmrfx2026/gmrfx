@@ -147,13 +147,37 @@ export default async function PortfolioCommunityFollowingPage() {
         </ul>
       )}
 
+      {/* Download EA */}
+      <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 px-4 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-emerald-300">Download EA GMRFX</p>
+          <p className="mt-0.5 text-xs text-broker-muted">
+            File EA <code className="text-emerald-400">GMRFX_CopyTrader</code> (copier) dan{" "}
+            <code className="text-emerald-400">GMRFX_TradeLogger</code> (publisher) tersedia di Google Drive.
+          </p>
+        </div>
+        <a
+          href="https://drive.google.com/drive/folders/17t8Vy_VZfPoElBMxvhyIMZ-3J0a2X8YK?usp=drive_link"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 inline-flex items-center gap-2 rounded-lg border border-emerald-500/50 bg-emerald-900/30 px-4 py-2 text-sm font-semibold text-emerald-300 hover:bg-emerald-800/40 transition"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 16l-5-5h3V4h4v7h3l-5 5zm-7 2h14v2H5v-2z"/>
+          </svg>
+          Download EA
+        </a>
+      </div>
+
+      {/* Panduan */}
       <div className="rounded-xl border border-broker-border/40 bg-broker-surface/20 px-4 py-3 text-xs text-broker-muted space-y-1">
         <p className="font-semibold text-white/80">Cara copy trading dengan token:</p>
-        <p>1. Klik <strong className="text-white">Token EA CopyTrader</strong> di kartu langganan di atas untuk membuka panel token.</p>
-        <p>2. Klik <strong className="text-white">Regenerasi token</strong> untuk mendapatkan token baru (token lama langsung tidak berlaku).</p>
-        <p>3. Pasang EA <code className="text-emerald-400">GMRFX_CopyTrader</code> di MetaTrader — isi <code className="text-emerald-400">InpCopyToken</code> dengan token tersebut.</p>
-        <p>4. Untuk copy beberapa publisher, pasang beberapa EA dengan token dan magic number berbeda.</p>
-        <p>5. Token berlaku selama masa langganan (30 hari). Perpanjang dengan klik tombol Copy lagi di komunitas.</p>
+        <p>1. Download EA dari link di atas, pasang file <code className="text-emerald-400">.mq5</code> / <code className="text-emerald-400">.mq4</code> ke folder <code className="text-emerald-400">MQL5/Experts</code> atau <code className="text-emerald-400">MQL4/Experts</code> MetaTrader.</p>
+        <p>2. Klik <strong className="text-white">Token EA CopyTrader</strong> di kartu langganan di atas untuk membuka panel token.</p>
+        <p>3. Klik <strong className="text-white">Regenerasi token</strong> untuk mendapatkan token baru (token lama langsung tidak berlaku).</p>
+        <p>4. Pasang EA <code className="text-emerald-400">GMRFX_CopyTrader</code> di chart MetaTrader — isi <code className="text-emerald-400">InpCopyToken</code> dengan token tersebut.</p>
+        <p>5. Untuk copy beberapa publisher, pasang beberapa EA dengan token dan magic number berbeda.</p>
+        <p>6. Token berlaku selama masa langganan (30 hari). Perpanjang dengan klik tombol Copy lagi di komunitas.</p>
       </div>
     </div>
   );

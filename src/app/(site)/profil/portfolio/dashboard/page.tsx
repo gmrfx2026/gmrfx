@@ -12,6 +12,32 @@ import { PortfolioAccountStatsBoard } from "@/components/portfolio/PortfolioAcco
 
 export const dynamic = "force-dynamic";
 
+const DRIVE_LINK = "https://drive.google.com/drive/folders/17t8Vy_VZfPoElBMxvhyIMZ-3J0a2X8YK?usp=drive_link";
+
+function EaDownloadBanner() {
+  return (
+    <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p className="text-sm font-semibold text-emerald-300">Download EA GMRFX</p>
+        <p className="mt-0.5 text-xs text-broker-muted">
+          File EA <code className="text-emerald-400">GMRFX_TradeLogger</code> (publisher / portofolio) tersedia di Google Drive.
+        </p>
+      </div>
+      <a
+        href={DRIVE_LINK}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="shrink-0 inline-flex items-center gap-2 rounded-lg border border-emerald-500/50 bg-emerald-900/30 px-4 py-2 text-sm font-semibold text-emerald-300 hover:bg-emerald-800/40 transition"
+      >
+        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 16l-5-5h3V4h4v7h3l-5 5zm-7 2h14v2H5v-2z"/>
+        </svg>
+        Download EA
+      </a>
+    </div>
+  );
+}
+
 async function linkedLogins(userId: string): Promise<string[]> {
   const [fromDeals, fromSnaps] = await Promise.all([
     prisma.mtDeal.groupBy({ by: ["mtLogin"], where: { userId } }),
@@ -47,6 +73,7 @@ export default async function PortfolioDashboardPage({
           </p>
         </header>
         <Mt5TokenPanel ingestPath={ingestPath} />
+        <EaDownloadBanner />
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm text-amber-100/90">
           <p className="font-medium text-white">Belum ada akun MetaTrader terhubung</p>
           <p className="mt-2 text-broker-muted">
@@ -91,6 +118,7 @@ export default async function PortfolioDashboardPage({
           </p>
         </header>
         <Mt5TokenPanel ingestPath={ingestPath} />
+        <EaDownloadBanner />
         <div className="grid gap-3 sm:grid-cols-2">
           {logins.map((login) => {
             const tradeLabel = tradeNameByLogin.get(login);
@@ -194,6 +222,7 @@ export default async function PortfolioDashboardPage({
       </header>
 
       <Mt5TokenPanel ingestPath={ingestPath} />
+      <EaDownloadBanner />
 
       <PortfolioAccountStatsBoard
         model={model}
