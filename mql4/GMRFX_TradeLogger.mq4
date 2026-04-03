@@ -6,18 +6,22 @@
 //+------------------------------------------------------------------+
 #property copyright "GMR FX"
 #property link      "https://github.com/"
-#property version   "1.05"
+#property version   "1.07"
 #property strict
 
 //--- MT4: satu baris histori = satu posisi market yang sudah ditutup.
-//--- Dipetakan ke "deal" penutupan: entryType=1 (OUT), dealTime=waktu tutup.
 
-input string InpApiBase     = "https://your-domain.com"; // tanpa slash akhir
+input string InpApiBase     = "https://gmrfx.app";       // URL API (tanpa slash akhir)
 input string InpApiToken    = "";                        // Bearer dari dashboard
 input int    InpIntervalSec = 300;                        // min 60
 input int    InpHistoryDays = 14;                         // hari ke belakang (OrderCloseTime)
 
-#define GMRFX_MAX_ROWS 2500
+#define GMRFX_MAX_ROWS       2500
+#define GMRFX_TRADE_THROTTLE_SEC 5
+#define GMRFX_TIMEOUT_FAST_MS   8000
+#define GMRFX_TIMEOUT_FULL_MS  30000
+
+datetime g_lastSendTime = 0;
 
 string JsonEscapeSym(string s)
 {
@@ -337,71 +341,112 @@ string BuildJsonBody()
    return json;
 }
 
-bool PostToServer(const string json_body, string &response)
+// Payload ringan: hanya open positions, tanpa scan histori order
+string BuildFastBody()
 {
-   string url;
-   string headers;
-   uchar  post[];
-   uchar  result[];
+   long   login = (long)AccountNumber();
+   double bal   = AccountBalance();
+   double eq    = AccountEquity();
+   double mg    = AccountMargin();
+   string cur   = AccountCurrency(); StringTrimLeft(cur); StringTrimRight(cur); cur = JsonEscapeSym(cur);
+   string brk   = AccountCompany();  StringTrimLeft(brk); StringTrimRight(brk); brk = JsonEscapeSym(brk);
+   string srv   = AccountServer();   StringTrimLeft(srv); StringTrimRight(srv); srv = JsonEscapeSym(srv);
+   string accName = AccountName();   StringTrimLeft(accName); StringTrimRight(accName); accName = JsonEscapeSym(accName);
+
+   string json = "{";
+   json += "\"login\":" + IntegerToString((int)login) + ",";
+   json += "\"platform\":\"mt4\",";
+   json += "\"account\":{";
+   json += "\"balance\":" + DoubleToString(bal,8) + ",";
+   json += "\"equity\":"  + DoubleToString(eq,8)  + ",";
+   json += "\"margin\":"  + DoubleToString(mg,8)  + ",";
+   json += "\"currency\":\"" + cur + "\",";
+   json += "\"brokerName\":\"" + brk + "\",";
+   json += "\"brokerServer\":\"" + srv + "\",";
+   json += "\"tradeAccountName\":\"" + accName + "\"";
+   json += "},";
+   json += "\"deals\":[],";
+   json += "\"openPositions\":";
+   json += GmrfxMt4OpenPositionsJson();
+   json += ",\"pendingOrders\":";
+   json += GmrfxMt4PendingOrdersJson();
+   json += "}";
+   return json;
+}
+
+bool PostToServer(const string json_body, string &response, const int timeout_ms)
+{
+   string url, headers;
+   uchar  post[], result[];
    string result_headers;
-   int    conv;
-   int    timeout;
-   int    code;
-   int    err;
+   int    conv, code, err;
 
    url = InpApiBase;
-   if(StringSubstr(url, StringLen(url) - 1, 1) == "/")
-      url = StringSubstr(url, 0, StringLen(url) - 1);
+   if(StringSubstr(url, StringLen(url)-1, 1) == "/")
+      url = StringSubstr(url, 0, StringLen(url)-1);
    url += "/api/mt4/ingest";
 
-   headers = "Content-Type: application/json; charset=utf-8\r\n";
+   headers  = "Content-Type: application/json; charset=utf-8\r\n";
    headers += "Authorization: Bearer " + InpApiToken + "\r\n";
 
    conv = StringToCharArray(json_body, post, 0, WHOLE_ARRAY, CP_UTF8);
-   if(conv < 2)
-   {
-      Print("GMRFX MT4: gagal konversi JSON ke UTF-8");
-      return false;
-   }
+   if(conv < 2) { Print("GMRFX MT4: gagal konversi JSON"); return false; }
    ArrayResize(post, conv - 1);
 
-   timeout = 30000;
    ResetLastError();
-   code = WebRequest("POST", url, headers, timeout, post, result, result_headers);
+   code = WebRequest("POST", url, headers, timeout_ms, post, result, result_headers);
    if(code == -1)
    {
       err = GetLastError();
-      Print("GMRFX MT4: WebRequest gagal, err=", err,
-            " — tambahkan URL ", url, " di Tools → Options → Expert Advisors → Allow WebRequest");
+      Print("GMRFX MT4: WebRequest gagal err=", err, " — izinkan URL di Tools→Options→Expert Advisors");
       return false;
    }
 
    response = CharArrayToString(result, 0, WHOLE_ARRAY, CP_UTF8);
-   Print("GMRFX MT4: HTTP ", code, " ", StringSubstr(response, 0, 200));
+   Print("GMRFX MT4: HTTP ", code, " [", (timeout_ms < 15000 ? "fast" : "full"), "] ", StringSubstr(response, 0, 120));
    return (code >= 200 && code < 300);
+}
+
+void TrySendFull(const string reason)
+{
+   string body, resp;
+   if(StringLen(InpApiToken) < 16) { Print("GMRFX MT4: isi InpApiToken"); return; }
+   body = BuildJsonBody();
+   bool ok = PostToServer(body, resp, GMRFX_TIMEOUT_FULL_MS);
+   if(ok) { g_lastSendTime = TimeCurrent(); Print("GMRFX MT4: sinkron full [", reason, "] OK"); }
+}
+
+void TrySendFast(const string reason)
+{
+   string body, resp;
+   if(StringLen(InpApiToken) < 16) return;
+   body = BuildFastBody();
+   bool ok = PostToServer(body, resp, GMRFX_TIMEOUT_FAST_MS);
+   if(ok) { g_lastSendTime = TimeCurrent(); Print("GMRFX MT4: sinkron fast [", reason, "] OK"); }
 }
 
 void OnTimer()
 {
-   string body;
-   string resp;
+   TrySendFull("timer");
+}
 
-   if(StringLen(InpApiToken) < 16)
-   {
-      Print("GMRFX MT4: isi InpApiToken (dari dashboard web)");
-      return;
-   }
-
-   body = BuildJsonBody();
-   PostToServer(body, resp);
+/**
+ * OnTrade — dipanggil MT4 setiap kali ada perubahan order/posisi.
+ * Gunakan payload ringan (tanpa histori order) agar pengiriman instan.
+ */
+void OnTrade()
+{
+   datetime now = TimeCurrent();
+   if(now - g_lastSendTime < GMRFX_TRADE_THROTTLE_SEC) return;
+   TrySendFast("OnTrade");
 }
 
 int OnInit()
 {
-   int sec;
-   sec = MathMax(60, InpIntervalSec);
+   int sec = MathMax(60, InpIntervalSec);
    EventSetTimer(sec);
-   Print("GMRFX Trade Logger MT4 aktif, interval ", sec, "s → /api/mt4/ingest");
+   Print("GMRFX Trade Logger MT4 aktif | interval=", sec, "s | OnTrade fast-throttle=", GMRFX_TRADE_THROTTLE_SEC, "s");
+   TrySendFull("init");
    return(INIT_SUCCEEDED);
 }
 

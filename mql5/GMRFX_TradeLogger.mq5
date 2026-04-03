@@ -5,15 +5,23 @@
 //+------------------------------------------------------------------+
 #property copyright "GMR FX"
 #property link      "https://github.com/"
-#property version   "1.07"
+#property version   "1.09"
 #property strict
 
-// Basis URL API (tanpa slash akhir). Tidak pakai `input` agar tidak tampil di tab Inputs.
+// Basis URL API (tanpa slash akhir).
 #define GMRFX_API_BASE "https://gmrfx.app"
+
+// Throttle OnTrade: kirim paling cepat setiap N detik agar tidak spam API.
+#define GMRFX_TRADE_THROTTLE_SEC 5
+
+// Timeout HTTP: lebih pendek untuk kirim cepat OnTrade, penuh untuk timer.
+#define GMRFX_TIMEOUT_FAST_MS  8000
+#define GMRFX_TIMEOUT_FULL_MS 30000
 
 ulong  g_gmrfx_pos_ids[];
 long   g_gmrfx_pos_times[];
 int    g_gmrfx_pos_n = 0;
+datetime g_lastSendTime = 0;
 
 void GmrfxPosClear()
 {
@@ -364,7 +372,55 @@ string BuildJsonBody()
    return json;
 }
 
-bool PostToServer(const string json_body, string &response)
+/**
+ * Payload ringan: hanya open positions + account snapshot, tanpa HistorySelect.
+ * Digunakan oleh OnTrade() agar pengiriman instan tanpa scan deal historis.
+ * Server tetap update MtTradingActivity.openPositions dengan benar.
+ */
+string BuildFastBody()
+{
+   long login = (long)AccountInfoInteger(ACCOUNT_LOGIN);
+   double bal = AccountInfoDouble(ACCOUNT_BALANCE);
+   double eq  = AccountInfoDouble(ACCOUNT_EQUITY);
+   double mg  = AccountInfoDouble(ACCOUNT_MARGIN);
+   string cur = AccountInfoString(ACCOUNT_CURRENCY);
+   StringTrimLeft(cur); StringTrimRight(cur);
+   StringReplace(cur, "\\", ""); StringReplace(cur, "\"", "'");
+   string brk = AccountInfoString(ACCOUNT_COMPANY);
+   StringTrimLeft(brk); StringTrimRight(brk);
+   StringReplace(brk, "\\", ""); StringReplace(brk, "\"", "'");
+   StringReplace(brk, "\r", " "); StringReplace(brk, "\n", " ");
+   string srv = AccountInfoString(ACCOUNT_SERVER);
+   StringTrimLeft(srv); StringTrimRight(srv);
+   StringReplace(srv, "\\", ""); StringReplace(srv, "\"", "'");
+   string accName = AccountInfoString(ACCOUNT_NAME);
+   StringTrimLeft(accName); StringTrimRight(accName);
+   StringReplace(accName, "\\", ""); StringReplace(accName, "\"", "'");
+   StringReplace(accName, "\r", " "); StringReplace(accName, "\n", " ");
+
+   string json = "{";
+   json += "\"login\":" + IntegerToString(login) + ",";
+   json += "\"platform\":\"mt5\",";
+   json += "\"account\":{";
+   json += "\"balance\":" + DoubleToString(bal, 8) + ",";
+   json += "\"equity\":" + DoubleToString(eq, 8) + ",";
+   json += "\"margin\":" + DoubleToString(mg, 8) + ",";
+   json += "\"currency\":\"" + cur + "\",";
+   json += "\"brokerName\":\"" + brk + "\",";
+   json += "\"brokerServer\":\"" + srv + "\",";
+   json += "\"tradeAccountName\":\"" + accName + "\"";
+   json += "},";
+   // deals kosong — server hanya update openPositions (tidak sentuh riwayat deal)
+   json += "\"deals\":[],";
+   json += "\"openPositions\":";
+   json += GmrfxOpenPositionsJson();
+   json += ",\"pendingOrders\":";
+   json += GmrfxPendingOrdersJson();
+   json += "}";
+   return json;
+}
+
+bool PostToServer(const string json_body, string &response, const int timeout_ms)
 {
    string url = GMRFX_API_BASE;
    if(StringSubstr(url, StringLen(url) - 1, 1) == "/")
@@ -386,9 +442,8 @@ bool PostToServer(const string json_body, string &response)
    }
    ArrayResize(post, conv - 1);
 
-   int timeout = 30000;
    ResetLastError();
-   int code = WebRequest("POST", url, headers, timeout, post, result, result_headers);
+   int code = WebRequest("POST", url, headers, timeout_ms, post, result, result_headers);
    if(code == -1)
    {
       int err = GetLastError();
@@ -397,28 +452,73 @@ bool PostToServer(const string json_body, string &response)
    }
 
    response = CharArrayToString(result, 0, WHOLE_ARRAY, CP_UTF8);
-   Print("GMRFX: HTTP ", code, " ", StringSubstr(response, 0, 200));
+   Print("GMRFX: HTTP ", code, " [", (timeout_ms < 15000 ? "fast" : "full"), "] ", StringSubstr(response, 0, 120));
    return (code >= 200 && code < 300);
 }
 
-void OnTimer()
+/**
+ * Kirim penuh: deals historis + open positions.
+ * Dipakai oleh OnTimer() — backup sync berkala.
+ */
+void TrySendFull(const string reason)
 {
    if(StringLen(InpApiToken) < 16)
    {
       Print("GMRFX: isi InpApiToken (dari dashboard)");
       return;
    }
-
    string body = BuildJsonBody();
    string resp;
-   PostToServer(body, resp);
+   bool ok = PostToServer(body, resp, GMRFX_TIMEOUT_FULL_MS);
+   if(ok)
+   {
+      g_lastSendTime = TimeCurrent();
+      Print("GMRFX: sinkron full [", reason, "] OK");
+   }
+}
+
+/**
+ * Kirim cepat: HANYA open positions, tanpa scan deal historis.
+ * Dipakai oleh OnTrade() — reaksi instan saat posisi buka/tutup.
+ * Payload jauh lebih kecil & proses server lebih ringan.
+ */
+void TrySendFast(const string reason)
+{
+   if(StringLen(InpApiToken) < 16) return;
+   string body = BuildFastBody();
+   string resp;
+   bool ok = PostToServer(body, resp, GMRFX_TIMEOUT_FAST_MS);
+   if(ok)
+   {
+      g_lastSendTime = TimeCurrent();
+      Print("GMRFX: sinkron fast [", reason, "] OK");
+   }
+}
+
+void OnTimer()
+{
+   TrySendFull("timer");
+}
+
+/**
+ * OnTrade — dipanggil MT5 setiap kali ada perubahan trading:
+ * posisi buka, tutup, atau order tereksekusi.
+ * Gunakan payload ringan (tanpa HistorySelect) agar instan.
+ */
+void OnTrade()
+{
+   datetime now = TimeCurrent();
+   if(now - g_lastSendTime < GMRFX_TRADE_THROTTLE_SEC) return;
+   TrySendFast("OnTrade");
 }
 
 int OnInit()
 {
    int sec = MathMax(60, InpIntervalSec);
    EventSetTimer(sec);
-   Print("GMRFX Trade Logger aktif, interval ", sec, "s");
+   Print("GMRFX Trade Logger aktif | interval=", sec, "s | OnTrade fast-throttle=", GMRFX_TRADE_THROTTLE_SEC, "s");
+   // Kirim langsung saat EA pertama kali aktif
+   TrySendFull("init");
    return INIT_SUCCEEDED;
 }
 

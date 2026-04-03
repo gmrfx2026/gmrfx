@@ -17,7 +17,7 @@
 //+------------------------------------------------------------------+
 #property copyright "GMR FX"
 #property link      "https://gmrfx.app"
-#property version   "3.00"
+#property version   "3.10"
 #property description "Copy trading GMR FX. Isi InpCopyToken dari halaman Komunitas → Mengikuti."
 
 #include <Trade\Trade.mqh>
@@ -25,7 +25,7 @@
 //--- Input
 input string  InpApiBase     = "https://gmrfx.app"; // URL API (tidak perlu diubah)
 input string  InpCopyToken   = "";                   // Token copy dari halaman "Mengikuti"
-input int     InpIntervalSec = 10;                   // Interval polling detik (min 5)
+input int     InpIntervalMs  = 2000;                 // Interval polling milidetik (min 1000 = 1 detik)
 input int     InpMagic       = 20250401;             // Magic number unik per publisher
 
 enum ENUM_VOL_MODE { VOL_FIXED=0, VOL_RATIO=1 };
@@ -43,10 +43,11 @@ input string  InpSymbolFilter = "";   // Filter simbol (koma, kosong=semua)
 
 //--- State
 CTrade g_trade;
-int    g_failCount = 0;
-bool   g_paused    = false;
-string g_etag      = "";
+int    g_failCount      = 0;
+bool   g_paused         = false;
+string g_etag           = "";
 string g_publisherLabel = "";
+bool   g_needSync       = false; // flag: ada perubahan lokal, poll segera
 
 struct PubPos
 {
@@ -329,7 +330,7 @@ void SyncPositions()
 }
 
 //+------------------------------------------------------------------+
-void OnTimer()
+void DoSync()
 {
    if(StringLen(InpCopyToken)<16)
    {
@@ -339,22 +340,57 @@ void OnTimer()
    }
    if(g_failCount>=10)
    {
-      if(!g_paused){Log("Terlalu banyak error ("+IntegerToString(g_failCount)+"). Pause — restart EA untuk lanjut.");g_paused=true;}
+      if(!g_paused){Log("Terlalu banyak error ("+IntegerToString(g_failCount)+"). Pause — restart EA.");g_paused=true;}
       return;
    }
+   g_needSync = false;
    if(FetchAndParse()){g_paused=false;SyncPositions();}
+}
+
+void OnTimer()
+{
+   DoSync();
+}
+
+/**
+ * OnTradeTransaction — dipanggil MT5 setiap kali ada perubahan posisi LOKAL.
+ * Misalnya: posisi tertutup oleh SL/TP, atau ada margin call.
+ * Dengan ini EA langsung tahu ada perubahan dan re-sync pada poll berikutnya.
+ * Tidak langsung sync di sini untuk menghindari race condition.
+ */
+void OnTradeTransaction(const MqlTradeTransaction &trans,
+                        const MqlTradeRequest     &request,
+                        const MqlTradeResult      &result)
+{
+   // Tandai perlu sync segera jika ada deal baru (posisi buka/tutup)
+   if(trans.type == TRADE_TRANSACTION_DEAL_ADD ||
+      trans.type == TRADE_TRANSACTION_POSITION  )
+   {
+      // Hanya peduli posisi dengan magic EA ini
+      if(trans.deal > 0)
+      {
+         ulong dealMagic = (ulong)HistoryDealGetInteger(trans.deal, DEAL_MAGIC);
+         if(dealMagic == (ulong)InpMagic)
+            g_needSync = true;
+      }
+   }
 }
 
 int OnInit()
 {
-   int s=MathMax(5,InpIntervalSec); EventSetTimer(s);
-   Log("=== GMRFX CopyTrader MT5 v3 ===");
-   Log("Interval : "+IntegerToString(s)+"s | Magic: "+IntegerToString(InpMagic));
-   Log("Vol mode : "+(InpVolumeMode==VOL_FIXED?"Fixed "+DoubleToString(InpFixedLot,2):"Ratio x"+DoubleToString(InpRatio,3)));
+   int ms = MathMax(1000, InpIntervalMs);
+   EventSetMillisecondTimer(ms);
+   Log("=== GMRFX CopyTrader MT5 v3.10 ===");
+   Log("Poll    : "+IntegerToString(ms)+"ms | Magic: "+IntegerToString(InpMagic));
+   Log("Vol     : "+(InpVolumeMode==VOL_FIXED?"Fixed "+DoubleToString(InpFixedLot,2):"Ratio x"+DoubleToString(InpRatio,3)));
    if(StringLen(InpCopyToken)<16) Log("PERINGATAN: InpCopyToken belum diisi.");
-   else OnTimer();
+   else DoSync();
    return INIT_SUCCEEDED;
 }
 
 void OnDeinit(const int reason){EventKillTimer();Log("EA berhenti reason="+IntegerToString(reason));}
-void OnTick(){}
+void OnTick()
+{
+   // Jika ada flag needSync (dari OnTradeTransaction), percepat sync
+   if(g_needSync) DoSync();
+}
