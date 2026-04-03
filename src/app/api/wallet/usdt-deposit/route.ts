@@ -39,30 +39,44 @@ function padAddress(addr: string): string {
   return "0x000000000000000000000000" + addr.toLowerCase().replace(/^0x/, "");
 }
 
+type VerifyResult =
+  | { valid: true; amountUsdt: number }
+  | { valid: false; pending: true; error: string }   // TX belum di-mine — boleh coba ulang
+  | { valid: false; pending: false; error: string };  // TX gagal / tidak valid — simpan FAILED
+
 /** Verifikasi TX di BSCScan, return jumlah USDT yang masuk ke admin address. */
 async function verifyBscUsdtTx(
   txHash: string,
   adminAddress: string
-): Promise<{ valid: boolean; amountUsdt: number; error?: string }> {
+): Promise<VerifyResult> {
   const apiKey = process.env.BSCSCAN_API_KEY ?? "";
   const url =
     `https://api.bscscan.com/api?module=proxy&action=eth_getTransactionReceipt` +
     `&txhash=${txHash}&apikey=${apiKey}`;
 
-  let data: { result?: { status?: string; logs?: Array<{ address: string; topics: string[]; data: string }> } };
+  let data: { result?: { status?: string; logs?: Array<{ address: string; topics: string[]; data: string }> } | null };
   try {
     const res = await fetch(url, { cache: "no-store" });
     data = (await res.json()) as typeof data;
   } catch {
-    return { valid: false, amountUsdt: 0, error: "Gagal menghubungi BSCScan" };
+    // BSCScan tidak dapat dijangkau — anggap pending agar member bisa coba lagi
+    return { valid: false, pending: true, error: "Gagal menghubungi BSCScan, coba beberapa saat lagi" };
+  }
+
+  // result === null artinya TX masih pending (belum di-mine), bukan TX gagal
+  if (data.result === null || data.result === undefined) {
+    return {
+      valid: false,
+      pending: true,
+      error: "Transaksi masih dalam antrian jaringan (pending). Tunggu beberapa menit lalu coba lagi.",
+    };
   }
 
   const receipt = data.result;
-  if (!receipt) {
-    return { valid: false, amountUsdt: 0, error: "TX tidak ditemukan di BSCScan" };
-  }
+
+  // status "0x0" = TX di-mine tapi gagal (revert) — ini permanen, simpan FAILED
   if (receipt.status !== "0x1") {
-    return { valid: false, amountUsdt: 0, error: "TX gagal atau belum dikonfirmasi" };
+    return { valid: false, pending: false, error: "Transaksi gagal di blockchain (status bukan sukses)" };
   }
 
   const adminPadded = padAddress(adminAddress);
@@ -80,8 +94,8 @@ async function verifyBscUsdtTx(
 
   return {
     valid: false,
-    amountUsdt: 0,
-    error: "Transfer USDT ke alamat deposit tidak ditemukan dalam TX ini",
+    pending: false,
+    error: "Transfer USDT ke alamat deposit tidak ditemukan dalam transaksi ini",
   };
 }
 
@@ -153,10 +167,16 @@ export async function POST(req: Request) {
   }
 
   // Verifikasi on-chain
-  const { valid, amountUsdt, error: verifyError } = await verifyBscUsdtTx(txHash, adminAddress);
+  const verifyResult = await verifyBscUsdtTx(txHash, adminAddress);
 
-  if (!valid) {
-    // Simpan sebagai FAILED agar tidak bisa dicoba ulang dengan TX yang sama
+  if (!verifyResult.valid) {
+    // TX masih pending: jangan simpan ke DB agar member bisa submit ulang setelah dikonfirmasi
+    if (verifyResult.pending) {
+      return NextResponse.json({ error: verifyResult.error, pending: true }, { status: 422 });
+    }
+
+    // TX gagal atau tidak valid secara permanen: simpan sebagai FAILED
+    // agar TxHash ini tidak bisa dipakai ulang
     await prisma.usdtDepositRequest.create({
       data: {
         userId,
@@ -166,11 +186,13 @@ export async function POST(req: Request) {
         rateIdr: 0,
         amountIdr: 0,
         status: "FAILED",
-        failReason: verifyError ?? "Verifikasi gagal",
+        failReason: verifyResult.error,
       },
     });
-    return NextResponse.json({ error: verifyError ?? "Verifikasi TX gagal" }, { status: 422 });
+    return NextResponse.json({ error: verifyResult.error }, { status: 422 });
   }
+
+  const { amountUsdt } = verifyResult;
 
   if (amountUsdt < MIN_USDT) {
     await prisma.usdtDepositRequest.create({

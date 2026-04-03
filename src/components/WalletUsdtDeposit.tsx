@@ -4,6 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 import { useToast } from "@/components/ToastProvider";
 
+const PENDING_RETRY_SEC = 20;   // coba ulang setiap N detik saat TX masih pending
+const PENDING_MAX_TRIES = 15;   // maksimum percobaan (~5 menit total)
+
 type DepositRow = {
   id: string;
   txHash: string;
@@ -54,6 +57,8 @@ export function WalletUsdtDeposit() {
   const [txHash, setTxHash] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showFull, setShowFull] = useState(false);
+  const [pendingCountdown, setPendingCountdown] = useState<number | null>(null);
+  const pendingRetryRef = useRef<{ hash: string; tries: number; timer: ReturnType<typeof setTimeout> } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -69,11 +74,24 @@ export function WalletUsdtDeposit() {
     void load();
   }, [load]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const hash = txHash.trim();
-    if (!hash) return;
+  // Bersihkan retry timer saat komponen unmount
+  useEffect(() => {
+    return () => {
+      if (pendingRetryRef.current) clearTimeout(pendingRetryRef.current.timer);
+    };
+  }, []);
+
+  function cancelPendingRetry() {
+    if (pendingRetryRef.current) {
+      clearTimeout(pendingRetryRef.current.timer);
+      pendingRetryRef.current = null;
+    }
+    setPendingCountdown(null);
+  }
+
+  async function submitHash(hash: string, isAutoRetry = false): Promise<void> {
     setSubmitting(true);
+    if (!isAutoRetry) cancelPendingRetry();
     try {
       const r = await fetch("/api/wallet/usdt-deposit", {
         method: "POST",
@@ -87,10 +105,54 @@ export function WalletUsdtDeposit() {
         amountIdr?: number;
         rateIdr?: number;
         error?: string;
+        pending?: boolean;
       };
+
       if (!r.ok) {
-        show(j.error ?? "Verifikasi gagal", "err");
+        if (j.pending) {
+          // TX masih menunggu konfirmasi jaringan — jadwalkan retry otomatis
+          const prevTries = isAutoRetry ? (pendingRetryRef.current?.tries ?? 0) : 0;
+          const nextTry = prevTries + 1;
+
+          if (nextTry <= PENDING_MAX_TRIES) {
+            show(
+              `TX masih pending — cek ulang otomatis dalam ${PENDING_RETRY_SEC}s (percobaan ${nextTry}/${PENDING_MAX_TRIES})`,
+              "warn",
+            );
+
+            // Hitung mundur di UI
+            let secs = PENDING_RETRY_SEC;
+            setPendingCountdown(secs);
+            const countdown = window.setInterval(() => {
+              secs -= 1;
+              if (secs <= 0) {
+                clearInterval(countdown);
+              } else {
+                setPendingCountdown(secs);
+              }
+            }, 1000);
+
+            const timer = setTimeout(() => {
+              clearInterval(countdown);
+              setPendingCountdown(null);
+              void submitHash(hash, true);
+            }, PENDING_RETRY_SEC * 1000);
+
+            if (pendingRetryRef.current) clearTimeout(pendingRetryRef.current.timer);
+            pendingRetryRef.current = { hash, tries: nextTry, timer };
+          } else {
+            cancelPendingRetry();
+            show(
+              `TX masih belum dikonfirmasi setelah ${PENDING_MAX_TRIES} percobaan. Coba lagi secara manual setelah TX sukses di BSCScan.`,
+              "err",
+            );
+          }
+        } else {
+          cancelPendingRetry();
+          show(j.error ?? "Verifikasi gagal", "err");
+        }
       } else {
+        cancelPendingRetry();
         show(
           `Deposit dikonfirmasi! ${j.amountUsdt} USDT → Rp ${fmtIdr(j.amountIdr ?? 0)} (kurs ${fmtIdr(j.rateIdr ?? 0)}/USDT)`,
         );
@@ -102,6 +164,13 @@ export function WalletUsdtDeposit() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const hash = txHash.trim();
+    if (!hash) return;
+    await submitHash(hash);
   }
 
   async function copyAddress() {
@@ -233,9 +302,28 @@ export function WalletUsdtDeposit() {
                 {submitting ? "Verifikasi…" : "Konfirmasi"}
               </button>
             </form>
-            <p className="mt-2 text-xs text-broker-muted">
-              Proses verifikasi otomatis via BSCScan. Saldo IDR langsung dikreditkan setelah konfirmasi.
-            </p>
+            {pendingCountdown !== null ? (
+              <div className="mt-2 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-950/20 px-3 py-2 text-xs text-amber-300">
+                <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                </svg>
+                TX masih pending — cek ulang otomatis dalam{" "}
+                <strong className="tabular-nums">{pendingCountdown}s</strong>
+                <button
+                  type="button"
+                  onClick={cancelPendingRetry}
+                  className="ml-auto text-amber-400/60 hover:text-amber-200"
+                  title="Batalkan retry otomatis"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <p className="mt-2 text-xs text-broker-muted">
+                Verifikasi otomatis via BSCScan. Jika TX masih pending saat submit, sistem akan mengecek ulang
+                otomatis setiap {PENDING_RETRY_SEC} detik hingga dikonfirmasi.
+              </p>
+            )}
           </div>
 
           {/* Deposit history */}

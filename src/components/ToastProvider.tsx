@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 
-type Tone = "ok" | "err";
+type Tone = "ok" | "err" | "warn";
 
 type Toast = { id: number; message: string; tone: Tone };
 
@@ -36,6 +36,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             className={`pointer-events-auto rounded-lg border px-4 py-2 text-sm shadow-lg ${
               t.tone === "err"
                 ? "border-red-500/40 bg-red-950/95 text-red-50"
+                : t.tone === "warn"
+                ? "border-amber-500/40 bg-amber-950/90 text-amber-100"
                 : "border-broker-border bg-broker-surface/95 text-white"
             }`}
           >
