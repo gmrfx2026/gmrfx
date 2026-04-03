@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Petunjuk & Penggunaan — GMR FX",
   description:
-    "Panduan lengkap untuk member GMR FX: akun, wallet, deposit USDT, marketplace, portofolio MetaTrader, copy trading EA, komunitas, dan aturan penggunaan.",
+    "Panduan lengkap untuk member GMR FX: akun, wallet, deposit USDT, marketplace, penawaran pekerjaan freelance EA/indikator, portofolio MetaTrader, copy trading EA, komunitas, dan aturan penggunaan.",
 };
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
@@ -56,15 +56,16 @@ function Warn({ children }: { children: React.ReactNode }) {
 }
 
 const TOC = [
-  { id: "akun",       label: "Daftar, masuk & profil" },
-  { id: "wallet",     label: "Wallet & saldo IDR" },
-  { id: "deposit",    label: "Deposit USDT (BSC)" },
-  { id: "marketplace",label: "Marketplace Indikator & EA" },
-  { id: "portofolio", label: "Portofolio MetaTrader" },
-  { id: "komunitas",  label: "Komunitas & copy trading" },
-  { id: "ea-setup",   label: "Cara pasang EA (Logger & CopyTrader)" },
-  { id: "sosial",     label: "Artikel, berita & profil publik" },
-  { id: "privasi",    label: "Privasi & aturan" },
+  { id: "akun",        label: "Daftar, masuk & profil" },
+  { id: "wallet",      label: "Wallet & saldo IDR" },
+  { id: "deposit",     label: "Deposit USDT (BSC)" },
+  { id: "marketplace", label: "Marketplace Indikator & EA" },
+  { id: "penawaran",   label: "Penawaran Pekerjaan (Freelance)" },
+  { id: "portofolio",  label: "Portofolio MetaTrader" },
+  { id: "komunitas",   label: "Komunitas & copy trading" },
+  { id: "ea-setup",    label: "Cara pasang EA (Logger & CopyTrader)" },
+  { id: "sosial",      label: "Artikel, berita & profil publik" },
+  { id: "privasi",     label: "Privasi & aturan" },
 ];
 
 export default function CaraPemakaianPage() {
@@ -234,7 +235,91 @@ export default function CaraPemakaianPage() {
           </Sub>
         </Section>
 
-        {/* 5. Portofolio */}
+        {/* 5. Penawaran Pekerjaan */}
+        <Section id="penawaran" title="Penawaran Pekerjaan (Freelance)">
+          <p>
+            Fitur <Link href="/penawaran" className="text-broker-accent hover:underline">Penawaran Pekerjaan</Link> mempertemukan
+            member yang ingin membuat EA / indikator dengan freelancer sesama member. Transaksi menggunakan saldo wallet IDR
+            dengan sistem <strong className="text-zinc-300">escrow otomatis</strong>.
+          </p>
+
+          <Sub title="Sebagai pemberi kerja (Requester)">
+            <Li>
+              Buka <Link href="/penawaran/buat" className="text-broker-accent hover:underline">Penawaran → Buat Penawaran</Link>.
+              Isi judul, deskripsi (mendukung rich text + gambar/flowchart), kategori, budget maksimal, dan batas waktu penawaran.
+            </Li>
+            <Li>
+              Opsional: upload file <strong className="text-zinc-300">PDF</strong> sebagai spesifikasi detail EA/indikator
+              (maks 10 MB). PDF hanya bisa diakses oleh pemenang dan admin.
+            </Li>
+            <Li>
+              Klik <strong className="text-zinc-300">Posting Pekerjaan</strong>. Saldo sejumlah budget otomatis
+              dikunci (escrow) dari wallet Anda. Dana baru dilepas setelah pekerjaan selesai atau dikembalikan jika gagal.
+            </Li>
+            <Li>
+              Setelah ada pelamar, tinjau daftar bid di halaman detail — pelamar menampilkan harga penawaran mereka
+              (lebih rendah dari budget Anda) beserta pesan. Pilih pemenang dengan klik{" "}
+              <strong className="text-zinc-300">Pilih sebagai Pemenang</strong>.
+            </Li>
+            <Li>
+              Setelah pemenang mengirimkan hasil kerja (deliverable), Anda mendapat notifikasi.
+              Unduh dan periksa file, lalu klik <strong className="text-zinc-300">Konfirmasi Selesai</strong> untuk
+              mencairkan dana ke pemenang — atau klik <strong className="text-zinc-300">Komplain</strong> jika ada masalah.
+            </Li>
+            <Li>
+              Jika tidak ada aksi dalam <strong className="text-zinc-300">3 hari</strong> setelah pengiriman, dana
+              otomatis dicairkan ke pemenang (auto-release).
+            </Li>
+          </Sub>
+
+          <Sub title="Sebagai freelancer (penawar / Bidder)">
+            <Li>
+              Jelajahi daftar pekerjaan terbuka di <Link href="/penawaran" className="text-broker-accent hover:underline">Penawaran</Link>.
+              Klik pekerjaan yang diminati untuk melihat deskripsi lengkap, lampiran PDF (jika ada), dan daftar penawar saat ini.
+            </Li>
+            <Li>
+              Klik <strong className="text-zinc-300">Ajukan Penawaran</strong>, masukkan harga yang Anda tawarkan
+              (harus lebih rendah atau sama dengan budget maksimal pemberi kerja) dan pesan singkat tentang kemampuan Anda.
+            </Li>
+            <Li>
+              Jika dipilih sebagai pemenang, status berubah menjadi <em>Dikerjakan</em>. Selesaikan pekerjaan, lalu
+              upload file hasil kerja melalui tombol <strong className="text-zinc-300">Upload Hasil Kerja</strong> di
+              halaman detail.
+            </Li>
+            <Li>
+              Setelah dikirim, status berubah menjadi <em>Menunggu konfirmasi</em>. Jika pemberi kerja mengonfirmasi
+              atau 3 hari berlalu tanpa komplain, dana masuk ke saldo wallet Anda.
+            </Li>
+            <Li>
+              Gunakan kolom <strong className="text-zinc-300">komentar privat</strong> di halaman detail untuk
+              berkomunikasi dengan pemberi kerja (hanya keduanya + admin yang dapat melihat).
+            </Li>
+          </Sub>
+
+          <Sub title="Penyelesaian sengketa">
+            <Li>
+              Jika pemberi kerja mengklik <strong className="text-zinc-300">Komplain</strong>, status berubah menjadi
+              <em> Sengketa</em> dan admin akan meninjau kasus.
+            </Li>
+            <Li>
+              Admin dapat memeriksa deskripsi pekerjaan, file hasil kerja, komentar privat, dan alasan komplain, lalu
+              memutuskan untuk mencairkan dana ke pemenang atau mengembalikan ke pemberi kerja.
+            </Li>
+          </Sub>
+
+          <Warn>
+            <strong>⚠ Penting:</strong> Dana escrow dikunci dari wallet Anda saat posting pekerjaan. Pastikan saldo
+            mencukupi. Jika pekerjaan dibatalkan atau kedaluwarsa tanpa ada yang dipilih, dana otomatis dikembalikan.
+          </Warn>
+
+          <Note>
+            Satu pekerjaan = satu pemenang. Budget adalah <em>nilai maksimal</em> — pemenang bisa saja memenangkan
+            dengan harga lebih rendah. Dana yang dilepas ke pemenang sesuai budget, bukan harga penawaran pemenang
+            (selisih tetap terhitung sebagai transaksi).
+          </Note>
+        </Section>
+
+        {/* 6. Portofolio */}
         <Section id="portofolio" title="Portofolio MetaTrader">
           <p>
             Hubungkan terminal MetaTrader ke situs menggunakan <strong className="text-zinc-300">token EA</strong> (bukan

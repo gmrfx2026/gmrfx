@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 export const metadata: Metadata = {
   title: "FAQ — GMR FX",
   description:
-    "Pertanyaan yang sering diajukan tentang akun, wallet, deposit USDT, copy trading EA, portofolio MetaTrader, marketplace, dan penggunaan GMR FX.",
+    "Pertanyaan yang sering diajukan tentang akun, wallet, deposit USDT, copy trading EA, portofolio MetaTrader, marketplace, penawaran pekerjaan freelance, dan penggunaan GMR FX.",
 };
 
 type FaqItem = { q: string; a: ReactNode };
@@ -139,6 +139,79 @@ const groups: { title: string; items: FaqItem[] }[] = [
             isi harga dan deskripsi, lalu publikasikan. Pembeli membayar menggunakan saldo wallet.
           </>
         ),
+      },
+    ],
+  },
+  {
+    title: "Penawaran Pekerjaan (Freelance)",
+    items: [
+      {
+        q: "Apa itu fitur Penawaran Pekerjaan?",
+        a: (
+          <>
+            Fitur di menu <Link href="/penawaran">Penawaran</Link> adalah marketplace freelance khusus sesama member GMR FX
+            untuk pembuatan EA atau indikator. Member yang membutuhkan EA/indikator bisa memposting pekerjaan, dan member
+            yang mampu membuatnya bisa mengajukan penawaran harga.
+          </>
+        ),
+      },
+      {
+        q: "Bagaimana alur lengkap Penawaran Pekerjaan?",
+        a: (
+          <>
+            <strong>1. Post pekerjaan</strong> — pemberi kerja mengisi deskripsi (rich text + gambar), opsional upload PDF
+            spesifikasi, dan menetapkan budget maksimal. Dana budget langsung dikunci (escrow).{" "}
+            <strong>2. Freelancer menawar</strong> — ajukan harga lebih rendah dari budget. Pemberi kerja memilih pemenang.{" "}
+            <strong>3. Pengerjaan</strong> — pemenang mengerjakan dan upload file hasil kerja.{" "}
+            <strong>4. Konfirmasi</strong> — pemberi kerja memeriksa dan mengonfirmasi, atau mengkomplain.{" "}
+            <strong>5. Pencairan</strong> — dana dicairkan ke pemenang setelah dikonfirmasi atau 3 hari tanpa komplain.
+          </>
+        ),
+      },
+      {
+        q: "Apakah dana saya aman saat memposting pekerjaan?",
+        a: "Ya. Saldo sejumlah budget dikunci di escrow saat pekerjaan diposting — bukan dikirim ke siapapun. Dana baru dicairkan ke pemenang setelah Anda mengonfirmasi pekerjaan selesai. Jika pekerjaan kedaluwarsa tanpa ada pemenang yang dipilih, atau jika dibatalkan, dana otomatis dikembalikan.",
+      },
+      {
+        q: "Bagaimana cara mengajukan penawaran harga?",
+        a: (
+          <>
+            Buka halaman detail pekerjaan yang diminati di <Link href="/penawaran">Penawaran</Link>, klik{" "}
+            <strong>Ajukan Penawaran</strong>, masukkan harga yang Anda tawarkan (harus ≤ budget maksimal pemberi kerja)
+            dan pesan singkat. Pemberi kerja memilih pemenang dari semua penawaran yang masuk.
+          </>
+        ),
+      },
+      {
+        q: "Siapa yang menentukan pemenang?",
+        a: "Pemberi kerja — bukan sistem otomatis. Mereka bebas memilih berdasarkan harga, reputasi, atau pesan penawaran. Tidak harus memilih yang termurah.",
+      },
+      {
+        q: "Apa itu auto-release 3 hari?",
+        a: "Setelah pemenang mengupload hasil kerja, pemberi kerja punya 3 hari untuk mengonfirmasi atau mengajukan komplain. Jika tidak ada aksi dalam 3 hari, dana otomatis dicairkan ke pemenang. Ini melindungi freelancer dari pemberi kerja yang tidak responsif.",
+      },
+      {
+        q: "Bagaimana jika terjadi sengketa?",
+        a: "Pemberi kerja bisa mengklik Komplain (dalam 3 hari setelah pengiriman). Status berubah menjadi Sengketa dan admin akan meninjau — memeriksa deskripsi pekerjaan, file hasil kerja, dan riwayat diskusi privat — lalu memutuskan mencairkan dana ke pemenang atau mengembalikan ke pemberi kerja.",
+      },
+      {
+        q: "Bisakah saya melampirkan gambar atau PDF di deskripsi pekerjaan?",
+        a: (
+          <>
+            Ya. Form pembuatan pekerjaan menggunakan <strong>rich text editor</strong> yang mendukung teks berformat,
+            list, tabel, dan sisipan gambar langsung (mis. flowchart atau screenshot). Anda juga dapat mengupload file{" "}
+            <strong>PDF</strong> terpisah sebagai spesifikasi teknis (maks 10 MB). PDF hanya bisa diakses oleh pemenang
+            dan admin.
+          </>
+        ),
+      },
+      {
+        q: "Apakah ada batas waktu untuk pekerjaan?",
+        a: "Ya. Saat membuat pekerjaan Anda menentukan durasi penawaran (misalnya 30 hari). Jika batas waktu habis sebelum ada pemenang yang dipilih, pekerjaan otomatis kedaluwarsa dan dana dikembalikan ke pemberi kerja.",
+      },
+      {
+        q: "Siapa saja yang bisa melihat komentar privat?",
+        a: "Hanya pemberi kerja, pemenang, dan admin. Komentar privat tidak terlihat oleh pelamar lain atau pengunjung umum.",
       },
     ],
   },
