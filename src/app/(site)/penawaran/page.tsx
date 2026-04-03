@@ -104,7 +104,7 @@ export default async function PenawaranPage() {
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-lg font-bold text-broker-gold">Rp {fmtIdr(job.budgetIdr)}</p>
+                <p className="text-lg font-bold text-broker-gold">Rp {fmtIdr(job.budgetIdr.toString())}</p>
                 <p className="text-[10px] text-broker-muted uppercase tracking-wide">maks. budget</p>
                 <p className="text-xs text-broker-muted">{job._count.bids} pelamar</p>
               </div>
