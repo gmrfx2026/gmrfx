@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const disclaimer =
-  "Perdagangan valuta asing dengan margin memiliki tingkat risiko yang tinggi, dan mungkin tidak cocok untuk semua investor. Sebelum memutuskan untuk memperdagangkan produk yang ditawarkan oleh broker, Anda harus mempertimbangkan dengan cermat tujuan, situasi keuangan, kebutuhan, dan tingkat pengalaman Anda. Traders Family memberikan saran umum yang tidak mempertimbangkan tujuan, situasi keuangan, atau kebutuhan Anda. Isi situs web ini tidak boleh ditafsirkan sebagai nasihat pribadi. Ada kemungkinan Anda dapat mengalami kerugian melebihi dana yang Anda setorkan dan oleh karena itu, Anda tidak boleh berspekulasi dengan modal yang tidak mampu Anda rugikan. Anda harus menyadari semua risiko yang terkait dengan perdagangan dengan margin.";
+  "Perdagangan valuta asing dengan margin memiliki tingkat risiko yang tinggi, dan mungkin tidak cocok untuk semua investor. Sebelum memutuskan untuk memperdagangkan produk yang ditawarkan oleh broker, Anda harus mempertimbangkan dengan cermat tujuan, situasi keuangan, kebutuhan, dan tingkat pengalaman Anda. GMR FX memberikan saran umum yang tidak mempertimbangkan tujuan, situasi keuangan, atau kebutuhan Anda. Isi situs web ini tidak boleh ditafsirkan sebagai nasihat pribadi. Ada kemungkinan Anda dapat mengalami kerugian melebihi dana yang Anda setorkan dan oleh karena itu, Anda tidak boleh berspekulasi dengan modal yang tidak mampu Anda rugikan. Anda harus menyadari semua risiko yang terkait dengan perdagangan dengan margin.";
 
 export function SiteFooter() {
   return (
