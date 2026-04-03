@@ -154,21 +154,3 @@ export async function POST(req: Request) {
   }
 }
 
-/** Validasi token copy (digunakan oleh copy-feed endpoint). */
-export async function resolveCopyToken(rawToken: string) {
-  if (!rawToken || rawToken.length < 16) return null;
-  const hash = hashMt5ApiToken(rawToken);
-  return prisma.mtCopyFollow.findFirst({
-    where: {
-      copyTokenHash: hash,
-      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-    },
-    select: {
-      id: true,
-      followerUserId: true,
-      publisherUserId: true,
-      mtLogin: true,
-      expiresAt: true,
-    },
-  });
-}
