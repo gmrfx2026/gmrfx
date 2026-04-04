@@ -437,22 +437,42 @@ export default async function ProfilPage({
 
       {showWalletTransfer && (
         <>
-          <section className="border-t border-broker-border pt-10">
+          {/* Navigasi cepat antar-bagian wallet */}
+          <nav className="flex flex-wrap gap-2 border-b border-broker-border pb-4 mb-2">
+            {[
+              { href: "#deposit-usdt", label: "💰 Deposit USDT" },
+              { href: "#transfer", label: "↔ Transfer" },
+              { href: "#rekening", label: "🏦 Rekening & Dompet" },
+              { href: "#penarikan", label: "📤 Penarikan" },
+              { href: "#riwayat", label: "📋 Riwayat" },
+            ].map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="rounded-full border border-broker-border px-3 py-1 text-xs font-medium text-broker-muted hover:border-broker-accent/40 hover:text-white transition"
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
+
+          <section id="deposit-usdt" className="border-t border-broker-border pt-10">
             <WalletUsdtDeposit />
           </section>
-          <section className="border-t border-broker-border pt-10">
+          <section id="transfer" className="border-t border-broker-border pt-10">
             <ProfilWalletTransfer />
           </section>
-          <section className="border-t border-broker-border pt-10">
+          <section id="rekening" className="border-t border-broker-border pt-10">
             <h2 className="mb-5 text-lg font-bold text-white">Rekening &amp; Dompet</h2>
             <ProfilPaymentMethodForm />
           </section>
-          <section className="border-t border-broker-border pt-10">
+          <section id="penarikan" className="border-t border-broker-border pt-10">
             <h2 className="mb-5 text-lg font-bold text-white">Penarikan Saldo</h2>
             <ProfilWithdrawPanel walletBalance={bal} />
           </section>
           <ProfilMarketplaceEscrowSection rows={marketplaceEscrowRows} />
           {walletHistoryBundle && (
+            <div id="riwayat">
             <ProfilWalletHistory
               rows={walletHistoryRows}
               total={walletHistoryBundle.total}
@@ -462,6 +482,7 @@ export default async function ProfilPage({
               toStr={walletHistoryBundle.toStr}
               q={walletHistoryBundle.q}
             />
+            </div>
           )}
         </>
       )}
