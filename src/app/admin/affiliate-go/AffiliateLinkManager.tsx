@@ -224,7 +224,7 @@ export function AffiliateLinkManager({ links }: { links: Link[] }) {
               </>
             ))}
             {links.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400 text-sm">Belum ada link broker. Klik "Tambah Link" di atas.</td></tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400 text-sm">Belum ada link broker. Klik &ldquo;Tambah Link&rdquo; di atas.</td></tr>
             )}
           </tbody>
         </table>

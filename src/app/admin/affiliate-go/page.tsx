@@ -60,7 +60,7 @@ export default async function AdminAffiliateGoPage() {
         <h2 className="text-lg font-bold text-gray-800">Statistik Kunjungan /go</h2>
         <p className="mt-0.5 text-sm text-gray-500">
           Setiap kunjungan ke halaman <code className="rounded bg-gray-200 px-1">/go</code> dicatat sekali.
-          Perkiraan "orang" memakai cookie pengunjung di browser.
+          Perkiraan &ldquo;orang&rdquo; memakai cookie pengunjung di browser.
         </p>
 
         <dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
