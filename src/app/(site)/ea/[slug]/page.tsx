@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { toMemberSlug } from "@/lib/memberSlug";
@@ -13,6 +14,27 @@ import { MarketplaceProductStarRating } from "@/components/marketplace/Marketpla
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const decoded = decodeURIComponent(slug);
+  const ea = await prisma.sharedExpertAdvisor.findFirst({
+    where: { slug: decoded, published: true },
+    select: { title: true, description: true },
+  });
+  if (!ea) return { title: "Expert Advisor" };
+  const description = ea.description?.replace(/<[^>]+>/g, "").slice(0, 160).trim() || `Expert Advisor MetaTrader: ${ea.title}`;
+  return {
+    title: ea.title,
+    description,
+    openGraph: {
+      title: `${ea.title} — Expert Advisor MetaTrader`,
+      description,
+      type: "website",
+    },
+    twitter: { card: "summary_large_image", title: ea.title, description },
+  };
+}
 
 export default async function EaDetailPage({ params }: Props) {
   const { slug } = await params;

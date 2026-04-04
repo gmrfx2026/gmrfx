@@ -8,10 +8,53 @@ const dmSans = DM_Sans({
   variable: "--font-dm-sans",
 });
 
+const SITE_URL = "https://gmrfx.app";
+
 export const metadata: Metadata = {
-  title: "GMR FX — Komunitas Trader, Edukasi & Berbagi Strategi",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "GMR FX — Komunitas Trader, Edukasi & Berbagi Strategi",
+    template: "%s | GMR FX",
+  },
   description:
     "Komunitas trading Indonesia: komunikasi antar trader, edukasi forex & CFD, berbagi strategi, artikel & berita, galeri, marketplace indikator & Expert Advisor.",
+  keywords: [
+    "komunitas trader",
+    "edukasi forex",
+    "copy trading",
+    "expert advisor",
+    "indikator mt4 mt5",
+    "gmrfx",
+    "trading indonesia",
+    "belajar forex",
+    "sinyal trading",
+    "marketplace ea indikator",
+  ],
+  authors: [{ name: "GMR FX", url: SITE_URL }],
+  creator: "GMR FX",
+  publisher: "GMR FX",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-snippet": -1, "max-image-preview": "large" },
+  },
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    url: SITE_URL,
+    siteName: "GMR FX",
+    title: "GMR FX — Komunitas Trader, Edukasi & Berbagi Strategi",
+    description:
+      "Wadah trader untuk berdiskusi, belajar, dan berbagi ide strategi — dengan artikel, komunitas, dan marketplace indikator & EA.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GMR FX — Komunitas Trader, Edukasi & Berbagi Strategi",
+    description: "Komunitas trading Indonesia — edukasi, copy trading, marketplace indikator & EA.",
+  },
+  alternates: {
+    canonical: SITE_URL,
+  },
 };
 
 export const viewport: Viewport = {

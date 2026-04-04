@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { toMemberSlug } from "@/lib/memberSlug";
@@ -14,6 +15,29 @@ import { MarketplaceProductStarRating } from "@/components/marketplace/Marketpla
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const decoded = decodeURIComponent(slug);
+  const ind = await prisma.sharedIndicator.findFirst({
+    where: { slug: decoded, published: true },
+    select: { title: true, description: true, coverImageUrl: true, slug: true },
+  });
+  if (!ind) return { title: "Indikator" };
+  const description = ind.description?.replace(/<[^>]+>/g, "").slice(0, 160).trim() || `Indikator MetaTrader: ${ind.title}`;
+  const cover = resolveMarketplaceIndicatorCoverUrl(ind.coverImageUrl, ind.slug);
+  return {
+    title: ind.title,
+    description,
+    openGraph: {
+      title: `${ind.title} — Indikator MetaTrader`,
+      description,
+      type: "website",
+      ...(cover ? { images: [{ url: cover, width: 800, height: 450 }] } : {}),
+    },
+    twitter: { card: "summary_large_image", title: ind.title, description },
+  };
+}
 
 export default async function IndikatorDetailPage({ params }: Props) {
   const { slug } = await params;

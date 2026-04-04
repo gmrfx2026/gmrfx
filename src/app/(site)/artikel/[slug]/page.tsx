@@ -78,8 +78,36 @@ export default async function ArtikelDetailPage({
   const avg =
     ratingCount > 0 ? article.ratings.reduce((s, r) => s + r.stars, 0) / ratingCount : null;
 
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.title,
+    description: article.excerpt?.trim() || `Artikel: ${article.title}`,
+    author: {
+      "@type": "Person",
+      name: article.author.name ?? "Redaksi GMR FX",
+    },
+    publisher: {
+      "@type": "Organization",
+      "@id": "https://gmrfx.app/#organization",
+      name: "GMR FX",
+    },
+    datePublished: article.publishedAt?.toISOString(),
+    dateModified: article.updatedAt.toISOString(),
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://gmrfx.app/artikel/${encodeURIComponent(article.slug)}`,
+    },
+    inLanguage: "id",
+  };
+
   return (
-    <article className="mx-auto max-w-3xl px-4 py-12">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <article className="mx-auto max-w-3xl px-4 py-12">
       <p className="text-xs uppercase tracking-wider text-broker-accent">Artikel</p>
       <h1 className="mt-2 text-3xl font-bold text-white md:text-4xl">{article.title}</h1>
       <p className="mt-3 text-sm text-broker-muted">
@@ -108,5 +136,6 @@ export default async function ArtikelDetailPage({
         }))}
       />
     </article>
+    </>
   );
 }
