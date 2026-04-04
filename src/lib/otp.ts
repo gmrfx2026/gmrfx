@@ -7,7 +7,48 @@ function randomSixDigit(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-/** Buat OTP. Di development, cek konsol server atau gunakan DEV_OTP_CODE. */
+/**
+ * Kirim OTP via WhatsApp menggunakan Fonnte.
+ * Set FONNTE_TOKEN di environment variable.
+ * Jika tidak ada token (dev), kode dicetak ke console.
+ */
+async function sendOtpWhatsApp(phone: string, code: string): Promise<void> {
+  const token = process.env.FONNTE_TOKEN;
+  if (!token) {
+    console.info(`[OTP-DEV] code=${code} phone=${phone} (set FONNTE_TOKEN di .env untuk kirim WhatsApp)`);
+    return;
+  }
+
+  // Normalisasi nomor: hapus +, 0 di depan ganti 62
+  let target = phone.replace(/\D/g, "");
+  if (target.startsWith("0")) target = "62" + target.slice(1);
+  if (!target.startsWith("62")) target = "62" + target;
+
+  const message =
+    `Kode OTP GMR FX Anda: *${code}*\n\n` +
+    `Berlaku 10 menit. Jangan bagikan kode ini kepada siapapun.\n\n` +
+    `Abaikan jika Anda tidak merasa meminta kode ini.`;
+
+  const res = await fetch("https://api.fonnte.com/send", {
+    method: "POST",
+    headers: {
+      Authorization: token,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      target,
+      message,
+      countryCode: "62",
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error(`[OTP] Fonnte gagal (${res.status}): ${body}`);
+  }
+}
+
+/** Buat dan kirim OTP. */
 export async function createOtp(
   userId: string,
   purpose: OtpPurpose,
@@ -21,11 +62,7 @@ export async function createOtp(
     data: { userId, purpose, phone, code, expiresAt },
   });
 
-  if (process.env.NODE_ENV === "development") {
-    console.info(
-      `[OTP ${purpose}] user=${userId} phone=${phone} code=${code} (sambungkan SMS gateway di production)`
-    );
-  }
+  await sendOtpWhatsApp(phone, code);
 
   return code;
 }
