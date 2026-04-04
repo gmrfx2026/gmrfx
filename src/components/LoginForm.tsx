@@ -69,9 +69,14 @@ export function LoginForm({
           />
         </div>
         <div className="space-y-1.5">
-          <label htmlFor="login-password" className="block text-xs font-medium text-broker-muted">
-            Password
-          </label>
+          <div className="flex items-center justify-between">
+            <label htmlFor="login-password" className="block text-xs font-medium text-broker-muted">
+              Password
+            </label>
+            <Link href="/lupa-password" className="text-xs text-broker-accent hover:underline">
+              Lupa password?
+            </Link>
+          </div>
           <input
             id="login-password"
             type="password"

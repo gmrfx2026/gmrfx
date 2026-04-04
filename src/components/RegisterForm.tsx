@@ -50,7 +50,7 @@ export function RegisterForm() {
       setErr(parts.join(" "));
       return;
     }
-    router.push("/login?registered=1");
+    router.push(`/verifikasi-hp?email=${encodeURIComponent(form.email)}`);
   }
 
   const input =

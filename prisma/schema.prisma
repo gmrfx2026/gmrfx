@@ -41,6 +41,8 @@ enum HomeNewsStatus {
 enum OtpPurpose {
   PHONE_UPDATE
   PASSWORD_CHANGE
+  PHONE_VERIFY
+  PASSWORD_RESET
 }
 
 enum CommentTarget {
