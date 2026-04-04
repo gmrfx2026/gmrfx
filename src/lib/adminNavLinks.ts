@@ -105,6 +105,16 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         label: "Penarikan saldo",
         icon: "M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z",
       },
+      {
+        href: "/admin/withdrawals/banks",
+        label: "Kelola bank",
+        icon: "M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z",
+      },
+      {
+        href: "/admin/withdrawals/settings",
+        label: "Pengaturan penarikan",
+        icon: "M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4",
+      },
     ],
   },
   {

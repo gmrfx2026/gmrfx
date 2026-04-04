@@ -910,6 +910,51 @@ model UsdtDepositRequest {
   @@index([status])
 }
 
+/// Bank yang tersedia untuk penarikan — dikelola admin, dibaca member saat pengisian rekening.
+model WithdrawBankOption {
+  id        String   @id @default(cuid())
+  /// Kode singkat: BCA, BNI, MANDIRI, BRI, dst.
+  code      String   @unique @db.VarChar(20)
+  /// Nama lengkap bank.
+  fullName  String   @db.VarChar(100)
+  /// Aktif = ditampilkan di form member.
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, sortOrder])
+}
+
+/// Konfigurasi global fitur penarikan — satu baris dengan id "default".
+model WithdrawConfig {
+  id String @id @default("default")
+
+  /// Master switch; false = semua tombol penarikan disembunyikan.
+  withdrawEnabled  Boolean @default(true)
+  /// Izinkan penarikan ke rekening bank.
+  bankEnabled      Boolean @default(true)
+  /// Izinkan penarikan ke dompet USDT.
+  usdtEnabled      Boolean @default(true)
+
+  /// Minimal jumlah penarikan dalam IDR.
+  minAmountIdr     Int     @default(50000)
+  /// Maksimal jumlah per pengajuan dalam IDR (0 = tidak terbatas).
+  maxAmountIdr     Int     @default(0)
+
+  /// Biaya admin flat per pengajuan bank (IDR).
+  bankFeeIdr       Int     @default(0)
+  /// Biaya admin flat per pengajuan USDT (IDR).
+  usdtFeeIdr       Int     @default(0)
+
+  /// Nama jaringan USDT yang ditampilkan ke member.
+  usdtNetwork      String  @default("BSC (BEP-20)") @db.VarChar(50)
+  /// Catatan/syarat yang ditampilkan ke member saat pilih metode.
+  processingNote   String? @db.VarChar(500)
+
+  updatedAt DateTime @updatedAt
+}
+
 /// Permintaan penarikan saldo IDR oleh member — ke bank lokal atau dompet USDT.
 model WithdrawRequest {
   id      String         @id @default(cuid())
