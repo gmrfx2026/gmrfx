@@ -10,6 +10,10 @@ type PaymentMethod = {
   usdtWithdrawAddress: string | null;
 };
 
+const input = "mt-1 w-full rounded-lg border border-broker-border bg-broker-bg px-3 py-2 text-sm text-white placeholder:text-broker-muted focus:outline-none focus:ring-1 focus:ring-broker-accent";
+const label = "block text-xs font-medium text-broker-muted";
+const card = "rounded-2xl border border-broker-border bg-broker-surface/50 p-5";
+
 export function ProfilPaymentMethodForm() {
   const [banks, setBanks] = useState<BankOption[]>([]);
   const [usdtNetwork, setUsdtNetwork] = useState("BSC (BEP-20)");
@@ -38,46 +42,76 @@ export function ProfilPaymentMethodForm() {
     else { const errObj = json.error; setMsg({ ok: false, text: typeof errObj === "string" ? errObj : JSON.stringify(errObj) }); }
   }
 
-  if (loading) return <div className="text-sm text-gray-400">Memuat…</div>;
+  if (loading) return <div className="text-sm text-broker-muted">Memuat…</div>;
 
   return (
-    <form onSubmit={save} className="space-y-6">
+    <form onSubmit={save} className="space-y-5 max-w-2xl">
       {/* Bank */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-        <h3 className="mb-4 text-sm font-bold text-gray-800">Rekening Bank</h3>
+      <div className={card}>
+        <h3 className="mb-4 text-sm font-semibold text-white">Rekening Bank</h3>
         {banks.length === 0 ? (
-          <p className="text-sm text-gray-400">Belum ada bank tersedia. Hubungi administrator.</p>
+          <p className="text-sm text-broker-muted">Belum ada bank tersedia. Hubungi administrator.</p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Bank</label>
-              <select value={data.bankName ?? ""} onChange={e => setData(d => ({ ...d, bankName: e.target.value || null }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300">
-                <option value="">-- Pilih bank --</option>
-                {banks.map(b => <option key={b.id} value={b.code}>{b.code} — {b.fullName}</option>)}
+              <label className={label}>Bank</label>
+              <select
+                value={data.bankName ?? ""}
+                onChange={e => setData(d => ({ ...d, bankName: e.target.value || null }))}
+                className="mt-1 w-full rounded-lg border border-broker-border bg-broker-bg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-broker-accent"
+              >
+                <option value="" className="bg-broker-bg">-- Pilih bank --</option>
+                {banks.map(b => <option key={b.id} value={b.code} className="bg-broker-bg">{b.code} — {b.fullName}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Nomor Rekening</label>
-              <input type="text" inputMode="numeric" maxLength={30} value={data.bankAccountNumber ?? ""} onChange={e => setData(d => ({ ...d, bankAccountNumber: e.target.value.replace(/\D/g, "") || null }))} placeholder="1234567890" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-300" />
+              <label className={label}>Nomor Rekening</label>
+              <input
+                type="text" inputMode="numeric" maxLength={30}
+                value={data.bankAccountNumber ?? ""}
+                onChange={e => setData(d => ({ ...d, bankAccountNumber: e.target.value.replace(/\D/g, "") || null }))}
+                placeholder="1234567890"
+                className={input}
+              />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Nama Pemilik Rekening</label>
-              <input type="text" maxLength={100} value={data.bankAccountHolder ?? ""} onChange={e => setData(d => ({ ...d, bankAccountHolder: e.target.value.toUpperCase() || null }))} placeholder="NAMA SESUAI BUKU TABUNGAN" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-emerald-300" />
+              <label className={label}>Nama Pemilik Rekening</label>
+              <input
+                type="text" maxLength={100}
+                value={data.bankAccountHolder ?? ""}
+                onChange={e => setData(d => ({ ...d, bankAccountHolder: e.target.value.toUpperCase() || null }))}
+                placeholder="NAMA SESUAI BUKU TABUNGAN"
+                className={`${input} uppercase`}
+              />
             </div>
           </div>
         )}
-        <p className="mt-2 text-xs text-gray-400">Nama pemilik harus sama persis dengan nama di buku tabungan.</p>
+        <p className="mt-3 text-xs text-broker-muted">Nama pemilik harus sama persis dengan nama di buku tabungan.</p>
       </div>
 
       {/* USDT */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-        <h3 className="mb-1 text-sm font-bold text-gray-800">Alamat Dompet USDT</h3>
-        <p className="mb-3 text-xs text-gray-400">Jaringan {usdtNetwork}. Pastikan alamat sudah benar — kesalahan tidak bisa dipulihkan.</p>
-        <input type="text" maxLength={66} value={data.usdtWithdrawAddress ?? ""} onChange={e => setData(d => ({ ...d, usdtWithdrawAddress: e.target.value.trim() || null }))} placeholder="0x..." className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-300" />
+      <div className={card}>
+        <h3 className="mb-1 text-sm font-semibold text-white">Alamat Dompet USDT</h3>
+        <p className="mb-3 text-xs text-broker-muted">Jaringan {usdtNetwork}. Pastikan alamat sudah benar — kesalahan tidak bisa dipulihkan.</p>
+        <input
+          type="text" maxLength={66}
+          value={data.usdtWithdrawAddress ?? ""}
+          onChange={e => setData(d => ({ ...d, usdtWithdrawAddress: e.target.value.trim() || null }))}
+          placeholder="0x..."
+          className={`${input} font-mono`}
+        />
       </div>
 
-      {msg && <p className={`text-sm font-medium ${msg.ok ? "text-emerald-600" : "text-red-500"}`}>{msg.text}</p>}
-      <button type="submit" disabled={busy} className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50 transition">{busy ? "Menyimpan…" : "Simpan Data Pembayaran"}</button>
+      {msg && (
+        <p className={`text-sm font-medium ${msg.ok ? "text-emerald-400" : "text-red-400"}`}>{msg.text}</p>
+      )}
+
+      <button
+        type="submit" disabled={busy}
+        className="rounded-xl bg-broker-accent px-5 py-2.5 text-sm font-semibold text-broker-bg hover:opacity-90 disabled:opacity-50 transition"
+      >
+        {busy ? "Menyimpan…" : "Simpan Data Pembayaran"}
+      </button>
     </form>
   );
 }
