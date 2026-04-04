@@ -6,19 +6,36 @@ export const NEWS_IMAGES_SUBDIR = "news-images";
 
 export const ARTICLE_IMAGE_MAX_BYTES = 2.5 * 1024 * 1024;
 
-/** Path publik yang boleh dipakai di atribut `src` gambar artikel (UUID v4 + ekstensi). */
+/** Path publik lokal (local dev). */
 export const ARTICLE_IMAGE_SRC_RE =
   /^\/uploads\/article-images\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|jpeg|png|webp)$/i;
 
 export const NEWS_IMAGE_SRC_RE =
   /^\/uploads\/news-images\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|jpeg|png|webp)$/i;
 
+/** Vercel Blob public URL: https://<store>.public.blob.vercel-storage.com/<path> */
+export const VERCEL_BLOB_SRC_RE =
+  /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\/.+/i;
+
+/** URL gambar eksternal apa pun via HTTPS (untuk gambar yang disisipkan dari URL web). */
+export const EXTERNAL_HTTPS_IMAGE_RE = /^https:\/\/.+/i;
+
 export function isAllowedArticleImageSrc(src: string): boolean {
-  return ARTICLE_IMAGE_SRC_RE.test(String(src ?? "").trim());
+  const s = String(src ?? "").trim();
+  return (
+    ARTICLE_IMAGE_SRC_RE.test(s) ||
+    VERCEL_BLOB_SRC_RE.test(s) ||
+    EXTERNAL_HTTPS_IMAGE_RE.test(s)
+  );
 }
 
 export function isAllowedNewsImageSrc(src: string): boolean {
-  return NEWS_IMAGE_SRC_RE.test(String(src ?? "").trim());
+  const s = String(src ?? "").trim();
+  return (
+    NEWS_IMAGE_SRC_RE.test(s) ||
+    VERCEL_BLOB_SRC_RE.test(s) ||
+    EXTERNAL_HTTPS_IMAGE_RE.test(s)
+  );
 }
 
 export function isAllowedArticleOrNewsImageSrc(src: string): boolean {
