@@ -9,6 +9,7 @@ export function RegisterForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -24,9 +25,16 @@ export function RegisterForm() {
     setForm((f) => ({ ...f, [k]: v }));
   }
 
+  const passwordMismatch = confirmPassword.length > 0 && form.password !== confirmPassword;
+  const passwordMatch = confirmPassword.length > 0 && form.password === confirmPassword;
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr("");
+    if (form.password !== confirmPassword) {
+      setErr("Konfirmasi password tidak cocok. Periksa kembali password Anda.");
+      return;
+    }
     setLoading(true);
     const res = await fetch("/api/register", {
       method: "POST",
@@ -73,7 +81,34 @@ export function RegisterForm() {
           onChange={(e) => set("password", e.target.value)}
           required
           minLength={8}
+          placeholder="Minimal 8 karakter"
         />
+        <p className="mt-1 text-[11px] text-broker-muted/70">Minimal 8 karakter</p>
+      </div>
+      <div>
+        <label className="text-xs text-broker-muted">Konfirmasi Password</label>
+        <div className="relative">
+          <input
+            className={`${input} ${passwordMismatch ? "border-red-500 pr-8" : passwordMatch ? "border-emerald-500 pr-8" : ""}`}
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            placeholder="Ulangi password di atas"
+          />
+          {passwordMatch && (
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-emerald-400 text-sm">✓</span>
+          )}
+          {passwordMismatch && (
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-red-400 text-sm">✗</span>
+          )}
+        </div>
+        {passwordMismatch && (
+          <p className="mt-1 text-[11px] text-red-400">Password tidak cocok</p>
+        )}
+        {passwordMatch && (
+          <p className="mt-1 text-[11px] text-emerald-400">Password cocok</p>
+        )}
       </div>
       <div>
         <label className="text-xs text-broker-muted">Nomor WhatsApp</label>
@@ -98,7 +133,7 @@ export function RegisterForm() {
       {err && <p className="text-sm text-broker-danger">{err}</p>}
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || passwordMismatch}
         className="w-full rounded-lg bg-broker-accent py-3 text-sm font-semibold text-broker-bg disabled:opacity-50"
       >
         {loading ? "Menyimpan…" : "Daftar"}
