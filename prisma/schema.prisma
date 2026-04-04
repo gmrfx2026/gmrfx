@@ -590,6 +590,25 @@ model Comment {
   createdAt     DateTime      @default(now())
 }
 
+/// Link afiliasi broker yang ditampilkan di halaman /go. Dikelola dari admin panel.
+model BrokerAffiliateLink {
+  id        String   @id @default(cuid())
+  /// Nama broker, misal "Exness" atau "Tickmill".
+  name      String   @db.VarChar(100)
+  /// URL afiliasi lengkap.
+  url       String   @db.VarChar(2048)
+  /// URL logo/gambar opsional (path publik atau URL eksternal).
+  logoUrl   String?  @db.VarChar(2048)
+  /// Urutan tampil — makin kecil makin awal dibuka.
+  sortOrder Int      @default(0)
+  /// Jika false, link tidak akan dibuka di /go.
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, sortOrder])
+}
+
 /// Kunjungan ke halaman /go (pintu keluar ke mitra afiliasi).
 model AffiliateGoClick {
   id         String   @id @default(cuid())

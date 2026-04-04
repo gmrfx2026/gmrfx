@@ -2,7 +2,6 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { AFFILIATE_EXNESS_URL, AFFILIATE_TICKMILL_URL } from "@/lib/affiliatePartners";
 import { parseGoPageDownloadPath } from "@/lib/goPageDownloadPath";
 
 const VISITOR_COOKIE = "gmrfx_go_vid";
@@ -12,11 +11,7 @@ function getOrCreateVisitorId(): string {
   if (typeof document === "undefined") return "";
   const match = document.cookie.match(new RegExp(`(?:^|; )${VISITOR_COOKIE}=([^;]*)`));
   if (match?.[1]) {
-    try {
-      return decodeURIComponent(match[1]);
-    } catch {
-      return match[1];
-    }
+    try { return decodeURIComponent(match[1]); } catch { return match[1]; }
   }
   const id =
     typeof crypto !== "undefined" && crypto.randomUUID
@@ -26,47 +21,28 @@ function getOrCreateVisitorId(): string {
   return id;
 }
 
-/** Tanpa daftar fitur window — beberapa browser lebih sering mengizinkan popup. */
 function openInNewTab(url: string): boolean {
   try {
     const w = window.open(url, "_blank");
-    if (w) {
-      try {
-        w.opener = null;
-      } catch {
-        /* ignore */
-      }
-      return true;
-    }
-  } catch {
-    /* ignore */
-  }
+    if (w) { try { w.opener = null; } catch { /* ignore */ } return true; }
+  } catch { /* ignore */ }
   return false;
 }
 
-/**
- * Unduhan API kadang gagal dengan window.open langsung; buka tab kosong lalu arahkan ke URL unduhan.
- */
 function openDownloadInNewTab(url: string): boolean {
   if (openInNewTab(url)) return true;
   try {
     const w = window.open("about:blank", "_blank");
     if (w) {
-      try {
-        w.opener = null;
-      } catch {
-        /* ignore */
-      }
+      try { w.opener = null; } catch { /* ignore */ }
       w.location.href = url;
       return true;
     }
-  } catch {
-    /* ignore */
-  }
+  } catch { /* ignore */ }
   return false;
 }
 
-export function GoOutClient() {
+export function GoOutClient({ brokerUrls }: { brokerUrls: string[] }) {
   const searchParams = useSearchParams();
   const downloadPath = parseGoPageDownloadPath(searchParams.get("download"));
 
@@ -83,9 +59,7 @@ export function GoOutClient() {
 
     const origin = window.location.origin;
     const fullDownload = downloadPath ? `${origin}${downloadPath}` : "";
-
-    let exOk = false;
-    let tkOk = false;
+    const results: boolean[] = [];
     let dlOk = true;
 
     const schedule = (fn: () => void, ms: number) => {
@@ -93,33 +67,25 @@ export function GoOutClient() {
       timeoutsRef.current.push(id);
     };
 
-    schedule(() => {
-      exOk = openInNewTab(AFFILIATE_EXNESS_URL);
-    }, 0);
+    brokerUrls.forEach((url, i) => {
+      schedule(() => { results[i] = openInNewTab(url); }, i * 200);
+    });
 
+    const checkDelay = Math.max(brokerUrls.length * 200 + 250, 450);
     schedule(() => {
-      tkOk = openInNewTab(AFFILIATE_TICKMILL_URL);
-    }, 200);
-
-    schedule(() => {
-      if (fullDownload) {
-        dlOk = openDownloadInNewTab(fullDownload);
-      }
-      const allOk = exOk && tkOk && (!downloadPath || dlOk);
+      if (fullDownload) dlOk = openDownloadInNewTab(fullDownload);
+      const allOk = results.every(Boolean) && (!downloadPath || dlOk);
       setPopupBlocked(!allOk);
-    }, 450);
+    }, checkDelay);
 
     return () => {
-      for (const id of timeoutsRef.current) {
-        clearTimeout(id);
-      }
+      for (const id of timeoutsRef.current) clearTimeout(id);
       timeoutsRef.current = [];
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [downloadPath]);
 
-  if (popupBlocked !== true) {
-    return <div className="min-h-[1px] w-full" aria-hidden />;
-  }
+  if (popupBlocked !== true) return <div className="min-h-[1px] w-full" aria-hidden />;
 
   return (
     <div className="mx-auto max-w-md px-2 text-center">
