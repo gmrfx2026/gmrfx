@@ -102,6 +102,22 @@ enum UsdtDepositStatus {
   FAILED
 }
 
+enum WithdrawMethod {
+  BANK
+  USDT
+}
+
+enum WithdrawStatus {
+  /// Menunggu diproses admin.
+  PENDING
+  /// Sedang diproses (admin mulai mentransfer).
+  PROCESSING
+  /// Selesai — dana sudah dikirim.
+  APPROVED
+  /// Ditolak — saldo dikembalikan.
+  REJECTED
+}
+
 enum JobOfferStatus {
   /// Dana sudah dikunci; menunggu pelamar.
   OPEN
@@ -150,6 +166,13 @@ model User {
 
   walletAddress String? @unique
   walletBalance Decimal @default(0)
+
+  /// Nama bank untuk penarikan: BCA | BNI | MANDIRI | BRI
+  bankName          String? @db.VarChar(20)
+  bankAccountNumber String? @db.VarChar(30)
+  bankAccountHolder String? @db.VarChar(100)
+  /// Alamat dompet USDT (BEP-20/BSC) untuk penarikan.
+  usdtWithdrawAddress String? @db.VarChar(66)
 
   profileStatus String?
   memberSlug    String? @unique
@@ -226,6 +249,7 @@ model User {
   marketplaceEscrowAsBuyer  MarketplaceEscrowHold[] @relation("MarketplaceEscrowBuyer")
   marketplaceEscrowAsSeller MarketplaceEscrowHold[] @relation("MarketplaceEscrowSeller")
   usdtDeposits              UsdtDepositRequest[]
+  withdrawRequests          WithdrawRequest[]
 
   jobOffersPosted    JobOffer[]       @relation("JobRequester")
   jobOffersWon       JobOffer[]       @relation("JobWinner")
@@ -884,6 +908,37 @@ model UsdtDepositRequest {
 
   @@index([userId, createdAt])
   @@index([status])
+}
+
+/// Permintaan penarikan saldo IDR oleh member — ke bank lokal atau dompet USDT.
+model WithdrawRequest {
+  id      String         @id @default(cuid())
+  userId  String
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Jumlah IDR yang ingin ditarik (sudah dikunci dari walletBalance saat submit).
+  amountIdr Decimal @db.Decimal(18, 2)
+
+  method WithdrawMethod
+  status WithdrawStatus @default(PENDING)
+
+  /// Snapshot data bank saat submit (metode = BANK).
+  bankName          String? @db.VarChar(20)
+  bankAccountNumber String? @db.VarChar(30)
+  bankAccountHolder String? @db.VarChar(100)
+
+  /// Snapshot alamat dompet USDT saat submit (metode = USDT).
+  usdtAddress String? @db.VarChar(66)
+
+  /// Catatan dari admin (alasan tolak, bukti transfer, dll.).
+  adminNote   String?   @db.Text
+  processedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
 }
 
 /// Penawaran pekerjaan pembuatan EA/indikator antar member; dana dikunci saat posting.

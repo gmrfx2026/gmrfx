@@ -13,6 +13,8 @@ import {
   normalizeDateRange,
   parseWalletHistoryListParams,
 } from "@/lib/walletTransferFilters";
+import { ProfilPaymentMethodForm } from "@/components/ProfilPaymentMethodForm";
+import { ProfilWithdrawPanel } from "@/components/ProfilWithdrawPanel";
 import { ProfilStatusBlock } from "@/components/ProfilStatusBlock";
 import { ProfilChatBox } from "@/components/ProfilChatBox";
 import { ProfilFollowSettings } from "@/components/ProfilFollowSettings";
@@ -440,6 +442,14 @@ export default async function ProfilPage({
           </section>
           <section className="border-t border-broker-border pt-10">
             <ProfilWalletTransfer />
+          </section>
+          <section className="border-t border-broker-border pt-10">
+            <h2 className="mb-5 text-lg font-bold text-white">Rekening &amp; Dompet</h2>
+            <ProfilPaymentMethodForm />
+          </section>
+          <section className="border-t border-broker-border pt-10">
+            <h2 className="mb-5 text-lg font-bold text-white">Penarikan Saldo</h2>
+            <ProfilWithdrawPanel walletBalance={bal} />
           </section>
           <ProfilMarketplaceEscrowSection rows={marketplaceEscrowRows} />
           {walletHistoryBundle && (
