@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { OtpPurpose } from "@prisma/client";
-import { verifyOtp } from "@/lib/otp";
 import bcrypt from "bcryptjs";
 
 export async function PATCH(req: Request) {
@@ -12,23 +10,35 @@ export async function PATCH(req: Request) {
   }
 
   const body = await req.json();
+  const currentPassword = String(body.currentPassword ?? "");
   const newPassword = String(body.newPassword ?? "");
-  const code = String(body.code ?? "").trim();
-  if (newPassword.length < 8 || !code) {
-    return NextResponse.json({ error: "Password minimal 8 karakter & OTP wajib" }, { status: 400 });
+  const confirmPassword = String(body.confirmPassword ?? "");
+
+  if (!currentPassword) {
+    return NextResponse.json({ error: "Password saat ini wajib diisi" }, { status: 400 });
+  }
+  if (newPassword.length < 8) {
+    return NextResponse.json({ error: "Password baru minimal 8 karakter" }, { status: 400 });
+  }
+  if (newPassword !== confirmPassword) {
+    return NextResponse.json({ error: "Konfirmasi password baru tidak cocok" }, { status: 400 });
+  }
+  if (currentPassword === newPassword) {
+    return NextResponse.json({ error: "Password baru tidak boleh sama dengan password saat ini" }, { status: 400 });
   }
 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-  if (!user?.phoneWhatsApp) {
-    return NextResponse.json({ error: "Nomor HP belum terdaftar" }, { status: 400 });
-  }
-  if (!user.passwordHash) {
-    return NextResponse.json({ error: "Akun ini memakai login Google" }, { status: 400 });
+
+  if (!user?.passwordHash) {
+    return NextResponse.json(
+      { error: "Akun ini menggunakan login Google — tidak memiliki password yang bisa diubah" },
+      { status: 400 }
+    );
   }
 
-  const ok = await verifyOtp(user.id, OtpPurpose.PASSWORD_CHANGE, user.phoneWhatsApp, code);
-  if (!ok) {
-    return NextResponse.json({ error: "OTP salah atau kadaluarsa" }, { status: 400 });
+  const isCurrentCorrect = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!isCurrentCorrect) {
+    return NextResponse.json({ error: "Password saat ini salah" }, { status: 400 });
   }
 
   const passwordHash = await bcrypt.hash(newPassword, 12);
