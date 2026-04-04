@@ -228,10 +228,9 @@ export function MemberSidebar({
                   <Fragment key={it.key}>
                     <NavLinkRow it={it} active={active} badge={badge} />
 
-                    {/* Sub-nav Portofolio — muncul tepat di bawah item Portofolio */}
+                    {/* Sub-nav Portofolio — hanya PortfolioNavEmbedded, tanpa Komunitas */}
                     {it.key === "portfolio" && (
                       <div className="ml-2 mt-0.5 space-y-0 border-l border-broker-border/50 pl-2">
-                        <CommunityNavEmbedded menu={portfolioMenu} nested />
                         <PortfolioNavEmbedded menu={portfolioMenu} nested />
                       </div>
                     )}
@@ -262,6 +261,9 @@ export function MemberSidebar({
                 );
               })}
             </nav>
+
+            {/* Komunitas — seksi tersendiri di bawah menu member */}
+            <CommunityNavEmbedded menu={portfolioMenu} />
           </div>
 
           {toast && (
