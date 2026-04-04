@@ -17,7 +17,7 @@
 //+------------------------------------------------------------------+
 #property copyright "GMR FX"
 #property link      "https://gmrfx.app"
-#property version   "3.11"
+#property version   "3.12"
 #property description "Copy trading GMR FX. Isi InpCopyToken dari halaman Komunitas → Mengikuti."
 
 #include <Trade\Trade.mqh>
@@ -132,6 +132,15 @@ ulong FindLocal(const string pubTk)
    return 0;
 }
 
+// Deteksi filling type terbaik yang didukung broker untuk simbol tertentu
+ENUM_ORDER_TYPE_FILLING BestFilling(const string sym)
+{
+   uint filling=(uint)SymbolInfoInteger(sym,SYMBOL_FILLING_FLAGS);
+   if((filling & SYMBOL_FILLING_FOK)!=0) return ORDER_FILLING_FOK;
+   if((filling & SYMBOL_FILLING_IOC)!=0) return ORDER_FILLING_IOC;
+   return ORDER_FILLING_RETURN;
+}
+
 void OpenPos(const PubPos &p)
 {
    string sym=LocalSym(p.symbol);
@@ -143,7 +152,8 @@ void OpenPos(const PubPos &p)
    double tp=(InpCopyTP&&p.tp>0)?NormalizeDouble(p.tp,dig):0;
    g_trade.SetExpertMagicNumber(InpMagic);
    g_trade.SetDeviationInPoints((ulong)(InpSlippage/SymbolInfoDouble(sym,SYMBOL_POINT)));
-   g_trade.SetTypeFilling(ORDER_FILLING_IOC);
+   // Auto-deteksi filling type yang didukung broker untuk simbol ini
+   g_trade.SetTypeFilling(BestFilling(sym));
    string cmt=MakeCmt(p.pubTicket);
    bool ok=(p.side==0)?g_trade.Buy(vol,sym,0,sl,tp,cmt):g_trade.Sell(vol,sym,0,sl,tp,cmt);
    if(ok) Log("BUKA "+(p.side==0?"BUY":"SELL")+" "+sym+" lot="+DoubleToString(vol,2)+" pub="+p.pubTicket);
