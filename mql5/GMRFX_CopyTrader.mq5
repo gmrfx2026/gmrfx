@@ -17,7 +17,7 @@
 //+------------------------------------------------------------------+
 #property copyright "GMR FX"
 #property link      "https://gmrfx.app"
-#property version   "3.10"
+#property version   "3.11"
 #property description "Copy trading GMR FX. Isi InpCopyToken dari halaman Komunitas → Mengikuti."
 
 #include <Trade\Trade.mqh>
@@ -82,9 +82,10 @@ string GetPubTk(const string c)
 string LocalSym(const string s)
 {
    if(!InpUseSuffix || StringLen(InpSuffix)==0) return s;
-   if(SymbolInfoInteger(s,SYMBOL_EXIST)>0) return s;
+   // Cek versi suffix dulu — jika ada, prioritaskan
    string ws=s+InpSuffix;
    if(SymbolInfoInteger(ws,SYMBOL_EXIST)>0) return ws;
+   if(SymbolInfoInteger(s,SYMBOL_EXIST)>0) return s;
    return s;
 }
 
@@ -105,11 +106,15 @@ bool SymOk(const string sym)
 
 double CalcVol(const double pv,const string sym)
 {
+   // Pastikan simbol tersedia di Market Watch agar SymbolInfo mengembalikan data valid
+   SymbolSelect(sym,true);
    double v=(InpVolumeMode==VOL_FIXED)?InpFixedLot:pv*MathMax(0.001,InpRatio);
    double step=SymbolInfoDouble(sym,SYMBOL_VOLUME_STEP);
    double mn=SymbolInfoDouble(sym,SYMBOL_VOLUME_MIN);
    double mx=SymbolInfoDouble(sym,SYMBOL_VOLUME_MAX);
    if(step<=0)step=0.01;
+   if(mn<=0)mn=0.01;   // fallback: volume_min tidak terbaca (simbol belum di-subscribe)
+   if(mx<=0)mx=100.0;  // fallback: volume_max tidak terbaca
    v=MathRound(v/step)*step;
    return NormalizeDouble(MathMax(mn,MathMin(mx,v)),2);
 }

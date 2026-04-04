@@ -17,7 +17,7 @@
 //+------------------------------------------------------------------+
 #property copyright "GMR FX"
 #property link      "https://gmrfx.app"
-#property version   "3.00"
+#property version   "3.01"
 #property description "Copy trading GMR FX. Isi InpCopyToken dari halaman Komunitas → Mengikuti."
 #property strict
 
@@ -68,8 +68,9 @@ string GetPubTk(const string c){string pfx="GMRFX_CP_"+IntegerToString(InpMagic)
 string LocalSym(const string s)
 {
    if(!InpUseSuffix||StringLen(InpSuffix)==0)return s;
-   if(MarketInfo(s,MODE_BID)>0)return s;
+   // Cek versi suffix dulu — jika ada bid, prioritaskan
    string ws=s+InpSuffix;if(MarketInfo(ws,MODE_BID)>0)return ws;
+   if(MarketInfo(s,MODE_BID)>0)return s;
    return s;
 }
 
@@ -86,7 +87,10 @@ double CalcVol(const double pv,const string sym)
 {
    double v=(InpVolumeMode==1)?pv*MathMax(0.001,InpRatio):InpFixedLot;
    double step=MarketInfo(sym,MODE_LOTSTEP);double mn=MarketInfo(sym,MODE_MINLOT);double mx=MarketInfo(sym,MODE_MAXLOT);
-   if(step<=0)step=0.01;v=MathFloor(v/step)*step;
+   if(step<=0)step=0.01;
+   if(mn<=0)mn=0.01;   // fallback jika simbol belum di-subscribe Market Watch
+   if(mx<=0)mx=100.0;
+   v=MathFloor(v/step)*step;
    return NormalizeDouble(MathMax(mn,MathMin(mx,v)),2);
 }
 
