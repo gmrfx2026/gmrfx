@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 export const metadata: Metadata = {
   title: "FAQ — GMR FX",
   description:
-    "Pertanyaan yang sering diajukan tentang akun, wallet, deposit USDT, copy trading EA, portofolio MetaTrader, marketplace, penawaran pekerjaan freelance, dan penggunaan GMR FX.",
+    "Pertanyaan yang sering diajukan tentang akun, wallet, deposit USDT, penarikan saldo, copy trading EA, portofolio MetaTrader, marketplace, penawaran pekerjaan freelance, dan penggunaan GMR FX.",
 };
 
 type FaqItem = { q: string; a: ReactNode };
@@ -98,6 +98,63 @@ const groups: { title: string; items: FaqItem[] }[] = [
             dan catatan, lalu kirim.
           </>
         ),
+      },
+    ],
+  },
+  {
+    title: "Penarikan Saldo",
+    items: [
+      {
+        q: "Bisakah saldo IDR di wallet ditarik ke rekening bank atau USDT?",
+        a: (
+          <>
+            Ya. Saldo IDR dapat ditarik ke <strong>rekening bank</strong> (BCA, BNI, Mandiri, BRI, dll.) atau ke{" "}
+            <strong>dompet USDT BSC (BEP-20)</strong>. Simpan data rekening terlebih dahulu di{" "}
+            <Link href="/profil/wallet/rekening">Wallet → Rekening &amp; Dompet</Link>, lalu ajukan penarikan di{" "}
+            <Link href="/profil/wallet/penarikan">Wallet → Penarikan Saldo</Link>.
+          </>
+        ),
+      },
+      {
+        q: "Bagaimana alur mengajukan penarikan saldo?",
+        a: (
+          <>
+            <strong>1.</strong> Simpan data rekening bank atau alamat USDT di Rekening &amp; Dompet.{" "}
+            <strong>2.</strong> Buka Penarikan Saldo, isi jumlah dan pilih metode, klik{" "}
+            <em>Lanjutkan → Verifikasi OTP</em>.{" "}
+            <strong>3.</strong> Masukkan kode 6 digit yang dikirim ke WhatsApp Anda, klik{" "}
+            <em>Konfirmasi Penarikan</em>.{" "}
+            <strong>4.</strong> Saldo dikunci dan pengajuan masuk ke antrian admin untuk diproses.
+          </>
+        ),
+      },
+      {
+        q: "Mengapa penarikan memerlukan verifikasi OTP?",
+        a: "OTP (One-Time Password) via WhatsApp adalah lapisan keamanan tambahan untuk memastikan bahwa yang mengajukan penarikan adalah pemilik akun. Ini melindungi akun Anda jika terjadi penyalahgunaan sesi login.",
+      },
+      {
+        q: "Kode OTP saya tidak masuk — apa yang harus dilakukan?",
+        a: "Pastikan nomor WhatsApp di profil Anda sudah benar dan aktif. Kode OTP berlaku 10 menit. Jika tidak diterima, tunggu 60 detik lalu klik tombol Kirim ulang OTP. Jika masih bermasalah, hubungi admin melalui kanal resmi.",
+      },
+      {
+        q: "Berapa lama proses pencairan dana penarikan?",
+        a: "Admin memproses penarikan dalam 1×24 jam kerja. Status berubah dari Menunggu → Diproses → Selesai. Anda dapat memantau riwayat pengajuan di halaman Penarikan Saldo.",
+      },
+      {
+        q: "Apakah ada biaya penarikan?",
+        a: "Biaya penarikan (jika ada) ditampilkan secara transparan di form sebelum Anda mengonfirmasi. Jumlah yang akan diterima = jumlah yang diajukan dikurangi biaya.",
+      },
+      {
+        q: "Apa yang terjadi jika pengajuan penarikan ditolak?",
+        a: "Saldo yang dikunci saat pengajuan otomatis dikembalikan ke wallet Anda. Alasan penolakan ditampilkan di riwayat pengajuan. Anda dapat mengajukan kembali setelah memperbaiki data atau kondisi yang menyebabkan penolakan.",
+      },
+      {
+        q: "Bisakah saya mengubah atau membatalkan pengajuan penarikan?",
+        a: "Pengajuan yang sudah disubmit tidak dapat diubah atau dibatalkan secara mandiri. Hubungi admin sesegera mungkin jika ada kesalahan data sebelum pengajuan diproses.",
+      },
+      {
+        q: "Bisakah ada dua pengajuan penarikan aktif sekaligus?",
+        a: "Tidak. Hanya boleh ada satu pengajuan aktif (status Menunggu atau Diproses) pada satu waktu. Pengajuan baru bisa dilakukan setelah pengajuan sebelumnya selesai atau ditolak.",
       },
     ],
   },

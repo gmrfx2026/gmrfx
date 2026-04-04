@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Petunjuk & Penggunaan — GMR FX",
   description:
-    "Panduan lengkap untuk member GMR FX: akun, wallet, deposit USDT, marketplace, penawaran pekerjaan freelance EA/indikator, portofolio MetaTrader, copy trading EA, komunitas, dan aturan penggunaan.",
+    "Panduan lengkap untuk member GMR FX: akun, wallet, deposit USDT, penarikan saldo (bank/USDT + OTP), marketplace, penawaran pekerjaan freelance EA/indikator, portofolio MetaTrader, copy trading EA, komunitas, dan aturan penggunaan.",
 };
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
@@ -59,6 +59,7 @@ const TOC = [
   { id: "akun",        label: "Daftar, masuk & profil" },
   { id: "wallet",      label: "Wallet & saldo IDR" },
   { id: "deposit",     label: "Deposit USDT (BSC)" },
+  { id: "penarikan",   label: "Penarikan saldo" },
   { id: "marketplace", label: "Marketplace Indikator & EA" },
   { id: "penawaran",   label: "Penawaran Pekerjaan (Freelance)" },
   { id: "portofolio",  label: "Portofolio MetaTrader" },
@@ -217,7 +218,89 @@ export default function CaraPemakaianPage() {
           </Sub>
         </Section>
 
-        {/* 4. Marketplace */}
+        {/* 4. Penarikan Saldo */}
+        <Section id="penarikan" title="Penarikan Saldo">
+          <p>
+            Saldo IDR di wallet dapat ditarik ke <strong className="text-zinc-300">rekening bank</strong> (BCA, BNI,
+            Mandiri, BRI, dll.) atau ke <strong className="text-zinc-300">dompet USDT (BSC/BEP-20)</strong>. Setiap
+            pengajuan wajib diverifikasi dengan <strong className="text-zinc-300">kode OTP via WhatsApp</strong> untuk
+            keamanan.
+          </p>
+
+          <Sub title="Langkah 1 — Simpan data rekening">
+            <Li>
+              Buka{" "}
+              <Link href="/profil/wallet/rekening" className="text-broker-accent hover:underline">
+                Wallet → Rekening &amp; Dompet
+              </Link>
+              . Pilih bank, masukkan nomor rekening, dan nama pemilik (harus sama persis dengan buku tabungan), lalu klik{" "}
+              <strong className="text-zinc-300">Simpan Data Pembayaran</strong>.
+            </Li>
+            <Li>
+              Untuk penarikan USDT, masukkan alamat dompet BSC (BEP-20) di kolom{" "}
+              <strong className="text-zinc-300">Alamat Dompet USDT</strong> dan simpan. Periksa ulang alamat sebelum
+              menyimpan — kesalahan tidak dapat dipulihkan.
+            </Li>
+          </Sub>
+
+          <Sub title="Langkah 2 — Ajukan penarikan">
+            <Li>
+              Buka{" "}
+              <Link href="/profil/wallet/penarikan" className="text-broker-accent hover:underline">
+                Wallet → Penarikan Saldo
+              </Link>
+              .
+            </Li>
+            <Li>
+              Masukkan jumlah IDR yang ingin ditarik (minimal dan maksimal sesuai pengaturan admin), pilih metode
+              (Bank atau USDT), lalu klik <strong className="text-zinc-300">Lanjutkan → Verifikasi OTP</strong>.
+            </Li>
+            <Li>
+              Sistem mengirim <strong className="text-zinc-300">kode OTP 6 digit</strong> ke nomor WhatsApp yang
+              terdaftar. Kode berlaku <strong className="text-zinc-300">10 menit</strong>.
+            </Li>
+          </Sub>
+
+          <Sub title="Langkah 3 — Verifikasi OTP">
+            <Li>
+              Layar berganti menampilkan ringkasan penarikan (jumlah, biaya, diterima, metode). Masukkan kode OTP
+              dari WhatsApp, lalu klik <strong className="text-zinc-300">Konfirmasi Penarikan</strong>.
+            </Li>
+            <Li>
+              Jika OTP salah atau sudah kedaluarsa, minta OTP baru dengan tombol{" "}
+              <strong className="text-zinc-300">Kirim ulang OTP</strong> (tersedia setelah 60 detik).
+            </Li>
+            <Li>
+              Setelah berhasil, saldo langsung dikunci dan pengajuan masuk ke antrian admin dengan status{" "}
+              <em>Menunggu</em>. Klik <strong className="text-zinc-300">Kembali</strong> untuk mengedit form
+              sebelum mengonfirmasi.
+            </Li>
+          </Sub>
+
+          <Sub title="Status pengajuan">
+            <Li><strong className="text-zinc-300">Menunggu</strong> — pengajuan diterima, admin belum memproses.</Li>
+            <Li><strong className="text-zinc-300">Diproses</strong> — admin sedang memproses transfer.</Li>
+            <Li><strong className="text-zinc-300">Selesai</strong> — dana telah dikirim ke rekening/dompet Anda.</Li>
+            <Li>
+              <strong className="text-zinc-300">Ditolak</strong> — pengajuan ditolak (alasan tertera di riwayat).
+              Saldo yang dikunci <em>otomatis dikembalikan</em> ke wallet.
+            </Li>
+          </Sub>
+
+          <Warn>
+            <strong>⚠ Penting:</strong> Pastikan nomor rekening, nama pemilik, dan alamat USDT sudah benar sebelum
+            mengajukan — kesalahan pengiriman akibat data yang salah bukan tanggung jawab platform. Admin tidak pernah
+            meminta kode OTP melalui pesan pribadi.
+          </Warn>
+
+          <Note>
+            Hanya boleh ada satu pengajuan aktif pada satu waktu. Pengajuan baru bisa dilakukan setelah status
+            sebelumnya berubah menjadi Selesai atau Ditolak. Biaya penarikan (jika ada) ditampilkan di form sebelum
+            konfirmasi.
+          </Note>
+        </Section>
+
+        {/* 6. Marketplace */}
         <Section id="marketplace" title="Marketplace Indikator & EA">
           <Sub title="Membeli produk">
             <Li>
@@ -235,7 +318,7 @@ export default function CaraPemakaianPage() {
           </Sub>
         </Section>
 
-        {/* 5. Penawaran Pekerjaan */}
+        {/* 7. Penawaran Pekerjaan */}
         <Section id="penawaran" title="Penawaran Pekerjaan (Freelance)">
           <p>
             Fitur <Link href="/penawaran" className="text-broker-accent hover:underline">Penawaran Pekerjaan</Link> mempertemukan
@@ -319,7 +402,7 @@ export default function CaraPemakaianPage() {
           </Note>
         </Section>
 
-        {/* 6. Portofolio */}
+        {/* 8. Portofolio */}
         <Section id="portofolio" title="Portofolio MetaTrader">
           <p>
             Hubungkan terminal MetaTrader ke situs menggunakan <strong className="text-zinc-300">token EA</strong> (bukan
@@ -369,7 +452,7 @@ export default function CaraPemakaianPage() {
           </Sub>
         </Section>
 
-        {/* 6. Komunitas copy trading */}
+        {/* 9. Komunitas copy trading */}
         <Section id="komunitas" title="Komunitas & copy trading">
           <Sub title="Sebagai publisher (trader yang diikuti)">
             <Li>
