@@ -27,7 +27,7 @@ export async function PATCH(req: Request) {
   if (body.provinsi !== undefined) data.provinsi = body.provinsi ? String(body.provinsi) : null;
   if (body.kodePos !== undefined) data.kodePos = body.kodePos ? String(body.kodePos) : null;
   if (body.negara !== undefined) data.negara = body.negara ? String(body.negara) : null;
-  if (body.memberStatus && (body.memberStatus === "ACTIVE" || body.memberStatus === "SUSPENDED")) {
+  if (body.memberStatus && (["ACTIVE","SUSPENDED","PENDING"] as const).includes(body.memberStatus)) {
     data.memberStatus = body.memberStatus as MemberStatus;
   }
   if (body.role && (body.role === "USER" || body.role === "ADMIN")) {
