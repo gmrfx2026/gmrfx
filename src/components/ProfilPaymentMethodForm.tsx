@@ -45,7 +45,7 @@ export function ProfilPaymentMethodForm() {
   if (loading) return <div className="text-sm text-broker-muted">Memuat…</div>;
 
   return (
-    <form onSubmit={save} className="space-y-5 max-w-2xl">
+    <form onSubmit={save} className="space-y-5">
       {/* Bank */}
       <div className={card}>
         <h3 className="mb-4 text-sm font-semibold text-white">Rekening Bank</h3>

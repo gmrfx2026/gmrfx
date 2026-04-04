@@ -80,7 +80,7 @@ export function ProfilWithdrawPanel({ walletBalance }: { walletBalance: number }
   );
 
   return (
-    <div className="space-y-5 max-w-2xl">
+    <div className="space-y-5">
       {/* Form ajukan */}
       <div className={card}>
         <h3 className="mb-1 text-sm font-semibold text-white">Ajukan Penarikan</h3>
