@@ -179,13 +179,14 @@ export default async function AdminMembersPortfolioPage({
 
       <div className="mt-6 overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
         <table className="min-w-full text-left text-sm">
-          <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-500">
+            <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-500">
             <tr>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Nama</th>
               <th className="px-4 py-3">Akun MT</th>
               <th className="px-4 py-3">Data terakhir</th>
               <th className="px-4 py-3">Daftar situs</th>
+              <th className="px-4 py-3">Portofolio</th>
               <th className="px-4 py-3">Profil</th>
             </tr>
           </thead>
@@ -204,6 +205,11 @@ export default async function AdminMembersPortfolioPage({
                   </td>
                   <td className="px-4 py-2 text-gray-600">
                     {formatJakarta(u.createdAt, { dateStyle: "short" })}
+                  </td>
+                  <td className="px-4 py-2">
+                    <Link href={`/admin/members/${u.id}/portfolio`} className="font-medium text-blue-600 hover:underline">
+                      Dashboard
+                    </Link>
                   </td>
                   <td className="px-4 py-2">
                     <Link href={profilHref} className="font-medium text-green-700 hover:underline">
