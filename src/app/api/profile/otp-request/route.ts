@@ -28,6 +28,6 @@ export async function POST(req: Request) {
     message:
       process.env.NODE_ENV === "development"
         ? "OTP dicetak di log server (atau gunakan DEV_OTP_CODE di .env)"
-        : "OTP dikirim ke nomor terdaftar (sambungkan SMS gateway)",
+        : "OTP dikirim ke nomor WhatsApp terdaftar",
   });
 }
