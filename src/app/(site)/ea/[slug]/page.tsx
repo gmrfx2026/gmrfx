@@ -99,8 +99,38 @@ export default async function EaDetailPage({ params }: Props) {
 
   const descHtml = ea.description?.trim() ? sanitizeArticleHtml(ea.description) : "";
 
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: ea.title,
+    description: ea.description?.replace(/<[^>]+>/g, "").slice(0, 500) || ea.title,
+    url: `https://gmrfx.app/ea/${encodeURIComponent(ea.slug)}`,
+    brand: { "@type": "Brand", name: "GMR FX" },
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "IDR",
+      price: priceNum <= 0 ? "0" : String(priceNum),
+      availability: "https://schema.org/InStock",
+      url: `https://gmrfx.app/ea/${encodeURIComponent(ea.slug)}`,
+      seller: { "@type": "Person", name: ea.seller.name ?? "Member GMR FX" },
+    },
+    ...(ratingCount > 0 && ratingAvg
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: ratingAvg.toFixed(1),
+            reviewCount: ratingCount,
+            bestRating: "5",
+            worstRating: "1",
+          },
+        }
+      : {}),
+  };
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
+      <div className="mx-auto max-w-3xl px-4 py-10">
       <p className="text-xs text-broker-muted">
         <Link href="/ea" className="hover:text-broker-accent">
           Expert Advisor
@@ -163,5 +193,6 @@ export default async function EaDetailPage({ params }: Props) {
         Diperbarui {ea.updatedAt.toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}
       </p>
     </div>
+    </>
   );
 }

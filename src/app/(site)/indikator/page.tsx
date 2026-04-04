@@ -1,9 +1,26 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
 import { marketplaceDescriptionPlainExcerpt } from "@/lib/marketplaceDescription";
 import { resolveMarketplaceIndicatorCoverUrl } from "@/lib/marketplaceCoverImage";
 import { MarketplaceRatingBadge } from "@/components/marketplace/MarketplaceRatingBadge";
+
+export const metadata: Metadata = {
+  title: "Indikator MetaTrader — GMR FX",
+  description:
+    "Download dan beli indikator MetaTrader MT4/MT5 dari member komunitas GMR FX. Tersedia indikator gratis dan berbayar untuk trading forex & CFD.",
+  openGraph: {
+    title: "Indikator MetaTrader — GMR FX",
+    description: "Download indikator MT4/MT5 gratis dan berbayar dari komunitas trader Indonesia.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Indikator MetaTrader — GMR FX",
+    description: "Download indikator MT4/MT5 gratis dan berbayar dari komunitas trader Indonesia.",
+  },
+};
 
 export const dynamic = "force-dynamic";
 

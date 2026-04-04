@@ -3,7 +3,16 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 
-export const metadata: Metadata = { title: "Penawaran Pekerjaan — GMR FX" };
+export const metadata: Metadata = {
+  title: "Penawaran Pekerjaan Freelance EA & Indikator — GMR FX",
+  description:
+    "Cari atau posting pekerjaan pembuatan Expert Advisor (EA) dan indikator MetaTrader. Sistem lelang harga antar sesama member trader Indonesia.",
+  openGraph: {
+    title: "Penawaran Pekerjaan Freelance EA & Indikator — GMR FX",
+    description: "Posting pekerjaan atau tawarkan jasa pembuatan EA & indikator kepada sesama member trader.",
+    type: "website",
+  },
+};
 export const dynamic = "force-dynamic";
 
 const CATEGORY_LABEL: Record<string, string> = { EA: "Expert Advisor", INDICATOR: "Indikator", OTHER: "Lainnya" };

@@ -9,8 +9,24 @@ export const dynamic = "force-dynamic";
 type Props = { params: { id: string } };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const job = await prisma.jobOffer.findUnique({ where: { id: params.id }, select: { title: true } });
-  return { title: job ? `${job.title} — Penawaran Pekerjaan GMR FX` : "Penawaran Pekerjaan" };
+  const job = await prisma.jobOffer.findUnique({
+    where: { id: params.id },
+    select: { title: true, description: true, category: true, budgetIdr: true },
+  });
+  if (!job) return { title: "Penawaran Pekerjaan — GMR FX" };
+  const plainDesc = job.description.replace(/<[^>]+>/g, "").slice(0, 160).trim();
+  const categoryLabel = job.category === "EA" ? "Expert Advisor" : job.category === "INDICATOR" ? "Indikator" : "Lainnya";
+  const description = plainDesc || `Proyek ${categoryLabel} — budget Rp ${Number(job.budgetIdr.toString()).toLocaleString("id-ID")}`;
+  return {
+    title: `${job.title} — Penawaran GMR FX`,
+    description,
+    openGraph: {
+      title: job.title,
+      description,
+      type: "website",
+    },
+    twitter: { card: "summary", title: job.title, description },
+  };
 }
 
 export default async function JobDetailPage({ params }: Props) {

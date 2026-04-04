@@ -1,8 +1,25 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
 import { marketplaceDescriptionPlainExcerpt } from "@/lib/marketplaceDescription";
 import { MarketplaceRatingBadge } from "@/components/marketplace/MarketplaceRatingBadge";
+
+export const metadata: Metadata = {
+  title: "Expert Advisor (EA) MetaTrader — GMR FX",
+  description:
+    "Download dan beli Expert Advisor (EA) MetaTrader MT4/MT5 dari member komunitas GMR FX. Tersedia EA gratis dan berbayar untuk otomasi trading forex & CFD.",
+  openGraph: {
+    title: "Expert Advisor MetaTrader — GMR FX",
+    description: "Download EA MT4/MT5 gratis dan berbayar dari komunitas trader Indonesia.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Expert Advisor MetaTrader — GMR FX",
+    description: "Download EA MT4/MT5 gratis dan berbayar dari komunitas trader Indonesia.",
+  },
+};
 
 export const dynamic = "force-dynamic";
 

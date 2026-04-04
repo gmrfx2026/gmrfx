@@ -1,7 +1,13 @@
 import { auth } from "@/auth";
 import { isGoogleOAuthConfigured } from "@/lib/googleOAuthEnv";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { LoginForm } from "@/components/LoginForm";
+
+export const metadata: Metadata = {
+  title: "Login — GMR FX",
+  robots: { index: false, follow: false },
+};
 
 export default async function LoginPage({
   searchParams,

@@ -1,6 +1,12 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { RegisterForm } from "@/components/RegisterForm";
+
+export const metadata: Metadata = {
+  title: "Daftar Member — GMR FX",
+  robots: { index: false, follow: false },
+};
 
 export default async function DaftarPage() {
   const session = await auth();
