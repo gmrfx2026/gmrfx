@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Fragment } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -26,36 +27,6 @@ const WALLET_SUB_LINKS = [
   { href: "/profil/wallet/rekening", label: "Rekening & Dompet", matchFn: (p: string) => p.startsWith("/profil/wallet/rekening") },
   { href: "/profil/wallet/penarikan", label: "Penarikan Saldo", matchFn: (p: string) => p.startsWith("/profil/wallet/penarikan") },
 ];
-
-function WalletSubNav({ activeTab, pathname, tab }: { activeTab: string; pathname: string; tab: string | null }) {
-  if (activeTab !== "wallet") return null;
-  return (
-    <div className="mt-3 border-t border-broker-border/40 pt-3">
-      <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-widest text-broker-muted/60">
-        Wallet
-      </p>
-      <nav className="space-y-0.5">
-        {WALLET_SUB_LINKS.map((l) => {
-          const isActive = l.matchFn(pathname, tab);
-          return (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={[
-                "block rounded-lg pl-5 pr-3 py-1.5 text-[13px] transition leading-snug",
-                isActive
-                  ? "bg-broker-accent/15 font-medium text-broker-accent ring-1 ring-broker-accent/35"
-                  : "text-broker-muted hover:bg-broker-bg/50 hover:text-white",
-              ].join(" ")}
-            >
-              {l.label}
-            </Link>
-          );
-        })}
-      </nav>
-    </div>
-  );
-}
 
 function NavLinkRow({
   it,
@@ -253,11 +224,35 @@ export function MemberSidebar({
               {items.map((it) => {
                 const active = it.key === activeTab;
                 const badge = it.key === "chat" && chatUnread > 0 ? chatUnread : null;
-                return <NavLinkRow key={it.key} it={it} active={active} badge={badge} />;
+                return (
+                  <Fragment key={it.key}>
+                    <NavLinkRow it={it} active={active} badge={badge} />
+                    {it.key === "wallet" && activeTab === "wallet" && (
+                      <div className="ml-2 mt-0.5 space-y-0.5 border-l border-broker-border/50 pl-2">
+                        {WALLET_SUB_LINKS.map((l) => {
+                          const isActive = l.matchFn(pathname, tab);
+                          return (
+                            <Link
+                              key={l.href}
+                              href={l.href}
+                              className={[
+                                "block rounded-lg px-3 py-1.5 text-[13px] leading-snug transition",
+                                isActive
+                                  ? "bg-broker-accent/15 font-medium text-broker-accent ring-1 ring-broker-accent/35"
+                                  : "text-broker-muted hover:bg-broker-bg/50 hover:text-white",
+                              ].join(" ")}
+                            >
+                              {l.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </Fragment>
+                );
               })}
             </nav>
 
-            <WalletSubNav activeTab={activeTab} pathname={pathname} tab={tab} />
             <CommunityNavEmbedded menu={portfolioMenu} />
             <PortfolioNavEmbedded menu={portfolioMenu} />
           </div>
