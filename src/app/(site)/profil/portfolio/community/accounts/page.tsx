@@ -61,15 +61,9 @@ export default async function PortfolioCommunityAccountsPage({
     <div className="space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">Akun komunitas</h1>
-          <p className="mt-1 text-sm text-broker-muted">
-            Nomor login MetaTrader tidak ditampilkan di daftar; klik <strong className="text-white">nama akun</strong> untuk
-            ringkasan statistik. Untuk mempublikasikan akun Anda, buka{" "}
-            <Link href="/profil/portfolio/community/publish" className="text-broker-accent hover:underline">
-              Publikasi copy trade
-            </Link>
-            .
-          </p>
+          <h1 className="text-xl font-bold uppercase tracking-wide text-white sm:text-2xl">
+            Akun trade publisher
+          </h1>
         </div>
         {bundle.total > 0 ? (
           <p className="text-xs text-broker-muted">
@@ -209,7 +203,7 @@ export default async function PortfolioCommunityAccountsPage({
           {bundle.totalPages > 1 ? (
             <nav
               className="flex flex-wrap items-center justify-end gap-3 text-xs text-broker-muted"
-              aria-label="Paginasi akun komunitas"
+              aria-label="Paginasi akun trade publisher"
             >
               {bundle.page > 1 ? (
                 <Link
