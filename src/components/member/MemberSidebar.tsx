@@ -230,10 +230,10 @@ export function MemberSidebar({
 
                     {/* Sub-nav Portofolio — muncul tepat di bawah item Portofolio */}
                     {it.key === "portfolio" && (
-                      <>
-                        <CommunityNavEmbedded menu={portfolioMenu} />
-                        <PortfolioNavEmbedded menu={portfolioMenu} />
-                      </>
+                      <div className="ml-2 mt-0.5 space-y-0 border-l border-broker-border/50 pl-2">
+                        <CommunityNavEmbedded menu={portfolioMenu} nested />
+                        <PortfolioNavEmbedded menu={portfolioMenu} nested />
+                      </div>
                     )}
 
                     {/* Sub-nav Wallet — muncul tepat di bawah item Wallet & Transfer */}

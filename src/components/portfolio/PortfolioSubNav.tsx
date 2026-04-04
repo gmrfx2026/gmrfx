@@ -110,7 +110,7 @@ export function getCommunityNavLinks(menu: PortfolioNavConfig): { href: string; 
 }
 
 /** Sub-menu Komunitas di kartu Member menu (desktop), terpisah dari blok Portofolio MetaTrader. */
-export function CommunityNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
+export function CommunityNavEmbedded({ menu, nested }: { menu: PortfolioNavConfig; nested?: boolean }) {
   const pathname = usePathname();
 
   const commSorted = useMemo(
@@ -135,6 +135,21 @@ export function CommunityNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
 
   if (commSorted.length === 0) return null;
 
+  if (nested) {
+    return (
+      <div className="space-y-0.5">
+        <p className="px-3 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-widest text-broker-muted/60">
+          Komunitas
+        </p>
+        <nav className="space-y-0.5" aria-label="Submenu komunitas">
+          {commSorted.map((k) => (
+            <SubNavLink key={k} href={hrefForPortfolioKey(k)} label={menu[k].label} isActive={isCommActive(k)} compact />
+          ))}
+        </nav>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-3 border-t border-broker-border/50 pt-3">
       <div className="px-2 pb-2">
@@ -156,7 +171,7 @@ export function CommunityNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
 }
 
 /** Sub-menu portofolio di dalam kartu Member menu (desktop). */
-export function PortfolioNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
+export function PortfolioNavEmbedded({ menu, nested }: { menu: PortfolioNavConfig; nested?: boolean }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const selectedMtLogin = (searchParams.get("mtLogin") ?? "").trim();
@@ -218,30 +233,25 @@ export function PortfolioNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
     return playbookActive;
   }
 
-  return (
-    <div className="mt-3 border-t border-broker-border/50 pt-3">
-      <div className="px-2 pb-2">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-accent">Portofolio MetaTrader</p>
-      </div>
+  const navContent = (
+    <nav className="space-y-0.5" aria-label="Submenu portofolio">
+      {menu.dashboard.enabled ? (
+        <SubNavLink
+          href={hrefForPortfolioKey("dashboard")}
+          label={menu.dashboard.label}
+          isActive={dashActive}
+          compact
+        />
+      ) : null}
 
-      <nav className="space-y-0.5" aria-label="Submenu portofolio">
-        {menu.dashboard.enabled ? (
-          <SubNavLink
-            href={hrefForPortfolioKey("dashboard")}
-            label={menu.dashboard.label}
-            isActive={dashActive}
+      {showPortfolioBlock ? (
+        <div className="pt-0.5">
+          <SectionToggle
+            open={portfolioOpen}
+            onToggle={() => setPortfolioOpen((o) => !o)}
+            label="Portofolio"
             compact
           />
-        ) : null}
-
-        {showPortfolioBlock ? (
-          <div className="pt-0.5">
-            <SectionToggle
-              open={portfolioOpen}
-              onToggle={() => setPortfolioOpen((o) => !o)}
-              label="Portofolio"
-              compact
-            />
             {portfolioOpen && (
               <div className="mt-0.5 space-y-0.5 border-l border-broker-border/40 pl-1.5">
                 {menu.summary.enabled ? (
@@ -294,6 +304,25 @@ export function PortfolioNavEmbedded({ menu }: { menu: PortfolioNavConfig }) {
           />
         ))}
       </nav>
+  );
+
+  if (nested) {
+    return (
+      <div className="mt-1 space-y-0.5">
+        <p className="px-3 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-widest text-broker-muted/60">
+          Portofolio MT
+        </p>
+        {navContent}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 border-t border-broker-border/50 pt-3">
+      <div className="px-2 pb-2">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-broker-accent">Portofolio MetaTrader</p>
+      </div>
+      {navContent}
     </div>
   );
 }
