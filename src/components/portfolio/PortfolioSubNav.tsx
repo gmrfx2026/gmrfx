@@ -233,6 +233,24 @@ export function PortfolioNavEmbedded({ menu, nested }: { menu: PortfolioNavConfi
     return playbookActive;
   }
 
+  /* Mode nested: daftar datar tanpa header/toggle, urutan Dashboard → Ringkasan → Jurnal/Trade log/Playbook */
+  if (nested) {
+    return (
+      <nav className="space-y-0.5" aria-label="Submenu portofolio">
+        {menu.dashboard.enabled && (
+          <SubNavLink href={hrefForPortfolioKey("dashboard")} label={menu.dashboard.label} isActive={dashActive} compact />
+        )}
+        {menu.summary.enabled && (
+          <SubNavLink href={hrefForPortfolioKey("summary")} label={menu.summary.label} isActive={summaryActive} compact />
+        )}
+        {midSorted.map((k) => (
+          <SubNavLink key={k} href={hrefForPortfolioKey(k)} label={menu[k].label} isActive={isMidActive(k)} compact />
+        ))}
+      </nav>
+    );
+  }
+
+  /* Mode normal (standalone): dengan header + toggle MT logins */
   const navContent = (
     <nav className="space-y-0.5" aria-label="Submenu portofolio">
       {menu.dashboard.enabled ? (
@@ -305,17 +323,6 @@ export function PortfolioNavEmbedded({ menu, nested }: { menu: PortfolioNavConfi
         ))}
       </nav>
   );
-
-  if (nested) {
-    return (
-      <div className="mt-1 space-y-0.5">
-        <p className="px-3 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-widest text-broker-muted/60">
-          Portofolio MT
-        </p>
-        {navContent}
-      </div>
-    );
-  }
 
   return (
     <div className="mt-3 border-t border-broker-border/50 pt-3">
