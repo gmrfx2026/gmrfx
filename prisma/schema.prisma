@@ -19,6 +19,7 @@ enum Role {
 enum MemberStatus {
   ACTIVE
   SUSPENDED
+  PENDING
 }
 
 enum ArticleStatus {
