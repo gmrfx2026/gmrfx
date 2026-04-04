@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyOtp } from "@/lib/otp";
+import { MemberStatus } from "@prisma/client";
 
 export async function POST(req: Request) {
   const { email, code } = await req.json().catch(() => ({})) as { email?: string; code?: string };
@@ -12,7 +13,7 @@ export async function POST(req: Request) {
   if (!user) {
     return NextResponse.json({ error: "Akun tidak ditemukan" }, { status: 404 });
   }
-  if (user.memberStatus === "ACTIVE") {
+  if (user.memberStatus === MemberStatus.ACTIVE) {
     return NextResponse.json({ ok: true, alreadyActive: true });
   }
   if (!user.phoneWhatsApp) {
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
 
   await prisma.user.update({
     where: { id: user.id },
-    data: { memberStatus: "ACTIVE" },
+    data: { memberStatus: MemberStatus.ACTIVE },
   });
 
   return NextResponse.json({ ok: true });

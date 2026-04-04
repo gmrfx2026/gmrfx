@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
+import { Prisma, MemberStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { generateUniqueWalletAddress } from "@/lib/wallet";
 import { toMemberSlug } from "@/lib/memberSlug";
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     const dup = await prisma.user.findUnique({ where: { email } });
     if (dup) {
       // Jika akun PENDING dan nomor sama, izinkan kirim ulang OTP
-      if (dup.memberStatus === "PENDING" && dup.phoneWhatsApp === d.phoneWhatsApp) {
+      if (dup.memberStatus === MemberStatus.PENDING && dup.phoneWhatsApp === d.phoneWhatsApp) {
         await createOtp(dup.id, "PHONE_VERIFY", dup.phoneWhatsApp);
         return NextResponse.json({ ok: true, pending: true, email });
       }
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
         profileComplete: true,
         walletAddress,
         memberSlug,
-        memberStatus: "PENDING",
+        memberStatus: MemberStatus.PENDING,
       },
     });
 
