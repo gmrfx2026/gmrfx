@@ -227,6 +227,16 @@ export function MemberSidebar({
                 return (
                   <Fragment key={it.key}>
                     <NavLinkRow it={it} active={active} badge={badge} />
+
+                    {/* Sub-nav Portofolio — muncul tepat di bawah item Portofolio */}
+                    {it.key === "portfolio" && (
+                      <>
+                        <CommunityNavEmbedded menu={portfolioMenu} />
+                        <PortfolioNavEmbedded menu={portfolioMenu} />
+                      </>
+                    )}
+
+                    {/* Sub-nav Wallet — muncul tepat di bawah item Wallet & Transfer */}
                     {it.key === "wallet" && activeTab === "wallet" && (
                       <div className="ml-2 mt-0.5 space-y-0.5 border-l border-broker-border/50 pl-2">
                         {WALLET_SUB_LINKS.map((l) => {
@@ -252,9 +262,6 @@ export function MemberSidebar({
                 );
               })}
             </nav>
-
-            <CommunityNavEmbedded menu={portfolioMenu} />
-            <PortfolioNavEmbedded menu={portfolioMenu} />
           </div>
 
           {toast && (
