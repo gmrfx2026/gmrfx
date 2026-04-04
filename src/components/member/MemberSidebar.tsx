@@ -17,7 +17,44 @@ import clsx from "clsx";
 function getActiveTab(pathname: string, tab: string | null): string {
   if (pathname.startsWith("/profil/portfolio")) return "portfolio";
   if (pathname.startsWith("/profil/artikel/baru")) return "artikel";
+  if (pathname.startsWith("/profil/wallet")) return "wallet";
   return tab ?? "home";
+}
+
+const WALLET_SUB_LINKS = [
+  { href: "/profil?tab=wallet", label: "Ringkasan", matchFn: (p: string, t: string | null) => p === "/profil" && t === "wallet" },
+  { href: "/profil/wallet/rekening", label: "Rekening & Dompet", matchFn: (p: string) => p.startsWith("/profil/wallet/rekening") },
+  { href: "/profil/wallet/penarikan", label: "Penarikan Saldo", matchFn: (p: string) => p.startsWith("/profil/wallet/penarikan") },
+];
+
+function WalletSubNav({ activeTab, pathname, tab }: { activeTab: string; pathname: string; tab: string | null }) {
+  if (activeTab !== "wallet") return null;
+  return (
+    <div className="mt-3 border-t border-broker-border/40 pt-3">
+      <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-widest text-broker-muted/60">
+        Wallet
+      </p>
+      <nav className="space-y-0.5">
+        {WALLET_SUB_LINKS.map((l) => {
+          const isActive = l.matchFn(pathname, tab);
+          return (
+            <Link
+              key={l.href}
+              href={l.href}
+              className={[
+                "block rounded-lg pl-5 pr-3 py-1.5 text-[13px] transition leading-snug",
+                isActive
+                  ? "bg-broker-accent/15 font-medium text-broker-accent ring-1 ring-broker-accent/35"
+                  : "text-broker-muted hover:bg-broker-bg/50 hover:text-white",
+              ].join(" ")}
+            >
+              {l.label}
+            </Link>
+          );
+        })}
+      </nav>
+    </div>
+  );
 }
 
 function NavLinkRow({
@@ -220,6 +257,7 @@ export function MemberSidebar({
               })}
             </nav>
 
+            <WalletSubNav activeTab={activeTab} pathname={pathname} tab={tab} />
             <CommunityNavEmbedded menu={portfolioMenu} />
             <PortfolioNavEmbedded menu={portfolioMenu} />
           </div>

@@ -13,8 +13,6 @@ import {
   normalizeDateRange,
   parseWalletHistoryListParams,
 } from "@/lib/walletTransferFilters";
-import { ProfilPaymentMethodForm } from "@/components/ProfilPaymentMethodForm";
-import { ProfilWithdrawPanel } from "@/components/ProfilWithdrawPanel";
 import { ProfilStatusBlock } from "@/components/ProfilStatusBlock";
 import { ProfilChatBox } from "@/components/ProfilChatBox";
 import { ProfilFollowSettings } from "@/components/ProfilFollowSettings";
@@ -442,8 +440,6 @@ export default async function ProfilPage({
             {[
               { href: "#deposit-usdt", label: "💰 Deposit USDT" },
               { href: "#transfer", label: "↔ Transfer" },
-              { href: "#rekening", label: "🏦 Rekening & Dompet" },
-              { href: "#penarikan", label: "📤 Penarikan" },
               { href: "#riwayat", label: "📋 Riwayat" },
             ].map((item) => (
               <a
@@ -456,19 +452,45 @@ export default async function ProfilPage({
             ))}
           </nav>
 
+          {/* Kartu akses cepat: Rekening & Penarikan */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Link
+              href="/profil/wallet/rekening"
+              className="group flex items-start gap-4 rounded-2xl border border-broker-border bg-broker-surface/40 px-5 py-4 transition hover:border-broker-accent/40 hover:bg-broker-surface/70"
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-broker-accent/10 text-xl transition group-hover:bg-broker-accent/20">
+                🏦
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-white">Rekening &amp; Dompet</p>
+                <p className="mt-0.5 text-xs text-broker-muted">
+                  Atur nomor rekening bank dan alamat dompet USDT untuk penarikan
+                </p>
+              </div>
+              <span className="ml-auto shrink-0 text-broker-muted transition group-hover:text-broker-accent">→</span>
+            </Link>
+            <Link
+              href="/profil/wallet/penarikan"
+              className="group flex items-start gap-4 rounded-2xl border border-broker-border bg-broker-surface/40 px-5 py-4 transition hover:border-broker-accent/40 hover:bg-broker-surface/70"
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-broker-accent/10 text-xl transition group-hover:bg-broker-accent/20">
+                📤
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-white">Penarikan Saldo</p>
+                <p className="mt-0.5 text-xs text-broker-muted">
+                  Ajukan penarikan ke rekening bank atau dompet USDT Anda
+                </p>
+              </div>
+              <span className="ml-auto shrink-0 text-broker-muted transition group-hover:text-broker-accent">→</span>
+            </Link>
+          </div>
+
           <section id="deposit-usdt" className="border-t border-broker-border pt-10">
             <WalletUsdtDeposit />
           </section>
           <section id="transfer" className="border-t border-broker-border pt-10">
             <ProfilWalletTransfer />
-          </section>
-          <section id="rekening" className="border-t border-broker-border pt-10">
-            <h2 className="mb-5 text-lg font-bold text-white">Rekening &amp; Dompet</h2>
-            <ProfilPaymentMethodForm />
-          </section>
-          <section id="penarikan" className="border-t border-broker-border pt-10">
-            <h2 className="mb-5 text-lg font-bold text-white">Penarikan Saldo</h2>
-            <ProfilWithdrawPanel walletBalance={bal} />
           </section>
           <ProfilMarketplaceEscrowSection rows={marketplaceEscrowRows} />
           {walletHistoryBundle && (
