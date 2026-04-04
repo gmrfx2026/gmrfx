@@ -44,6 +44,7 @@ enum OtpPurpose {
   PASSWORD_CHANGE
   PHONE_VERIFY
   PASSWORD_RESET
+  WITHDRAW
 }
 
 enum CommentTarget {

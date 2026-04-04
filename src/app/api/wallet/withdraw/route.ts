@@ -3,10 +3,12 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { WithdrawMethod } from "@prisma/client";
 import { z } from "zod";
+import { verifyOtp } from "@/lib/otp";
 
 const submitSchema = z.object({
   amountIdr: z.number().int().positive(),
   method: z.enum(["BANK", "USDT"]),
+  otpCode: z.string().length(6, "Kode OTP harus 6 digit"),
 });
 
 export async function GET() {
@@ -36,7 +38,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg }, { status: 400 });
   }
 
-  const { amountIdr, method } = parsed.data;
+  const { amountIdr, method, otpCode } = parsed.data;
+
+  // Ambil user + nomor HP
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      walletBalance: true,
+      phoneWhatsApp: true,
+      bankName: true, bankAccountNumber: true, bankAccountHolder: true,
+      usdtWithdrawAddress: true,
+    },
+  });
+  if (!user) return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
+  if (!user.phoneWhatsApp) {
+    return NextResponse.json({ error: "Nomor WhatsApp belum terdaftar" }, { status: 400 });
+  }
+
+  // Verifikasi OTP
+  const otpValid = await verifyOtp(session.user.id, "WITHDRAW", user.phoneWhatsApp, otpCode);
+  if (!otpValid) {
+    return NextResponse.json({ error: "Kode OTP salah atau sudah kadaluarsa" }, { status: 400 });
+  }
 
   // Baca config
   const config = await prisma.withdrawConfig.findUnique({ where: { id: "default" } });
@@ -49,11 +72,6 @@ export async function POST(req: Request) {
   if (amountIdr < minAmount) return NextResponse.json({ error: `Minimal penarikan Rp ${minAmount.toLocaleString("id-ID")}` }, { status: 400 });
   if (maxAmount > 0 && amountIdr > maxAmount) return NextResponse.json({ error: `Maksimal penarikan Rp ${maxAmount.toLocaleString("id-ID")}` }, { status: 400 });
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { walletBalance: true, bankName: true, bankAccountNumber: true, bankAccountHolder: true, usdtWithdrawAddress: true },
-  });
-  if (!user) return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
   if (Number(user.walletBalance) < amountIdr) return NextResponse.json({ error: "Saldo tidak mencukupi" }, { status: 400 });
 
   if (method === "BANK" && (!user.bankName || !user.bankAccountNumber || !user.bankAccountHolder)) {

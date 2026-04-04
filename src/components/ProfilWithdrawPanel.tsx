@@ -28,6 +28,8 @@ const card = "rounded-2xl border border-broker-border bg-broker-surface/50 p-5";
 function fmtIDR(n: number) { return "Rp " + Number(n).toLocaleString("id-ID"); }
 function fmtDT(s: string) { return new Date(s).toLocaleString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }); }
 
+const OTP_RESEND_COOLDOWN = 60;
+
 export function ProfilWithdrawPanel({ walletBalance }: { walletBalance: number }) {
   const [config, setConfig] = useState<WithdrawConfig | null>(null);
   const [amount, setAmount] = useState("");
@@ -36,6 +38,13 @@ export function ProfilWithdrawPanel({ walletBalance }: { walletBalance: number }
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [history, setHistory] = useState<WithdrawReq[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+
+  // OTP state
+  const [step, setStep] = useState<"form" | "otp">("form");
+  const [otpCode, setOtpCode] = useState("");
+  const [maskedPhone, setMaskedPhone] = useState("");
+  const [otpCountdown, setOtpCountdown] = useState(0);
+  const [otpError, setOtpError] = useState("");
 
   const loadHistory = useCallback(() => {
     setLoadingHistory(true);
@@ -47,6 +56,13 @@ export function ProfilWithdrawPanel({ walletBalance }: { walletBalance: number }
     loadHistory();
   }, [loadHistory]);
 
+  // Countdown resend
+  useEffect(() => {
+    if (otpCountdown <= 0) return;
+    const t = setTimeout(() => setOtpCountdown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [otpCountdown]);
+
   const hasPending = history.some(h => h.status === "PENDING" || h.status === "PROCESSING");
   const minAmount = config?.minAmountIdr ?? 50000;
   const maxAmount = config?.maxAmountIdr ?? 0;
@@ -54,17 +70,63 @@ export function ProfilWithdrawPanel({ walletBalance }: { walletBalance: number }
   const amountNum = parseInt(amount.replace(/\D/g, ""), 10) || 0;
   const willReceive = Math.max(0, amountNum - fee);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault(); setMsg(null);
+  // Step 1: Validasi form lalu kirim OTP
+  async function requestOtp(e: React.FormEvent) {
+    e.preventDefault();
+    setMsg(null);
     if (amountNum < minAmount) { setMsg({ ok: false, text: `Minimal penarikan ${fmtIDR(minAmount)}` }); return; }
     if (maxAmount > 0 && amountNum > maxAmount) { setMsg({ ok: false, text: `Maksimal penarikan ${fmtIDR(maxAmount)}` }); return; }
     if (amountNum > walletBalance) { setMsg({ ok: false, text: "Saldo tidak mencukupi" }); return; }
     setBusy(true);
-    const res = await fetch("/api/wallet/withdraw", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amountIdr: amountNum, method }) });
+    const res = await fetch("/api/wallet/withdraw/request-otp", { method: "POST" });
     const json = await res.json().catch(() => ({}));
     setBusy(false);
-    if (res.ok) { setMsg({ ok: true, text: "Pengajuan berhasil! Admin akan memproses dalam 1×24 jam kerja." }); setAmount(""); loadHistory(); }
-    else setMsg({ ok: false, text: json.error ?? "Gagal mengajukan penarikan" });
+    if (!res.ok) { setMsg({ ok: false, text: json.error ?? "Gagal mengirim OTP" }); return; }
+    setMaskedPhone(json.maskedPhone ?? "");
+    setOtpCode("");
+    setOtpError("");
+    setOtpCountdown(OTP_RESEND_COOLDOWN);
+    setStep("otp");
+  }
+
+  // Kirim ulang OTP
+  async function resendOtp() {
+    setOtpError("");
+    const res = await fetch("/api/wallet/withdraw/request-otp", { method: "POST" });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) { setOtpError(json.error ?? "Gagal mengirim ulang OTP"); return; }
+    setMaskedPhone(json.maskedPhone ?? maskedPhone);
+    setOtpCountdown(OTP_RESEND_COOLDOWN);
+  }
+
+  // Step 2: Submit penarikan dengan OTP
+  async function submitWithOtp(e: React.FormEvent) {
+    e.preventDefault();
+    setOtpError("");
+    if (otpCode.length !== 6) { setOtpError("Masukkan 6 digit kode OTP"); return; }
+    setBusy(true);
+    const res = await fetch("/api/wallet/withdraw", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amountIdr: amountNum, method, otpCode }),
+    });
+    const json = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (res.ok) {
+      setMsg({ ok: true, text: "Pengajuan berhasil! Admin akan memproses dalam 1×24 jam kerja." });
+      setAmount("");
+      setOtpCode("");
+      setStep("form");
+      loadHistory();
+    } else {
+      // OTP salah → tetap di step otp
+      if (res.status === 400 && json.error?.toLowerCase().includes("otp")) {
+        setOtpError(json.error);
+      } else {
+        setMsg({ ok: false, text: json.error ?? "Gagal mengajukan penarikan" });
+        setStep("form");
+      }
+    }
   }
 
   if (config && !config.withdrawEnabled) {
@@ -81,84 +143,155 @@ export function ProfilWithdrawPanel({ walletBalance }: { walletBalance: number }
 
   return (
     <div className="space-y-5">
-      {/* Form ajukan */}
-      <div className={card}>
-        <h3 className="mb-1 text-sm font-semibold text-white">Ajukan Penarikan</h3>
-        <p className="mb-4 text-xs text-broker-muted">
-          Saldo saat ini: <span className="font-semibold text-broker-accent">{fmtIDR(walletBalance)}</span>.
-          Minimal {fmtIDR(minAmount)}{maxAmount > 0 ? `, maksimal ${fmtIDR(maxAmount)}` : ""}.
-          Saldo dikunci saat pengajuan dan dikembalikan jika ditolak.
-        </p>
 
-        {config?.processingNote && (
-          <div className="mb-4 rounded-xl border border-broker-border/60 bg-broker-bg/50 px-3 py-2.5 text-xs text-broker-muted">
-            {config.processingNote}
-          </div>
-        )}
-
-        {hasPending && (
-          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-300">
-            Ada pengajuan yang sedang diproses. Tunggu hingga selesai sebelum mengajukan yang baru.
-          </div>
-        )}
-
-        <form onSubmit={submit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+      {/* ── STEP OTP ── */}
+      {step === "otp" && (
+        <div className={card}>
+          <div className="mb-4 flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-broker-accent/10 text-lg">🔐</div>
             <div>
-              <label className="block text-xs font-medium text-broker-muted">Jumlah (IDR)</label>
+              <h3 className="text-sm font-semibold text-white">Verifikasi OTP</h3>
+              <p className="mt-0.5 text-xs text-broker-muted">
+                Kode 6 digit telah dikirim ke WhatsApp <span className="font-semibold text-white">{maskedPhone}</span>.
+                Masukkan kode untuk mengonfirmasi penarikan{" "}
+                <span className="font-semibold text-broker-accent">{fmtIDR(amountNum)}</span>{" "}
+                via <span className="font-semibold text-white">{method}</span>.
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={submitWithOtp} className="space-y-4">
+            {/* Ringkasan penarikan */}
+            <div className="rounded-xl border border-broker-border/50 bg-broker-bg/40 px-4 py-3 text-xs text-broker-muted space-y-1">
+              <div className="flex justify-between"><span>Jumlah</span><span className="font-semibold text-white">{fmtIDR(amountNum)}</span></div>
+              {fee > 0 && <div className="flex justify-between"><span>Biaya</span><span className="text-red-400">− {fmtIDR(fee)}</span></div>}
+              <div className="flex justify-between border-t border-broker-border/40 pt-1"><span>Diterima</span><span className="font-semibold text-emerald-400">{fmtIDR(willReceive)}</span></div>
+              <div className="flex justify-between"><span>Metode</span><span className="font-semibold text-white">{method === "BANK" ? "🏦 Bank" : "💎 USDT"}</span></div>
+            </div>
+
+            {/* Input OTP */}
+            <div>
+              <label className="block text-xs font-medium text-broker-muted">Kode OTP</label>
               <input
-                type="text" inputMode="numeric"
-                value={amount}
-                onChange={e => setAmount(e.target.value.replace(/\D/g, ""))}
-                placeholder={`Min. ${fmtIDR(minAmount)}`}
-                disabled={hasPending}
-                className={`${input} font-mono`}
+                type="text" inputMode="numeric" maxLength={6} autoFocus
+                value={otpCode}
+                onChange={e => { setOtpCode(e.target.value.replace(/\D/g, "")); setOtpError(""); }}
+                placeholder="••••••"
+                className={`${input} mt-1 text-center font-mono text-xl tracking-[0.4em]`}
               />
-              {amountNum > 0 && (
-                <p className="mt-1 text-xs text-broker-muted">
-                  {fmtIDR(amountNum)}
-                  {fee > 0 && <> &mdash; biaya {fmtIDR(fee)} = diterima <span className="text-emerald-400 font-semibold">{fmtIDR(willReceive)}</span></>}
-                </p>
-              )}
+              {otpError && <p className="mt-1 text-xs text-red-400">{otpError}</p>}
             </div>
-            <div>
-              <label className="block text-xs font-medium text-broker-muted">Metode</label>
-              <div className="mt-1 flex gap-2">
-                {availableMethods.map(m => (
-                  <button
-                    key={m} type="button"
-                    onClick={() => setMethod(m)}
-                    disabled={hasPending}
-                    className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold transition disabled:opacity-40 ${
-                      method === m
-                        ? "border-broker-accent bg-broker-accent/10 text-broker-accent"
-                        : "border-broker-border text-broker-muted hover:border-broker-accent/40 hover:text-white"
-                    }`}
-                  >
-                    {m === "BANK" ? "🏦 Bank" : `💎 USDT`}
-                  </button>
-                ))}
-              </div>
-              {method === "USDT" && config?.usdtNetwork && (
-                <p className="mt-1 text-xs text-broker-muted">{config.usdtNetwork}</p>
-              )}
-            </div>
-          </div>
 
-          {msg && (
-            <p className={`text-sm font-medium ${msg.ok ? "text-emerald-400" : "text-red-400"}`}>{msg.text}</p>
+            {/* Resend */}
+            <div className="flex items-center gap-2 text-xs text-broker-muted">
+              {otpCountdown > 0 ? (
+                <span>Kirim ulang dalam <span className="font-semibold text-white">{otpCountdown}d</span></span>
+              ) : (
+                <button type="button" onClick={resendOtp} className="font-semibold text-broker-accent hover:underline">
+                  Kirim ulang OTP
+                </button>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => { setStep("form"); setOtpCode(""); setOtpError(""); }}
+                className="rounded-xl border border-broker-border px-5 py-2.5 text-sm font-semibold text-broker-muted hover:text-white transition"
+              >
+                Kembali
+              </button>
+              <button
+                type="submit" disabled={busy || otpCode.length !== 6}
+                className="flex-1 rounded-xl bg-broker-accent px-5 py-2.5 text-sm font-semibold text-broker-bg hover:opacity-90 disabled:opacity-40 transition"
+              >
+                {busy ? "Memverifikasi…" : "Konfirmasi Penarikan"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ── STEP FORM ── */}
+      {step === "form" && (
+        <div className={card}>
+          <h3 className="mb-1 text-sm font-semibold text-white">Ajukan Penarikan</h3>
+          <p className="mb-4 text-xs text-broker-muted">
+            Saldo saat ini: <span className="font-semibold text-broker-accent">{fmtIDR(walletBalance)}</span>.
+            Minimal {fmtIDR(minAmount)}{maxAmount > 0 ? `, maksimal ${fmtIDR(maxAmount)}` : ""}.
+            Saldo dikunci saat pengajuan dan dikembalikan jika ditolak.
+          </p>
+
+          {config?.processingNote && (
+            <div className="mb-4 rounded-xl border border-broker-border/60 bg-broker-bg/50 px-3 py-2.5 text-xs text-broker-muted">
+              {config.processingNote}
+            </div>
           )}
 
-          <button
-            type="submit" disabled={busy || hasPending}
-            className="rounded-xl bg-broker-accent px-5 py-2.5 text-sm font-semibold text-broker-bg hover:opacity-90 disabled:opacity-40 transition"
-          >
-            {busy ? "Mengajukan…" : "Ajukan Penarikan"}
-          </button>
-        </form>
-      </div>
+          {hasPending && (
+            <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-300">
+              Ada pengajuan yang sedang diproses. Tunggu hingga selesai sebelum mengajukan yang baru.
+            </div>
+          )}
 
-      {/* Riwayat */}
+          <form onSubmit={requestOtp} className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-xs font-medium text-broker-muted">Jumlah (IDR)</label>
+                <input
+                  type="text" inputMode="numeric"
+                  value={amount}
+                  onChange={e => setAmount(e.target.value.replace(/\D/g, ""))}
+                  placeholder={`Min. ${fmtIDR(minAmount)}`}
+                  disabled={hasPending}
+                  className={`${input} font-mono`}
+                />
+                {amountNum > 0 && (
+                  <p className="mt-1 text-xs text-broker-muted">
+                    {fmtIDR(amountNum)}
+                    {fee > 0 && <> &mdash; biaya {fmtIDR(fee)} = diterima <span className="text-emerald-400 font-semibold">{fmtIDR(willReceive)}</span></>}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-broker-muted">Metode</label>
+                <div className="mt-1 flex gap-2">
+                  {availableMethods.map(m => (
+                    <button
+                      key={m} type="button"
+                      onClick={() => setMethod(m)}
+                      disabled={hasPending}
+                      className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold transition disabled:opacity-40 ${
+                        method === m
+                          ? "border-broker-accent bg-broker-accent/10 text-broker-accent"
+                          : "border-broker-border text-broker-muted hover:border-broker-accent/40 hover:text-white"
+                      }`}
+                    >
+                      {m === "BANK" ? "🏦 Bank" : "💎 USDT"}
+                    </button>
+                  ))}
+                </div>
+                {method === "USDT" && config?.usdtNetwork && (
+                  <p className="mt-1 text-xs text-broker-muted">{config.usdtNetwork}</p>
+                )}
+              </div>
+            </div>
+
+            {msg && (
+              <p className={`text-sm font-medium ${msg.ok ? "text-emerald-400" : "text-red-400"}`}>{msg.text}</p>
+            )}
+
+            <button
+              type="submit" disabled={busy || hasPending}
+              className="w-full rounded-xl bg-broker-accent px-5 py-2.5 text-sm font-semibold text-broker-bg hover:opacity-90 disabled:opacity-40 transition"
+            >
+              {busy ? "Mengirim OTP…" : "Lanjutkan → Verifikasi OTP"}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* ── RIWAYAT ── */}
       <div className={card}>
         <h3 className="mb-3 text-sm font-semibold text-white">Riwayat Penarikan</h3>
         {loadingHistory ? (
