@@ -5,14 +5,14 @@
 //+------------------------------------------------------------------+
 #property copyright "GMR FX"
 #property link      "https://github.com/"
-#property version   "1.09"
+#property version   "1.10"
 #property strict
 
 // Basis URL API (tanpa slash akhir).
 #define GMRFX_API_BASE "https://gmrfx.app"
 
-// Throttle OnTrade: kirim paling cepat setiap N detik agar tidak spam API.
-#define GMRFX_TRADE_THROTTLE_SEC 5
+// Throttle hanya untuk perubahan SL/TP (bukan buka/tutup posisi).
+#define GMRFX_SLTP_THROTTLE_SEC 3
 
 // Timeout HTTP: lebih pendek untuk kirim cepat OnTrade, penuh untuk timer.
 #define GMRFX_TIMEOUT_FAST_MS  8000
@@ -22,6 +22,40 @@ ulong  g_gmrfx_pos_ids[];
 long   g_gmrfx_pos_times[];
 int    g_gmrfx_pos_n = 0;
 datetime g_lastSendTime = 0;
+
+// Snapshot ticket posisi terbuka terakhir kali dikirim
+ulong g_knownTickets[];
+int   g_knownCount = 0;
+
+// Simpan snapshot ticket posisi terbuka saat ini
+void SaveKnownPositions()
+{
+   int n = PositionsTotal();
+   ArrayResize(g_knownTickets, n);
+   g_knownCount = 0;
+   for(int i = 0; i < n; i++)
+   {
+      ulong tk = PositionGetTicket(i);
+      if(tk > 0) g_knownTickets[g_knownCount++] = tk;
+   }
+}
+
+// Bandingkan posisi terbuka sekarang dengan snapshot terakhir
+// Kembalikan true jika ada ticket baru atau ticket yang hilang
+bool PositionsTicketsChanged()
+{
+   int n = PositionsTotal();
+   if(n != g_knownCount) return true;
+   for(int i = 0; i < n; i++)
+   {
+      ulong tk = PositionGetTicket(i);
+      bool found = false;
+      for(int j = 0; j < g_knownCount; j++)
+         if(g_knownTickets[j] == tk) { found = true; break; }
+      if(!found) return true;
+   }
+   return false;
+}
 
 void GmrfxPosClear()
 {
@@ -503,20 +537,36 @@ void OnTimer()
 /**
  * OnTrade — dipanggil MT5 setiap kali ada perubahan trading:
  * posisi buka, tutup, atau order tereksekusi.
- * Gunakan payload ringan (tanpa HistorySelect) agar instan.
+ *
+ * Strategi:
+ * - Ticket berubah (posisi buka/tutup) → kirim SEGERA tanpa throttle
+ * - Ticket sama (hanya SL/TP/dll berubah) → throttle 3 detik agar tidak spam
  */
 void OnTrade()
 {
-   datetime now = TimeCurrent();
-   if(now - g_lastSendTime < GMRFX_TRADE_THROTTLE_SEC) return;
-   TrySendFast("OnTrade");
+   if(PositionsTicketsChanged())
+   {
+      // Posisi buka atau tutup → kirim segera
+      TrySendFast("OnTrade-pos");
+      SaveKnownPositions();
+   }
+   else
+   {
+      // Hanya perubahan SL/TP/volume → throttle ringan
+      datetime now = TimeCurrent();
+      if(now - g_lastSendTime < GMRFX_SLTP_THROTTLE_SEC) return;
+      TrySendFast("OnTrade-sltp");
+      SaveKnownPositions();
+   }
 }
 
 int OnInit()
 {
    int sec = MathMax(60, InpIntervalSec);
    EventSetTimer(sec);
-   Print("GMRFX Trade Logger aktif | interval=", sec, "s | OnTrade fast-throttle=", GMRFX_TRADE_THROTTLE_SEC, "s");
+   Print("GMRFX Trade Logger aktif | interval=", sec, "s | SL/TP throttle=", GMRFX_SLTP_THROTTLE_SEC, "s");
+   // Simpan snapshot posisi awal agar OnTrade pertama bisa deteksi perubahan
+   SaveKnownPositions();
    // Kirim langsung saat EA pertama kali aktif
    TrySendFull("init");
    return INIT_SUCCEEDED;
