@@ -50,7 +50,12 @@ export function RegisterForm() {
       setErr(parts.join(" "));
       return;
     }
-    router.push(`/verifikasi-hp?email=${encodeURIComponent(form.email)}`);
+    if (data.pending) {
+      router.push(`/verifikasi-hp?email=${encodeURIComponent(form.email)}`);
+    } else {
+      // Verifikasi HP nonaktif — akun langsung aktif, arahkan ke login
+      router.push(`/login?registered=1`);
+    }
   }
 
   const input =

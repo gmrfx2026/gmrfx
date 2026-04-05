@@ -8,6 +8,7 @@ import { generateUniqueWalletAddress } from "@/lib/wallet";
 import { toMemberSlug } from "@/lib/memberSlug";
 import { resolveWilayahByDistrictId } from "@/lib/wilayahIndonesia";
 import { createOtp } from "@/lib/otp";
+import { MANUAL_PHONE_VERIFY_KEY, isManualPhoneVerifyRequired } from "@/lib/oauthPhoneVerifySettings";
 
 export const maxDuration = 60;
 
@@ -55,6 +56,10 @@ export async function POST(req: Request) {
     const id = randomUUID();
     const memberSlug = toMemberSlug(d.name, id);
 
+    // Cek setting: apakah verifikasi HP wajib untuk pendaftaran manual?
+    const verifySetting = await prisma.systemSetting.findUnique({ where: { key: MANUAL_PHONE_VERIFY_KEY } });
+    const requireVerify = isManualPhoneVerifyRequired(verifySetting?.value);
+
     await prisma.user.create({
       data: {
         id,
@@ -71,14 +76,17 @@ export async function POST(req: Request) {
         profileComplete: true,
         walletAddress,
         memberSlug,
-        memberStatus: MemberStatus.PENDING,
+        memberStatus: requireVerify ? MemberStatus.PENDING : MemberStatus.ACTIVE,
       },
     });
 
-    // Kirim OTP verifikasi nomor WA
-    await createOtp(id, "PHONE_VERIFY", d.phoneWhatsApp);
+    if (requireVerify) {
+      // Kirim OTP verifikasi nomor WA
+      await createOtp(id, "PHONE_VERIFY", d.phoneWhatsApp);
+      return NextResponse.json({ ok: true, pending: true, email });
+    }
 
-    return NextResponse.json({ ok: true, pending: true, email });
+    return NextResponse.json({ ok: true, email });
   } catch (e) {
     console.error("register", e);
     if (e instanceof Prisma.PrismaClientValidationError) {

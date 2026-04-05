@@ -22,6 +22,7 @@ export function AdminSettingsForm({
   initialDepositUsdtBscAddress,
   initialDepositUsdtBscEnabled,
   initialOauthPhoneVerifyRequired,
+  initialManualPhoneVerifyRequired,
 }: {
   initialFee: string;
   initialArticleCommentsPerPage: string;
@@ -41,6 +42,7 @@ export function AdminSettingsForm({
   initialDepositUsdtBscAddress: string;
   initialDepositUsdtBscEnabled: boolean;
   initialOauthPhoneVerifyRequired: boolean;
+  initialManualPhoneVerifyRequired: boolean;
 }) {
   const router = useRouter();
   const [v, setV] = useState(initialFee);
@@ -65,6 +67,7 @@ export function AdminSettingsForm({
   const [depositUsdtAddr, setDepositUsdtAddr] = useState(initialDepositUsdtBscAddress);
   const [depositUsdtEnabled, setDepositUsdtEnabled] = useState(initialDepositUsdtBscEnabled);
   const [oauthPhoneVerify, setOauthPhoneVerify] = useState(initialOauthPhoneVerifyRequired);
+  const [manualPhoneVerify, setManualPhoneVerify] = useState(initialManualPhoneVerifyRequired);
   const [msg, setMsg] = useState("");
 
   async function save(e: React.FormEvent) {
@@ -91,6 +94,7 @@ export function AdminSettingsForm({
         depositUsdtBscAddress: depositUsdtAddr,
         depositUsdtBscEnabled: depositUsdtEnabled,
         oauthPhoneVerifyRequired: oauthPhoneVerify,
+        manualPhoneVerifyRequired: manualPhoneVerify,
       }),
     });
     setMsg(res.ok ? "Disimpan." : "Gagal");
@@ -351,6 +355,21 @@ export function AdminSettingsForm({
             <span className="mt-0.5 block text-xs text-gray-500">
               Jika aktif, member yang mendaftar via Google harus memverifikasi nomor WhatsApp via OTP
               setelah mengisi profil. Jika tidak aktif, akun langsung aktif tanpa OTP.
+            </span>
+          </span>
+        </label>
+        <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={manualPhoneVerify}
+            onChange={(e) => setManualPhoneVerify(e.target.checked)}
+            className="mt-1 h-4 w-4 shrink-0"
+          />
+          <span>
+            <span className="font-medium text-gray-800">Wajibkan verifikasi HP untuk pendaftaran manual</span>
+            <span className="mt-0.5 block text-xs text-gray-500">
+              Jika aktif (default), member yang mendaftar via email/password harus memverifikasi nomor
+              WhatsApp via OTP sebelum akun aktif. Jika tidak aktif, akun langsung aktif tanpa OTP.
             </span>
           </span>
         </label>

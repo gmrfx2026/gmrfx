@@ -35,6 +35,8 @@ import {
 import {
   OAUTH_PHONE_VERIFY_KEY,
   isOauthPhoneVerifyRequired,
+  MANUAL_PHONE_VERIFY_KEY,
+  isManualPhoneVerifyRequired,
 } from "@/lib/oauthPhoneVerifySettings";
 
 export const dynamic = "force-dynamic";
@@ -59,6 +61,7 @@ export default async function AdminSettingsPage() {
     usdtAddr,
     usdtEnabled,
     oauthPhoneVerify,
+    manualPhoneVerify,
   ] = await Promise.all([
     prisma.systemSetting.findUnique({ where: { key: "platform_fee_percent" } }),
     prisma.systemSetting.findUnique({ where: { key: ARTICLE_COMMENTS_PER_PAGE_KEY } }),
@@ -78,6 +81,7 @@ export default async function AdminSettingsPage() {
     prisma.systemSetting.findUnique({ where: { key: DEPOSIT_USDT_BSC_ADDRESS_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: DEPOSIT_USDT_BSC_ENABLED_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: OAUTH_PHONE_VERIFY_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: MANUAL_PHONE_VERIFY_KEY } }),
   ]);
 
   return (
@@ -109,6 +113,7 @@ export default async function AdminSettingsPage() {
           initialDepositUsdtBscAddress={usdtAddr?.value ?? process.env.ADMIN_USDT_BSC_ADDRESS ?? ""}
           initialDepositUsdtBscEnabled={usdtEnabled ? usdtEnabled.value === "1" : true}
           initialOauthPhoneVerifyRequired={isOauthPhoneVerifyRequired(oauthPhoneVerify?.value)}
+          initialManualPhoneVerifyRequired={isManualPhoneVerifyRequired(manualPhoneVerify?.value)}
         />
       </div>
     </div>

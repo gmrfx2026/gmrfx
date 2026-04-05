@@ -34,7 +34,7 @@ import {
   DEPOSIT_USDT_BSC_ADDRESS_KEY,
   DEPOSIT_USDT_BSC_ENABLED_KEY,
 } from "@/lib/depositUsdtSettings";
-import { OAUTH_PHONE_VERIFY_KEY } from "@/lib/oauthPhoneVerifySettings";
+import { OAUTH_PHONE_VERIFY_KEY, MANUAL_PHONE_VERIFY_KEY } from "@/lib/oauthPhoneVerifySettings";
 
 export async function GET() {
   const session = await auth();
@@ -279,6 +279,15 @@ export async function PATCH(req: Request) {
     await prisma.systemSetting.upsert({
       where: { key: OAUTH_PHONE_VERIFY_KEY },
       create: { key: OAUTH_PHONE_VERIFY_KEY, value: on ? "1" : "0" },
+      update: { value: on ? "1" : "0" },
+    });
+  }
+
+  if (body.manualPhoneVerifyRequired !== undefined) {
+    const on = Boolean(body.manualPhoneVerifyRequired);
+    await prisma.systemSetting.upsert({
+      where: { key: MANUAL_PHONE_VERIFY_KEY },
+      create: { key: MANUAL_PHONE_VERIFY_KEY, value: on ? "1" : "0" },
       update: { value: on ? "1" : "0" },
     });
   }
