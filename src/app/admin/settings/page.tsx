@@ -38,6 +38,7 @@ import {
   MANUAL_PHONE_VERIFY_KEY,
   isManualPhoneVerifyRequired,
 } from "@/lib/oauthPhoneVerifySettings";
+import { SITE_NAME_KEY, DEFAULT_SITE_NAME } from "@/lib/siteNameSettings";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +63,7 @@ export default async function AdminSettingsPage() {
     usdtEnabled,
     oauthPhoneVerify,
     manualPhoneVerify,
+    siteNameRow,
   ] = await Promise.all([
     prisma.systemSetting.findUnique({ where: { key: "platform_fee_percent" } }),
     prisma.systemSetting.findUnique({ where: { key: ARTICLE_COMMENTS_PER_PAGE_KEY } }),
@@ -82,6 +84,7 @@ export default async function AdminSettingsPage() {
     prisma.systemSetting.findUnique({ where: { key: DEPOSIT_USDT_BSC_ENABLED_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: OAUTH_PHONE_VERIFY_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: MANUAL_PHONE_VERIFY_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: SITE_NAME_KEY } }),
   ]);
 
   return (
@@ -114,6 +117,7 @@ export default async function AdminSettingsPage() {
           initialDepositUsdtBscEnabled={usdtEnabled ? usdtEnabled.value === "1" : true}
           initialOauthPhoneVerifyRequired={isOauthPhoneVerifyRequired(oauthPhoneVerify?.value)}
           initialManualPhoneVerifyRequired={isManualPhoneVerifyRequired(manualPhoneVerify?.value)}
+          initialSiteName={siteNameRow?.value?.trim() || DEFAULT_SITE_NAME}
         />
       </div>
     </div>

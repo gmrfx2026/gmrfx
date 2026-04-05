@@ -1,15 +1,16 @@
 import Link from "next/link";
+import { getSiteName } from "@/lib/siteNameSettings";
 
-const disclaimer =
-  "Perdagangan valuta asing dengan margin memiliki tingkat risiko yang tinggi, dan mungkin tidak cocok untuk semua investor. Sebelum memutuskan untuk memperdagangkan produk yang ditawarkan oleh broker, Anda harus mempertimbangkan dengan cermat tujuan, situasi keuangan, kebutuhan, dan tingkat pengalaman Anda. GMR FX memberikan saran umum yang tidak mempertimbangkan tujuan, situasi keuangan, atau kebutuhan Anda. Isi situs web ini tidak boleh ditafsirkan sebagai nasihat pribadi. Ada kemungkinan Anda dapat mengalami kerugian melebihi dana yang Anda setorkan dan oleh karena itu, Anda tidak boleh berspekulasi dengan modal yang tidak mampu Anda rugikan. Anda harus menyadari semua risiko yang terkait dengan perdagangan dengan margin.";
-
-export function SiteFooter() {
+export async function SiteFooter() {
+  const siteName = await getSiteName();
+  const disclaimer =
+    `Perdagangan valuta asing dengan margin memiliki tingkat risiko yang tinggi, dan mungkin tidak cocok untuk semua investor. Sebelum memutuskan untuk memperdagangkan produk yang ditawarkan oleh broker, Anda harus mempertimbangkan dengan cermat tujuan, situasi keuangan, kebutuhan, dan tingkat pengalaman Anda. ${siteName} memberikan saran umum yang tidak mempertimbangkan tujuan, situasi keuangan, atau kebutuhan Anda. Isi situs web ini tidak boleh ditafsirkan sebagai nasihat pribadi. Ada kemungkinan Anda dapat mengalami kerugian melebihi dana yang Anda setorkan dan oleh karena itu, Anda tidak boleh berspekulasi dengan modal yang tidak mampu Anda rugikan. Anda harus menyadari semua risiko yang terkait dengan perdagangan dengan margin.`;
   return (
     <footer className="mt-auto border-t border-broker-border bg-broker-surface/50">
       <div className="mx-auto max-w-6xl px-4 py-10">
         <div className="grid gap-8 md:grid-cols-3">
           <div>
-            <p className="font-semibold text-white">GMR FX</p>
+            <p className="font-semibold text-white">{siteName}</p>
             <p className="mt-2 text-sm text-broker-muted">
               Buat Jurnal Trading kamu sekarang disini secara gratis, tingkatkan disiplin, konsistensi, dan
               profitabilitas. Evaluasi strategi secara objektif, manajemen emosi, perbaikan manajemen risiko, dan
@@ -96,7 +97,7 @@ export function SiteFooter() {
           {disclaimer}
         </p>
         <p className="mt-4 text-center text-xs text-broker-muted">
-          © {new Date().getFullYear()} GMR FX. Hak cipta dilindungi.
+          © {new Date().getFullYear()} {siteName}. Hak cipta dilindungi.
         </p>
       </div>
     </footer>

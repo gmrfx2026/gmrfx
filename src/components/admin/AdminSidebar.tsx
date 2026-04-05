@@ -30,16 +30,16 @@ function NavIcon({ d }: { d: string }) {
   );
 }
 
-function SidebarContent({ current, onClose }: { current: string | null; onClose?: () => void }) {
+function SidebarContent({ current, siteName, onClose }: { current: string | null; siteName: string; onClose?: () => void }) {
   return (
     <div className="flex h-full flex-col">
       {/* Logo */}
       <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-5">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500 text-white font-bold text-sm">
-          G
+          {siteName.charAt(0).toUpperCase()}
         </div>
         <div>
-          <p className="text-sm font-bold tracking-tight text-white">GMR FX</p>
+          <p className="text-sm font-bold tracking-tight text-white">{siteName}</p>
           <p className="text-[10px] font-medium uppercase tracking-widest text-emerald-400">Admin</p>
         </div>
       </div>
@@ -100,7 +100,7 @@ function SidebarContent({ current, onClose }: { current: string | null; onClose?
   );
 }
 
-export function AdminSidebar() {
+export function AdminSidebar({ siteName }: { siteName: string }) {
   const pathname = usePathname() ?? "";
   const current  = activeHref(pathname);
   const [open, setOpen] = useState(false);
@@ -117,7 +117,7 @@ export function AdminSidebar() {
     <>
       {/* ── Desktop sidebar ── */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-56 lg:flex-col lg:bg-slate-900 lg:border-r lg:border-white/[0.06]">
-        <SidebarContent current={current} />
+        <SidebarContent current={current} siteName={siteName} />
       </aside>
 
       {/* ── Mobile: topbar trigger ── */}
@@ -133,7 +133,7 @@ export function AdminSidebar() {
           </svg>
         </button>
         <span className="text-sm font-bold tracking-tight text-slate-900">
-          GMR FX <span className="font-semibold text-emerald-600">Admin</span>
+          {siteName} <span className="font-semibold text-emerald-600">Admin</span>
         </span>
       </div>
 
@@ -162,7 +162,7 @@ export function AdminSidebar() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <SidebarContent current={current} onClose={() => setOpen(false)} />
+              <SidebarContent current={current} siteName={siteName} onClose={() => setOpen(false)} />
             </div>
           </aside>
         </div>

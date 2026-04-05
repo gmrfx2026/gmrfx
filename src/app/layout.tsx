@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
+import { getSiteName } from "@/lib/siteNameSettings";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -10,55 +11,58 @@ const dmSans = DM_Sans({
 
 const SITE_URL = "https://gmrfx.app";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: {
-    default: "GMR FX — Komunitas Trader, Edukasi & Berbagi Strategi",
-    template: "%s | GMR FX",
-  },
-  description:
-    "Komunitas trading Indonesia: komunikasi antar trader, edukasi forex & CFD, berbagi strategi, artikel & berita, galeri, marketplace indikator & Expert Advisor.",
-  keywords: [
-    "komunitas trader",
-    "edukasi forex",
-    "copy trading",
-    "expert advisor",
-    "indikator mt4 mt5",
-    "gmrfx",
-    "trading indonesia",
-    "belajar forex",
-    "sinyal trading",
-    "marketplace ea indikator",
-  ],
-  authors: [{ name: "GMR FX", url: SITE_URL }],
-  creator: "GMR FX",
-  publisher: "GMR FX",
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, "max-snippet": -1, "max-image-preview": "large" },
-  },
-  openGraph: {
-    type: "website",
-    locale: "id_ID",
-    url: SITE_URL,
-    siteName: "GMR FX",
-    title: "GMR FX — Komunitas Trader, Edukasi & Berbagi Strategi",
+export async function generateMetadata(): Promise<Metadata> {
+  const siteName = await getSiteName();
+  const tagline = `${siteName} — Komunitas Trader, Edukasi & Berbagi Strategi`;
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: {
+      default: tagline,
+      template: `%s | ${siteName}`,
+    },
     description:
-      "Wadah trader untuk berdiskusi, belajar, dan berbagi ide strategi — dengan artikel, komunitas, dan marketplace indikator & EA.",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "GMR FX — Komunitas Trader, Edukasi & Berbagi Strategi",
-    description: "Komunitas trading Indonesia — edukasi, copy trading, marketplace indikator & EA.",
-  },
-  alternates: {
-    canonical: SITE_URL,
-  },
-  verification: {
-    google: "v6BkdzSPwb6SMf81sxPzOXqx-_bZVMu_VwfYuCL0dFU",
-  },
-};
+      "Komunitas trading Indonesia: komunikasi antar trader, edukasi forex & CFD, berbagi strategi, artikel & berita, galeri, marketplace indikator & Expert Advisor.",
+    keywords: [
+      "komunitas trader",
+      "edukasi forex",
+      "copy trading",
+      "expert advisor",
+      "indikator mt4 mt5",
+      "trading indonesia",
+      "belajar forex",
+      "sinyal trading",
+      "marketplace ea indikator",
+    ],
+    authors: [{ name: siteName, url: SITE_URL }],
+    creator: siteName,
+    publisher: siteName,
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: { index: true, follow: true, "max-snippet": -1, "max-image-preview": "large" },
+    },
+    openGraph: {
+      type: "website",
+      locale: "id_ID",
+      url: SITE_URL,
+      siteName,
+      title: tagline,
+      description:
+        "Wadah trader untuk berdiskusi, belajar, dan berbagi ide strategi — dengan artikel, komunitas, dan marketplace indikator & EA.",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: tagline,
+      description: "Komunitas trading Indonesia — edukasi, copy trading, marketplace indikator & EA.",
+    },
+    alternates: {
+      canonical: SITE_URL,
+    },
+    verification: {
+      google: "v6BkdzSPwb6SMf81sxPzOXqx-_bZVMu_VwfYuCL0dFU",
+    },
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",

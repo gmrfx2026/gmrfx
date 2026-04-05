@@ -23,6 +23,7 @@ export function AdminSettingsForm({
   initialDepositUsdtBscEnabled,
   initialOauthPhoneVerifyRequired,
   initialManualPhoneVerifyRequired,
+  initialSiteName,
 }: {
   initialFee: string;
   initialArticleCommentsPerPage: string;
@@ -43,6 +44,7 @@ export function AdminSettingsForm({
   initialDepositUsdtBscEnabled: boolean;
   initialOauthPhoneVerifyRequired: boolean;
   initialManualPhoneVerifyRequired: boolean;
+  initialSiteName: string;
 }) {
   const router = useRouter();
   const [v, setV] = useState(initialFee);
@@ -68,6 +70,7 @@ export function AdminSettingsForm({
   const [depositUsdtEnabled, setDepositUsdtEnabled] = useState(initialDepositUsdtBscEnabled);
   const [oauthPhoneVerify, setOauthPhoneVerify] = useState(initialOauthPhoneVerifyRequired);
   const [manualPhoneVerify, setManualPhoneVerify] = useState(initialManualPhoneVerifyRequired);
+  const [siteName, setSiteName] = useState(initialSiteName);
   const [msg, setMsg] = useState("");
 
   async function save(e: React.FormEvent) {
@@ -95,6 +98,7 @@ export function AdminSettingsForm({
         depositUsdtBscEnabled: depositUsdtEnabled,
         oauthPhoneVerifyRequired: oauthPhoneVerify,
         manualPhoneVerifyRequired: manualPhoneVerify,
+        siteName,
       }),
     });
     setMsg(res.ok ? "Disimpan." : "Gagal");
@@ -103,6 +107,25 @@ export function AdminSettingsForm({
 
   return (
     <form onSubmit={save} className="space-y-3">
+      {/* Identitas Situs */}
+      <div className="rounded-lg border border-gray-200 bg-gray-50/80 p-4">
+        <p className="text-sm font-medium text-gray-800">Identitas situs</p>
+        <p className="mt-1 text-xs text-gray-500">
+          Nama ini tampil di judul halaman, footer, sidebar admin, pesan OTP WhatsApp, dan metadata
+          SEO. Kosongkan untuk menggunakan nama default <strong>GMR FX</strong>.
+        </p>
+        <label className="mt-3 block text-sm">
+          <span className="text-gray-600">Nama situs</span>
+          <input
+            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm"
+            value={siteName}
+            onChange={(e) => setSiteName(e.target.value)}
+            placeholder="GMR FX"
+            maxLength={80}
+          />
+        </label>
+      </div>
+
       <div className="rounded-lg border border-gray-200 bg-gray-50/80 p-4">
         <p className="text-sm font-medium text-gray-800">Hero beranda (/)</p>
         <p className="mt-1 text-xs text-gray-500">

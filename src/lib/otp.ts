@@ -1,5 +1,6 @@
 import { OtpPurpose } from "@prisma/client";
 import { prisma } from "./prisma";
+import { getSiteName } from "./siteNameSettings";
 
 const OTP_TTL_MS = 10 * 60 * 1000;
 
@@ -24,8 +25,9 @@ async function sendOtpWhatsApp(phone: string, code: string): Promise<void> {
   if (target.startsWith("0")) target = "62" + target.slice(1);
   if (!target.startsWith("62")) target = "62" + target;
 
+  const siteName = await getSiteName();
   const message =
-    `Kode OTP GMR FX Anda: *${code}*\n\n` +
+    `Kode OTP ${siteName} Anda: *${code}*\n\n` +
     `Berlaku 10 menit. Jangan bagikan kode ini kepada siapapun.\n\n` +
     `Abaikan jika Anda tidak merasa meminta kode ini.`;
 

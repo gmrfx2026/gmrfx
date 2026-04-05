@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ARTICLE_COMMENTS_PER_PAGE_KEY } from "@/lib/articleCommentPagination";
@@ -35,6 +36,7 @@ import {
   DEPOSIT_USDT_BSC_ENABLED_KEY,
 } from "@/lib/depositUsdtSettings";
 import { OAUTH_PHONE_VERIFY_KEY, MANUAL_PHONE_VERIFY_KEY } from "@/lib/oauthPhoneVerifySettings";
+import { SITE_NAME_KEY, DEFAULT_SITE_NAME } from "@/lib/siteNameSettings";
 
 export async function GET() {
   const session = await auth();
@@ -290,6 +292,17 @@ export async function PATCH(req: Request) {
       create: { key: MANUAL_PHONE_VERIFY_KEY, value: on ? "1" : "0" },
       update: { value: on ? "1" : "0" },
     });
+  }
+
+  if (body.siteName !== undefined) {
+    const name = String(body.siteName ?? "").trim().slice(0, 80);
+    await prisma.systemSetting.upsert({
+      where: { key: SITE_NAME_KEY },
+      create: { key: SITE_NAME_KEY, value: name || DEFAULT_SITE_NAME },
+      update: { value: name || DEFAULT_SITE_NAME },
+    });
+    // Invalidate cache agar perubahan nama situs langsung berlaku
+    revalidateTag(SITE_NAME_KEY);
   }
 
   return NextResponse.json({ ok: true });
