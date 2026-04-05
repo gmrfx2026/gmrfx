@@ -5,6 +5,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { toMemberSlug } from "@/lib/memberSlug";
 import { resolveWilayahByDistrictId } from "@/lib/wilayahIndonesia";
+import { createOtp } from "@/lib/otp";
+import { OAUTH_PHONE_VERIFY_KEY, isOauthPhoneVerifyRequired } from "@/lib/oauthPhoneVerifySettings";
 
 const schema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -54,44 +56,47 @@ export async function POST(req: Request) {
 
   let memberSlug = toMemberSlug(d.name, user.id);
 
+  // Cek setting: apakah OAuth user wajib verifikasi HP?
+  const otpSetting = await prisma.systemSetting.findUnique({ where: { key: OAUTH_PHONE_VERIFY_KEY } });
+  const requirePhoneVerify = isOauthPhoneVerifyRequired(otpSetting?.value);
+
+  const updateData = {
+    name: d.name,
+    phoneWhatsApp: d.phoneWhatsApp,
+    addressLine: d.addressLine,
+    kecamatan: wilayah.kecamatan,
+    kabupaten: wilayah.kabupaten,
+    provinsi: wilayah.provinsi,
+    kodePos: d.kodePos,
+    negara: d.negara,
+    profileComplete: true,
+    memberSlug,
+    // Jika wajib OTP, set PENDING dulu; akan jadi ACTIVE setelah verifikasi
+    ...(requirePhoneVerify ? { memberStatus: "PENDING" as const } : {}),
+  };
+
   try {
     await prisma.user.update({
       where: { id: user.id },
-      data: {
-        name: d.name,
-        phoneWhatsApp: d.phoneWhatsApp,
-        addressLine: d.addressLine,
-        kecamatan: wilayah.kecamatan,
-        kabupaten: wilayah.kabupaten,
-        provinsi: wilayah.provinsi,
-        kodePos: d.kodePos,
-        negara: d.negara,
-        profileComplete: true,
-        memberSlug,
-      },
+      data: updateData,
     });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       memberSlug = `${memberSlug}-${user.id.slice(-4)}`;
       await prisma.user.update({
         where: { id: user.id },
-        data: {
-          name: d.name,
-          phoneWhatsApp: d.phoneWhatsApp,
-          addressLine: d.addressLine,
-          kecamatan: wilayah.kecamatan,
-          kabupaten: wilayah.kabupaten,
-          provinsi: wilayah.provinsi,
-          kodePos: d.kodePos,
-          negara: d.negara,
-          profileComplete: true,
-          memberSlug,
-        },
+        data: { ...updateData, memberSlug },
       });
     } else {
       console.error("complete-oauth update", e);
       return NextResponse.json({ error: "Gagal menyimpan. Coba lagi." }, { status: 500 });
     }
+  }
+
+  // Kirim OTP WhatsApp jika setting aktif
+  if (requirePhoneVerify) {
+    await createOtp(session.user.id, "PHONE_VERIFY", d.phoneWhatsApp);
+    return NextResponse.json({ ok: true, pendingPhoneVerify: true });
   }
 
   return NextResponse.json({ ok: true });

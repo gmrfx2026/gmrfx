@@ -32,6 +32,10 @@ import {
   DEPOSIT_USDT_BSC_ADDRESS_KEY,
   DEPOSIT_USDT_BSC_ENABLED_KEY,
 } from "@/lib/depositUsdtSettings";
+import {
+  OAUTH_PHONE_VERIFY_KEY,
+  isOauthPhoneVerifyRequired,
+} from "@/lib/oauthPhoneVerifySettings";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +58,7 @@ export default async function AdminSettingsPage() {
     heroSubtext,
     usdtAddr,
     usdtEnabled,
+    oauthPhoneVerify,
   ] = await Promise.all([
     prisma.systemSetting.findUnique({ where: { key: "platform_fee_percent" } }),
     prisma.systemSetting.findUnique({ where: { key: ARTICLE_COMMENTS_PER_PAGE_KEY } }),
@@ -72,6 +77,7 @@ export default async function AdminSettingsPage() {
     prisma.systemSetting.findUnique({ where: { key: HOME_HERO_SUBTEXT_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: DEPOSIT_USDT_BSC_ADDRESS_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: DEPOSIT_USDT_BSC_ENABLED_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: OAUTH_PHONE_VERIFY_KEY } }),
   ]);
 
   return (
@@ -102,6 +108,7 @@ export default async function AdminSettingsPage() {
           initialHomeHeroSubtext={heroSubtext?.value ?? HOME_HERO_DEFAULTS.subtext}
           initialDepositUsdtBscAddress={usdtAddr?.value ?? process.env.ADMIN_USDT_BSC_ADDRESS ?? ""}
           initialDepositUsdtBscEnabled={usdtEnabled ? usdtEnabled.value === "1" : true}
+          initialOauthPhoneVerifyRequired={isOauthPhoneVerifyRequired(oauthPhoneVerify?.value)}
         />
       </div>
     </div>

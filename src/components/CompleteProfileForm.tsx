@@ -39,7 +39,12 @@ export function CompleteProfileForm() {
       return;
     }
     await update();
-    router.push("/profil");
+    if (data.pendingPhoneVerify) {
+      // Setting admin aktif: wajib verifikasi HP via OTP sebelum akun aktif
+      router.push(`/verifikasi-hp?email=${encodeURIComponent(form.phoneWhatsApp)}`);
+    } else {
+      router.push("/profil");
+    }
     router.refresh();
   }
 

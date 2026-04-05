@@ -21,6 +21,7 @@ export function AdminSettingsForm({
   initialHomeHeroSubtext,
   initialDepositUsdtBscAddress,
   initialDepositUsdtBscEnabled,
+  initialOauthPhoneVerifyRequired,
 }: {
   initialFee: string;
   initialArticleCommentsPerPage: string;
@@ -39,6 +40,7 @@ export function AdminSettingsForm({
   initialHomeHeroSubtext: string;
   initialDepositUsdtBscAddress: string;
   initialDepositUsdtBscEnabled: boolean;
+  initialOauthPhoneVerifyRequired: boolean;
 }) {
   const router = useRouter();
   const [v, setV] = useState(initialFee);
@@ -62,6 +64,7 @@ export function AdminSettingsForm({
   const [homeHeroSubtext, setHomeHeroSubtext] = useState(initialHomeHeroSubtext);
   const [depositUsdtAddr, setDepositUsdtAddr] = useState(initialDepositUsdtBscAddress);
   const [depositUsdtEnabled, setDepositUsdtEnabled] = useState(initialDepositUsdtBscEnabled);
+  const [oauthPhoneVerify, setOauthPhoneVerify] = useState(initialOauthPhoneVerifyRequired);
   const [msg, setMsg] = useState("");
 
   async function save(e: React.FormEvent) {
@@ -87,6 +90,7 @@ export function AdminSettingsForm({
         homeHeroSubtext,
         depositUsdtBscAddress: depositUsdtAddr,
         depositUsdtBscEnabled: depositUsdtEnabled,
+        oauthPhoneVerifyRequired: oauthPhoneVerify,
       }),
     });
     setMsg(res.ok ? "Disimpan." : "Gagal");
@@ -325,6 +329,29 @@ export function AdminSettingsForm({
           />
           <span className="mt-1 block text-xs text-gray-500">
             Harus berupa alamat BSC valid (0x + 40 karakter hex). Member mengirim USDT ke alamat ini.
+          </span>
+        </label>
+      </div>
+
+      {/* Pendaftaran & Verifikasi */}
+      <div className="rounded-lg border border-gray-200 bg-gray-50/80 p-4">
+        <p className="text-sm font-medium text-gray-800">Pendaftaran & Verifikasi Akun</p>
+        <p className="mt-1 text-xs text-gray-500">
+          Pengaturan verifikasi nomor WhatsApp saat pendaftaran melalui Google OAuth.
+        </p>
+        <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={oauthPhoneVerify}
+            onChange={(e) => setOauthPhoneVerify(e.target.checked)}
+            className="mt-1 h-4 w-4 shrink-0"
+          />
+          <span>
+            <span className="font-medium text-gray-800">Wajibkan verifikasi HP untuk login Google</span>
+            <span className="mt-0.5 block text-xs text-gray-500">
+              Jika aktif, member yang mendaftar via Google harus memverifikasi nomor WhatsApp via OTP
+              setelah mengisi profil. Jika tidak aktif, akun langsung aktif tanpa OTP.
+            </span>
           </span>
         </label>
       </div>
