@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import Link from "next/link";
 import { ProfilWithdrawPanel } from "@/components/ProfilWithdrawPanel";
 
@@ -10,10 +11,28 @@ export default async function WalletPenarikanPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { walletBalance: true, bankName: true, bankAccountNumber: true, usdtWithdrawAddress: true },
-  });
+  const user = await (async () => {
+    try {
+      return await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { walletBalance: true, bankName: true, bankAccountNumber: true, usdtWithdrawAddress: true },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        (error.code === "P2021" || error.code === "P2022")
+      ) {
+        const fallback = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { walletBalance: true },
+        });
+        return fallback
+          ? { ...fallback, bankName: null, bankAccountNumber: null, usdtWithdrawAddress: null }
+          : null;
+      }
+      throw error;
+    }
+  })();
   if (!user) redirect("/login");
 
   const bal = Number(user.walletBalance);

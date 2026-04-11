@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { Role } from "@prisma/client";
+import { Prisma, Role } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -21,22 +21,33 @@ export async function POST() {
   const userId = session.user.id;
   const now = new Date();
 
-  const u = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { memberLastSeenAt: true },
-  });
+  try {
+    const u = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { memberLastSeenAt: true },
+    });
 
-  if (u?.memberLastSeenAt) {
-    const elapsedSec = (now.getTime() - u.memberLastSeenAt.getTime()) / 1000;
-    if (elapsedSec < THROTTLE_SEC) {
-      return NextResponse.json({ ok: true, throttled: true });
+    if (u?.memberLastSeenAt) {
+      const elapsedSec = (now.getTime() - u.memberLastSeenAt.getTime()) / 1000;
+      if (elapsedSec < THROTTLE_SEC) {
+        return NextResponse.json({ ok: true, throttled: true });
+      }
     }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { memberLastSeenAt: now },
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === "P2021" || error.code === "P2022")
+    ) {
+      console.warn("[activity-ping] memberLastSeenAt belum tersedia di database; skip ping.");
+      return NextResponse.json({ ok: true, skipped: true, reason: "memberLastSeenAt-unavailable" });
+    }
+    throw error;
   }
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: { memberLastSeenAt: now },
-  });
-
-  return NextResponse.json({ ok: true });
 }

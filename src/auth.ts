@@ -19,7 +19,19 @@ const providers = [
     async authorize(credentials) {
       if (!credentials?.email || !credentials?.password) return null;
       const email = String(credentials.email).toLowerCase().trim();
-      const user = await prisma.user.findUnique({ where: { email } });
+      const user = await prisma.user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          image: true,
+          role: true,
+          profileComplete: true,
+          memberStatus: true,
+          passwordHash: true,
+        },
+      });
       if (!user?.passwordHash || user.memberStatus !== "ACTIVE") return null;
       const ok = await bcrypt.compare(String(credentials.password), user.passwordHash);
       if (!ok) return null;
