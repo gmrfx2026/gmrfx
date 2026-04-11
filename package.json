@@ -15,7 +15,7 @@
     "migrate": "prisma migrate deploy",
     "build:next": "next build",
     "db:migrate": "prisma migrate deploy",
-    "db:migrate:safe": "node scripts/assert-migration-292100-fixed.cjs && prisma migrate deploy",
+    "db:migrate:safe": "node prisma/assert-migration-292100-fixed.cjs && prisma migrate deploy",
     "db:resolve:member-menu": "prisma migrate resolve --applied \"20260323103000_member_menu_item\"",
     "start": "next start",
     "lint": "next lint",

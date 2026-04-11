@@ -1,20 +1,18 @@
 /**
  * Gagalkan deploy jika migrasi 20260329210000 masih berisi ALTER ke tabel published account
  * (bug urutan lama). Jalankan dari root repo sebelum `prisma migrate deploy`.
+ * File di folder prisma/ agar ikut image deploy yang biasanya tidak menyalin scripts/.
  */
 const fs = require("fs");
 const path = require("path");
 
 const p = path.join(
   __dirname,
-  "..",
-  "prisma",
   "migrations",
   "20260329210000_community_watch_alert_pricing",
   "migration.sql"
 );
 const s = fs.readFileSync(p, "utf8");
-// Hanya deteksi pernyataan ALTER yang menyentuh tabel itu (bukan sekadar komentar).
 const bad =
   /\bALTER\s+TABLE\s+"MtCommunityPublishedAccount"/i.test(s) ||
   /\bALTER\s+TABLE\s+MtCommunityPublishedAccount\b/i.test(s);

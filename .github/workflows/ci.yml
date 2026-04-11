@@ -45,7 +45,7 @@ jobs:
         run: npm ci
 
       - name: Verify critical migration file (urutan 20260329210000)
-        run: node scripts/assert-migration-292100-fixed.cjs
+        run: node prisma/assert-migration-292100-fixed.cjs
 
       - name: Apply Prisma migrations
         run: npx prisma migrate deploy
