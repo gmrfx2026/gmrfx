@@ -10,6 +10,8 @@ import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 
 const DEMO_EA_SLUG = "demo-ea-piphunter-stub-mt5";
+const PIPHUNTER_EMAIL = "piphunter@gmrfx.local";
+const ADMIN_EMAIL = "admin@gmrfx.local";
 const DEMO_JOB_TITLES = [
   "[Demo] Butuh EA scalping XAUUSD timeframe rendah",
   "[Demo] Indikator custom volume & sesi Asia di MT5",
@@ -24,10 +26,17 @@ export async function seedDemoExpertAdvisors(prisma: PrismaClient): Promise<{ ok
     return { ok: false, message: "Stub .mq5 tidak ada — jalankan dari repo lengkap (prisma/seed-data/piphunter/)." };
   }
 
-  const EMAIL = "piphunter@gmrfx.local";
-  const user = await prisma.user.findUnique({ where: { email: EMAIL } });
-  if (!user) {
-    return { ok: false, message: "User PipHunter belum ada — jalankan npm run db:seed atau db:seed:piphunter dulu." };
+  let seller = await prisma.user.findUnique({ where: { email: PIPHUNTER_EMAIL } });
+  let sellerLabel = PIPHUNTER_EMAIL;
+  if (!seller) {
+    seller = await prisma.user.findUnique({ where: { email: ADMIN_EMAIL } });
+    sellerLabel = ADMIN_EMAIL;
+  }
+  if (!seller) {
+    return {
+      ok: false,
+      message: `Tidak ada penjual demo — buat ${PIPHUNTER_EMAIL} (db:seed:piphunter) atau ${ADMIN_EMAIL} (db:seed).`,
+    };
   }
 
   const existing = await prisma.sharedExpertAdvisor.findUnique({ where: { slug: DEMO_EA_SLUG } });
@@ -35,18 +44,18 @@ export async function seedDemoExpertAdvisors(prisma: PrismaClient): Promise<{ ok
   let fileName = existing?.fileName ?? "GMRFX_Demo_EA_Stub.mq5";
 
   if (!fileUrl) {
-    const uploadRoot = path.join(process.cwd(), "public", "uploads", "eas", user.id);
+    const uploadRoot = path.join(process.cwd(), "public", "uploads", "eas", seller.id);
     await mkdir(uploadRoot, { recursive: true });
     const idPart = randomBytes(8).toString("hex");
     const diskName = `${idPart}.mq5`;
     await writeFile(path.join(uploadRoot, diskName), stubBuf);
-    fileUrl = `/uploads/eas/${user.id}/${diskName}`;
+    fileUrl = `/uploads/eas/${seller.id}/${diskName}`;
   }
 
   await prisma.sharedExpertAdvisor.upsert({
     where: { slug: DEMO_EA_SLUG },
     create: {
-      sellerId: user.id,
+      sellerId: seller.id,
       title: "EA edukasi (stub) — contoh katalog",
       slug: DEMO_EA_SLUG,
       description:
@@ -67,14 +76,13 @@ export async function seedDemoExpertAdvisors(prisma: PrismaClient): Promise<{ ok
     },
   });
 
-  return { ok: true, message: `EA demo: slug ${DEMO_EA_SLUG} · penjual ${EMAIL}` };
+  return { ok: true, message: `EA demo: slug ${DEMO_EA_SLUG} · penjual ${sellerLabel}` };
 }
 
 export async function seedDemoJobOffers(prisma: PrismaClient): Promise<{ ok: boolean; message: string }> {
-  const adminEmail = "admin@gmrfx.local";
-  const admin = await prisma.user.findUnique({ where: { email: adminEmail } });
+  const admin = await prisma.user.findUnique({ where: { email: ADMIN_EMAIL } });
   if (!admin) {
-    return { ok: false, message: `User ${adminEmail} tidak ada — jalankan db:seed dulu agar admin terbuat.` };
+    return { ok: false, message: `User ${ADMIN_EMAIL} tidak ada — jalankan npm run db:seed sekali agar admin terbuat.` };
   }
 
   const already = await prisma.jobOffer.findFirst({
@@ -140,6 +148,6 @@ export async function seedDemoJobOffers(prisma: PrismaClient): Promise<{ ok: boo
 
   return {
     ok: true,
-    message: `Penawaran demo: ${jobs.length} listing OPEN · requester ${adminEmail} · top-up seed Rp ${topUp.toString()} lalu escrow sesuai budget.`,
+    message: `Penawaran demo: ${jobs.length} listing OPEN · requester ${ADMIN_EMAIL} · top-up seed Rp ${topUp.toString()} lalu escrow sesuai budget.`,
   };
 }

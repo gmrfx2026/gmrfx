@@ -68,6 +68,11 @@ async function main() {
 
   const ph = await seedPiphunterIndicators(prisma);
   console.log(ph.ok ? ph.message : "PipHunter:", ph.message);
+  if (!ph.ok) {
+    console.warn(
+      "[seed] PipHunter gagal — indikator katalog bisa kosong. EA demo akan memakai admin@gmrfx.local sebagai penjual jika PipHunter belum ada."
+    );
+  }
 
   const ea = await seedDemoExpertAdvisors(prisma);
   console.log(ea.ok ? ea.message : "EA demo:", ea.message);
