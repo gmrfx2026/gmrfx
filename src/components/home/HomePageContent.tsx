@@ -33,6 +33,7 @@ export async function HomePageContent() {
       key: {
         in: [
           HOME_MEMBER_TICKER_VISIBLE_KEY,
+          HOME_INDICATORS_VISIBLE_KEY,
           HOME_NEWS_DOMESTIC_VISIBLE_KEY,
           HOME_NEWS_INTERNATIONAL_VISIBLE_KEY,
           HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY,
@@ -106,7 +107,7 @@ export async function HomePageContent() {
   ]);
 
   return (
-    <div>
+    <div className="min-w-0">
       <section className="border-b border-broker-border bg-broker-surface/30">
         <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
           <p className="text-sm font-medium uppercase tracking-widest text-broker-accent">{hero.eyebrow}</p>
@@ -280,7 +281,7 @@ export async function HomePageContent() {
                 );
               })}
             </div>
-          {domesticNews.length === 0 && (
+            {domesticNews.length === 0 && (
               <p className="text-center text-sm text-broker-muted">Belum ada berita dalam negeri.</p>
             )}
           </div>

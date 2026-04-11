@@ -100,7 +100,7 @@ body { margin: 0; min-height: 100vh; background-color: #0b0e11; color: #eaecef; 
             punya induk flex — tanpa ini, flex-1 di <main> tidak berlaku dan footer bisa “naik”, tampilan berantakan.
           */}
           <Providers session={session}>
-            <div className="flex min-h-screen w-full flex-1 flex-col">{children}</div>
+            <div className="flex min-h-screen w-full min-w-0 flex-1 flex-col">{children}</div>
           </Providers>
         </div>
       </body>
