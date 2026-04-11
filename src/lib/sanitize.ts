@@ -1,59 +1,39 @@
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 import { isAllowedArticleImageSrc } from "./articleImagePolicy";
 
-let articlePurifyHooksInstalled = false;
+function sanitizeTableCellAttrs(
+  attribs: Record<string, string | undefined>,
+  allowScope: boolean
+): Record<string, string> {
+  const next: Record<string, string> = {};
 
-function ensureArticlePurifyHooks() {
-  if (articlePurifyHooksInstalled) return;
-  articlePurifyHooksInstalled = true;
+  if (typeof attribs.class === "string" && attribs.class.trim()) {
+    next.class = attribs.class.trim();
+  }
 
-  DOMPurify.addHook("uponSanitizeAttribute", (node, data) => {
-    const tag = String(node.nodeName).toUpperCase();
-
-    if (data.attrName === "src" && tag === "IMG") {
-      const v = String(data.attrValue ?? "").trim();
-      if (!isAllowedArticleImageSrc(v)) {
-        data.keepAttr = false;
-      }
-      return;
+  for (const key of ["colspan", "rowspan"] as const) {
+    const raw = String(attribs[key] ?? "").trim();
+    if (!raw) continue;
+    const n = Number.parseInt(raw, 10);
+    if (Number.isFinite(n) && n >= 1 && n <= 50) {
+      next[key] = String(n);
     }
+  }
 
-    if (data.attrName === "style") {
-      data.keepAttr = false;
-      return;
+  if (allowScope) {
+    const scope = String(attribs.scope ?? "").trim().toLowerCase();
+    if (["col", "row", "colgroup", "rowgroup"].includes(scope)) {
+      next.scope = scope;
     }
+  }
 
-    if ((data.attrName === "colspan" || data.attrName === "rowspan") && (tag === "TD" || tag === "TH")) {
-      const n = Number.parseInt(String(data.attrValue ?? ""), 10);
-      if (!Number.isFinite(n) || n < 1 || n > 50) {
-        data.keepAttr = false;
-      }
-      return;
-    }
-
-    if (data.attrName === "scope" && tag === "TH") {
-      const v = String(data.attrValue ?? "").toLowerCase();
-      if (!["col", "row", "colgroup", "rowgroup"].includes(v)) {
-        data.keepAttr = false;
-      }
-    }
-  });
-
-  DOMPurify.addHook("afterSanitizeElements", (node) => {
-    if (String(node.nodeName).toUpperCase() !== "IMG") return;
-    const el = node as Element;
-    if (typeof el.getAttribute === "function" && !el.getAttribute("src")) {
-      el.remove();
-    }
-  });
+  return next;
 }
 
 /** Konten artikel: izinkan formatting umum, tanpa script/iframes berbahaya */
 export function sanitizeArticleHtml(dirty: string): string {
-  ensureArticlePurifyHooks();
-  return DOMPurify.sanitize(dirty, {
-    USE_PROFILES: { html: true },
-    ALLOWED_TAGS: [
+  return sanitizeHtml(dirty, {
+    allowedTags: [
       "p",
       "br",
       "strong",
@@ -87,22 +67,44 @@ export function sanitizeArticleHtml(dirty: string): string {
       "td",
       "caption",
     ],
-    ALLOWED_ATTR: [
-      "href",
-      "title",
-      "class",
-      "target",
-      "rel",
-      "src",
-      "alt",
-      "loading",
-      "colspan",
-      "rowspan",
-      "scope",
-    ],
-    ALLOW_DATA_ATTR: false,
-    // Amankan link agar hanya boleh ke http(s), mailto, atau relative (#/path).
-    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|\/|#)/i,
+    allowedAttributes: {
+      "*": ["class"],
+      a: ["href", "title", "target", "rel"],
+      img: ["src", "alt", "loading"],
+      th: ["class", "colspan", "rowspan", "scope"],
+      td: ["class", "colspan", "rowspan"],
+    },
+    allowedSchemes: ["http", "https", "mailto"],
+    allowProtocolRelative: false,
+    transformTags: {
+      a: (tagName, attribs) => ({
+        tagName,
+        attribs: {
+          ...attribs,
+          ...(attribs.href ? { rel: "noopener noreferrer nofollow" } : {}),
+        },
+      }),
+      img: (tagName, attribs) => {
+        const src = String(attribs.src ?? "").trim();
+        if (!isAllowedArticleImageSrc(src)) {
+          return { tagName: "span", attribs: {}, text: "" };
+        }
+
+        const next: Record<string, string> = { src };
+        if (typeof attribs.class === "string" && attribs.class.trim()) next.class = attribs.class.trim();
+        if (typeof attribs.alt === "string" && attribs.alt.trim()) next.alt = attribs.alt.trim();
+        if (typeof attribs.loading === "string" && attribs.loading.trim()) next.loading = attribs.loading.trim();
+        return { tagName, attribs: next };
+      },
+      td: (tagName, attribs) => ({
+        tagName,
+        attribs: sanitizeTableCellAttrs(attribs, false),
+      }),
+      th: (tagName, attribs) => ({
+        tagName,
+        attribs: sanitizeTableCellAttrs(attribs, true),
+      }),
+    },
   });
 }
 
