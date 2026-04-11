@@ -28,8 +28,9 @@ jobs:
     env:
       # GitHub Actions: hindari deprecation Node 20 untuk JavaScript actions (changelog 2025-09-19).
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gmrfx_ci
-      DATABASE_URL_UNPOOLED: postgresql://postgres:postgres@localhost:5432/gmrfx_ci
+      # Pakai 127.0.0.1 (bukan localhost) — hindari IPv6 ::1 yang sering gagal ke service Postgres di Actions.
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/gmrfx_ci?schema=public
+      DATABASE_URL_UNPOOLED: postgresql://postgres:postgres@127.0.0.1:5432/gmrfx_ci?schema=public
       AUTH_SECRET: ci-build-placeholder-secret-min-32-chars
       AUTH_URL: http://localhost:3000
 
