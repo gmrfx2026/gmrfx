@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { MemberRowActions } from "@/components/admin/MemberRowActions";
@@ -16,7 +16,7 @@ export default async function AdminMembersPage({
   const lp = parseAdminListQuery(searchParams as Record<string, string | string[] | undefined>);
   const q = lp.q;
 
-  const where: Prisma.UserWhereInput = q
+  const fullWhere: Prisma.UserWhereInput = q
     ? {
         OR: [
           { email: { contains: q, mode: "insensitive" } },
@@ -27,15 +27,91 @@ export default async function AdminMembersPage({
       }
     : {};
 
-  const total = await prisma.user.count({ where });
-  const { page, skip, totalPages } = resolvePagedWindow(lp.page, lp.pageSize, total);
+  const legacyWhere: Prisma.UserWhereInput = q
+    ? {
+        OR: [
+          { email: { contains: q, mode: "insensitive" } },
+          { name: { contains: q, mode: "insensitive" } },
+        ],
+      }
+    : {};
 
-  const users = await prisma.user.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    skip,
-    take: lp.pageSize,
-  });
+  async function loadMembers(where: Prisma.UserWhereInput, fullSchema: boolean) {
+    const total = await prisma.user.count({ where });
+    const { page, skip, totalPages } = resolvePagedWindow(lp.page, lp.pageSize, total);
+
+    if (fullSchema) {
+      const users = await prisma.user.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: lp.pageSize,
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          phoneWhatsApp: true,
+          walletAddress: true,
+          walletBalance: true,
+          memberStatus: true,
+          addressLine: true,
+          kecamatan: true,
+          kabupaten: true,
+          provinsi: true,
+          kodePos: true,
+          negara: true,
+          role: true,
+        },
+      });
+      return { total, page, totalPages, users };
+    }
+
+    const users = (await prisma.user.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: lp.pageSize,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+      },
+    })).map((u) => ({
+      ...u,
+      phoneWhatsApp: null,
+      walletAddress: null,
+      walletBalance: 0,
+      memberStatus: "ACTIVE",
+      addressLine: null,
+      kecamatan: null,
+      kabupaten: null,
+      provinsi: null,
+      kodePos: null,
+      negara: "Indonesia",
+    }));
+
+    return { total, page, totalPages, users };
+  }
+
+  let total: number;
+  let page: number;
+  let totalPages: number;
+  let users: Awaited<ReturnType<typeof loadMembers>>["users"];
+
+  try {
+    ({ total, page, totalPages, users } = await loadMembers(fullWhere, true));
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === "P2021" || error.code === "P2022")
+    ) {
+      console.warn("[admin/members] Kolom member terbaru belum tersedia di database; gunakan tampilan kompatibel.");
+      ({ total, page, totalPages, users } = await loadMembers(legacyWhere, false));
+    } else {
+      throw error;
+    }
+  }
 
   return (
     <div>
