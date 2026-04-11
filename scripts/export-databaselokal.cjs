@@ -1,10 +1,11 @@
 /**
- * Export PostgreSQL (DATABASE_URL) ke file teks SQL di root repo: `databaselokal`.
- * Butuh `pg_dump` di PATH (instalasi PostgreSQL client).
+ * Export PostgreSQL (DATABASE_URL) ke file `databaselokal` di root repo (SQL teks).
+ *
+ * 1) pg_dump di PATH
+ * 2) pg_dump.exe di PostgreSQL\*\bin (Windows)
+ * 3) Docker image postgres:16 + bind mount folder project
  *
  *   npm run db:export:databaselokal
- *
- * Opsional: set OUT_FILE untuk path lain.
  */
 const { spawnSync } = require("child_process");
 const path = require("path");
@@ -44,10 +45,114 @@ if (!database) {
   process.exit(1);
 }
 
-const outFile = path.resolve(root, process.env.OUT_FILE || "databaselokal");
-const dump = spawnSync(
-  "pg_dump",
+const outRel = process.env.OUT_FILE || "databaselokal";
+const outFile = path.isAbsolute(outRel) ? path.normalize(outRel) : path.resolve(root, outRel);
+const outDir = path.dirname(outFile);
+if (!fs.existsSync(outDir)) {
+  fs.mkdirSync(outDir, { recursive: true });
+}
+
+function findPgDumpWindows() {
+  if (process.platform !== "win32") return null;
+  const bases = [
+    path.join(process.env["ProgramFiles"] || "C:\\Program Files", "PostgreSQL"),
+    path.join(process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)", "PostgreSQL"),
+  ];
+  for (const base of bases) {
+    if (!fs.existsSync(base)) continue;
+    let dirs;
+    try {
+      dirs = fs.readdirSync(base, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const d of dirs) {
+      if (!d.isDirectory()) continue;
+      const exe = path.join(base, d.name, "bin", "pg_dump.exe");
+      if (fs.existsSync(exe)) return exe;
+    }
+  }
+  return null;
+}
+
+function runPgDump(cmd, args) {
+  return spawnSync(cmd, args, {
+    env: { ...process.env, PGPASSWORD: password },
+    stdio: ["ignore", "inherit", "pipe"],
+    encoding: "utf8",
+  });
+}
+
+const baseArgs = [
+  "-h",
+  host,
+  "-p",
+  port,
+  "-U",
+  user,
+  "-d",
+  database,
+  "--no-owner",
+  "--no-acl",
+  "-F",
+  "p",
+  "-f",
+  outFile,
+];
+
+let dump = runPgDump("pg_dump", baseArgs);
+if (dump.error) {
+  const winExe = findPgDumpWindows();
+  if (winExe) {
+    console.log("Menggunakan:", winExe);
+    dump = runPgDump(winExe, baseArgs);
+  }
+}
+
+if (!dump.error && dump.status === 0) {
+  const stat = fs.statSync(outFile);
+  console.log("Export OK:", outFile, "(" + stat.size + " bytes)");
+  process.exit(0);
+}
+
+if (!dump.error && dump.status !== 0) {
+  console.error(dump.stderr?.trim() || "pg_dump gagal.");
+  process.exit(dump.status || 1);
+}
+
+/* dump.error: pg_dump tidak ada → coba Docker */
+const dockerCheck = spawnSync("docker", ["info"], { encoding: "utf8", stdio: "pipe" });
+if (dockerCheck.status !== 0) {
+  console.error(
+    "pg_dump tidak ditemukan dan Docker tidak tersedia.\n" +
+      "Pasang PostgreSQL CLI atau jalankan Docker Desktop."
+  );
+  if (dump.error) console.error(dump.error.message);
+  process.exit(1);
+}
+
+const rootReal = path.resolve(root);
+if (!outFile.startsWith(rootReal + path.sep) && outFile !== rootReal) {
+  console.error(
+    "Tanpa pg_dump lokal, export via Docker membutuhkan OUT_FILE di dalam folder project.\n" +
+      `Contoh: OUT_FILE=databaselokal   (bukan path di luar ${rootReal})`
+  );
+  process.exit(1);
+}
+
+const inContainerPath = "/dumpout/" + path.relative(root, outFile).split(path.sep).join("/");
+console.log("Menggunakan Docker (postgres:16) untuk pg_dump…");
+dump = spawnSync(
+  "docker",
   [
+    "run",
+    "--rm",
+    "-e",
+    `PGPASSWORD=${password}`,
+    "-v",
+    `${rootReal}:/dumpout`,
+    "postgres:16",
+    "pg_dump",
     "-h",
     host,
     "-p",
@@ -61,22 +166,16 @@ const dump = spawnSync(
     "-F",
     "p",
     "-f",
-    outFile,
+    inContainerPath,
   ],
-  {
-    env: { ...process.env, PGPASSWORD: password },
-    stdio: ["ignore", "inherit", "pipe"],
-    encoding: "utf8",
-  }
+  { stdio: ["ignore", "inherit", "pipe"], encoding: "utf8" }
 );
 
-if (dump.error) {
-  console.error("pg_dump tidak ditemukan di PATH. Pasang PostgreSQL client atau tambahkan folder bin ke PATH.");
-  console.error(dump.error.message);
-  process.exit(1);
-}
 if (dump.status !== 0) {
-  console.error(dump.stderr?.trim() || "pg_dump gagal (cek koneksi DATABASE_URL dan firewall).");
+  console.error(
+    dump.stderr?.trim() ||
+      "Docker pg_dump gagal (pastikan DB bisa dijangkau dari container, mis. host bukan localhost mesin Anda)."
+  );
   process.exit(dump.status || 1);
 }
 
