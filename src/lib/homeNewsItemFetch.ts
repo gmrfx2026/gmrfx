@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import type { Prisma as PrismaNamespace } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { prismaPgColumnExistsPublic } from "@/lib/prismaPgColumnExists";
 
 /** Penulis untuk kartu berita (beranda / daftar berita). */
 export const homeNewsAuthorCardSelect = {
@@ -79,25 +80,6 @@ function selectWithAuthorCardCompat() {
   };
 }
 
-/**
- * Jangan pakai `instanceof Prisma.PrismaClientKnownRequestError`: di bundle server Next.js
- * class bisa ter-duplicate sehingga instanceof gagal dan fallback tidak pernah jalan.
- */
-function isMissingImageSourceUrlColumn(e: unknown): boolean {
-  if (e == null || typeof e !== "object") return false;
-  const err = e as { code?: string; message?: string; meta?: Record<string, unknown> };
-  if (err.code !== "P2022") return false;
-  const msg = String(err.message ?? "");
-  if (msg.includes("imageSourceUrl")) return true;
-  const col =
-    typeof err.meta?.column === "string"
-      ? err.meta.column
-      : typeof err.meta?.field_name === "string"
-        ? err.meta.field_name
-        : "";
-  return col.includes("imageSourceUrl");
-}
-
 function normalizeHomeNewsWithAuthorCard(row: Record<string, unknown>): HomeNewsItemWithAuthorCard {
   const imageSourceUrl =
     "imageSourceUrl" in row && row.imageSourceUrl !== undefined
@@ -106,41 +88,24 @@ function normalizeHomeNewsWithAuthorCard(row: Record<string, unknown>): HomeNews
   return { ...row, imageSourceUrl } as HomeNewsItemWithAuthorCard;
 }
 
+async function homeNewsSelectWithAuthorCard() {
+  const hasCol = await prismaPgColumnExistsPublic("HomeNewsItem", "imageSourceUrl");
+  return hasCol ? selectWithAuthorCardFull() : selectWithAuthorCardCompat();
+}
+
 export async function findManyHomeNewsWithAuthorCard(
   args: Omit<Prisma.HomeNewsItemFindManyArgs, "select" | "include">
 ): Promise<HomeNewsItemWithAuthorCard[]> {
-  try {
-    const rows = await prisma.homeNewsItem.findMany({
-      ...args,
-      select: selectWithAuthorCardFull(),
-    });
-    return rows as HomeNewsItemWithAuthorCard[];
-  } catch (e) {
-    if (!isMissingImageSourceUrlColumn(e)) throw e;
-    const rows = await prisma.homeNewsItem.findMany({
-      ...args,
-      select: selectWithAuthorCardCompat(),
-    });
-    return rows.map((r) => normalizeHomeNewsWithAuthorCard(r as Record<string, unknown>));
-  }
+  const select = await homeNewsSelectWithAuthorCard();
+  const rows = await prisma.homeNewsItem.findMany({ ...args, select });
+  return rows.map((r) => normalizeHomeNewsWithAuthorCard(r as Record<string, unknown>));
 }
 
 export async function findFirstHomeNewsWithAuthorCard(
   args: Omit<Prisma.HomeNewsItemFindFirstArgs, "select" | "include">
 ): Promise<HomeNewsItemWithAuthorCard | null> {
-  try {
-    const row = await prisma.homeNewsItem.findFirst({
-      ...args,
-      select: selectWithAuthorCardFull(),
-    });
-    return row as HomeNewsItemWithAuthorCard | null;
-  } catch (e) {
-    if (!isMissingImageSourceUrlColumn(e)) throw e;
-    const row = await prisma.homeNewsItem.findFirst({
-      ...args,
-      select: selectWithAuthorCardCompat(),
-    });
-    if (!row) return null;
-    return normalizeHomeNewsWithAuthorCard(row as Record<string, unknown>);
-  }
+  const select = await homeNewsSelectWithAuthorCard();
+  const row = await prisma.homeNewsItem.findFirst({ ...args, select });
+  if (!row) return null;
+  return normalizeHomeNewsWithAuthorCard(row as Record<string, unknown>);
 }

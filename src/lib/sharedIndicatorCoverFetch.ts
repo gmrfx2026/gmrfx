@@ -1,21 +1,7 @@
 import { Prisma } from "@prisma/client";
 import type { Prisma as PrismaNamespace } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-
-/** Hindari `instanceof` pada error Prisma — lihat `homeNewsItemFetch.ts`. */
-function isMissingCoverImageUrlColumn(e: unknown): boolean {
-  if (e == null || typeof e !== "object") return false;
-  const err = e as { code?: string; message?: string; meta?: Record<string, unknown> };
-  if (err.code !== "P2022") return false;
-  if (String(err.message ?? "").includes("coverImageUrl")) return true;
-  const col =
-    typeof err.meta?.column === "string"
-      ? err.meta.column
-      : typeof err.meta?.field_name === "string"
-        ? err.meta.field_name
-        : "";
-  return col.includes("coverImageUrl");
-}
+import { prismaPgColumnExistsPublic } from "@/lib/prismaPgColumnExists";
 
 const homeSelectWithCover = {
   id: true,
@@ -45,14 +31,12 @@ export type SharedIndicatorHomeRow = PrismaNamespace.SharedIndicatorGetPayload<{
 export async function findManySharedIndicatorsForHome(
   args: Omit<Prisma.SharedIndicatorFindManyArgs, "select" | "include">
 ): Promise<SharedIndicatorHomeRow[]> {
-  try {
-    const rows = await prisma.sharedIndicator.findMany({ ...args, select: homeSelectWithCover });
-    return rows as SharedIndicatorHomeRow[];
-  } catch (e) {
-    if (!isMissingCoverImageUrlColumn(e)) throw e;
-    const rows = await prisma.sharedIndicator.findMany({ ...args, select: homeSelectCompat });
-    return rows.map((r) => ({ ...r, coverImageUrl: null }) as SharedIndicatorHomeRow);
-  }
+  const hasCol = await prismaPgColumnExistsPublic("SharedIndicator", "coverImageUrl");
+  const select = hasCol ? homeSelectWithCover : homeSelectCompat;
+  const rows = await prisma.sharedIndicator.findMany({ ...args, select });
+  return rows.map((r) =>
+    hasCol ? (r as SharedIndicatorHomeRow) : ({ ...r, coverImageUrl: null } as SharedIndicatorHomeRow)
+  );
 }
 
 const catalogSelectWithCover = {
@@ -85,12 +69,10 @@ export type SharedIndicatorCatalogRow = PrismaNamespace.SharedIndicatorGetPayloa
 export async function findManySharedIndicatorsForCatalog(
   args: Omit<Prisma.SharedIndicatorFindManyArgs, "select" | "include">
 ): Promise<SharedIndicatorCatalogRow[]> {
-  try {
-    const rows = await prisma.sharedIndicator.findMany({ ...args, select: catalogSelectWithCover });
-    return rows as SharedIndicatorCatalogRow[];
-  } catch (e) {
-    if (!isMissingCoverImageUrlColumn(e)) throw e;
-    const rows = await prisma.sharedIndicator.findMany({ ...args, select: catalogSelectCompat });
-    return rows.map((r) => ({ ...r, coverImageUrl: null }) as SharedIndicatorCatalogRow);
-  }
+  const hasCol = await prismaPgColumnExistsPublic("SharedIndicator", "coverImageUrl");
+  const select = hasCol ? catalogSelectWithCover : catalogSelectCompat;
+  const rows = await prisma.sharedIndicator.findMany({ ...args, select });
+  return rows.map((r) =>
+    hasCol ? (r as SharedIndicatorCatalogRow) : ({ ...r, coverImageUrl: null } as SharedIndicatorCatalogRow)
+  );
 }

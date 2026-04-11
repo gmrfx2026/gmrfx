@@ -28,6 +28,21 @@ export function extractFirstImageUrlFromNewsHtml(html: string | null | undefined
   return null;
 }
 
+/** True jika keduanya mengarah ke aset gambar yang sama (hindari hero + gambar pertama di isi artikel dobel). */
+export function isSameNewsImageUrl(a: string | null | undefined, b: string | null | undefined): boolean {
+  const x = normalizeNewsDisplayImageUrl(a);
+  const y = normalizeNewsDisplayImageUrl(b);
+  if (!x || !y) return false;
+  if (x === y) return true;
+  try {
+    const ux = new URL(x);
+    const uy = new URL(y);
+    return ux.origin === uy.origin && ux.pathname.replace(/\/+$/, "") === uy.pathname.replace(/\/+$/, "");
+  } catch {
+    return x.toLowerCase() === y.toLowerCase();
+  }
+}
+
 export function homeNewsDisplayImageUrl(row: {
   imageUrl: string | null;
   imageSourceUrl?: string | null;
