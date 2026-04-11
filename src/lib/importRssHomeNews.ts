@@ -20,16 +20,25 @@ const parser = new RSSParser({
   },
 });
 
+function normalizePickedImageUrl(raw: string | null | undefined): string | null {
+  const u = raw?.trim();
+  if (!u) return null;
+  if (u.startsWith("//")) return `https:${u}`;
+  return u;
+}
+
 function pickImageUrlFromItem(item: RssItemExt): string | null {
   const enc = item.enclosure;
   if (enc?.url) {
     const type = String(enc.type || "").toLowerCase();
     const u = String(enc.url).trim();
-    if (type.startsWith("image/") || /\.(jpe?g|png|webp)(\?|$)/i.test(u)) return u;
+    if (type.startsWith("image/") || /\.(jpe?g|png|webp)(\?|$)/i.test(u)) {
+      return normalizePickedImageUrl(u);
+    }
   }
   const html = String(item["content:encoded"] ?? item.content ?? "");
   const m = html.match(/<img[^>]+src=["']([^"']+)["']/i);
-  return m?.[1]?.trim() || null;
+  return normalizePickedImageUrl(m?.[1] ?? null);
 }
 
 function rawContentHtml(item: RssItemExt): string {
@@ -103,6 +112,8 @@ export async function importRssHomeNewsFeed(
 
       let imageUrl: string | null = null;
       const imgRemote = pickImageUrlFromItem(item);
+      const imageSourceUrl =
+        imgRemote && (imgRemote.startsWith("https://") || imgRemote.startsWith("http://")) ? imgRemote : null;
       if (imgRemote) {
         imageUrl = await storeRemoteNewsImage(imgRemote);
       }
@@ -117,6 +128,7 @@ export async function importRssHomeNewsFeed(
           excerpt,
           contentHtml,
           imageUrl,
+          imageSourceUrl,
           sourceUrl: link,
           sourceName,
           status: HomeNewsStatus.PUBLISHED,

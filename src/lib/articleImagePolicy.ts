@@ -38,8 +38,17 @@ export function isAllowedNewsImageSrc(src: string): boolean {
   );
 }
 
+/** `//cdn/img` → `https://cdn/img` untuk allowlist (sanitize RSS / artikel). */
+export function normalizeImageSrcForAllowlist(src: string): string {
+  const s = String(src ?? "").trim();
+  return s.startsWith("//") ? `https:${s}` : s;
+}
+
 export function isAllowedArticleOrNewsImageSrc(src: string): boolean {
-  return isAllowedArticleImageSrc(src) || isAllowedNewsImageSrc(src);
+  const s = String(src ?? "").trim();
+  if (isAllowedArticleImageSrc(s) || isAllowedNewsImageSrc(s)) return true;
+  const n = normalizeImageSrcForAllowlist(s);
+  return EXTERNAL_HTTPS_IMAGE_RE.test(n) || /^http:\/\/.+/i.test(n);
 }
 
 /** Deteksi tipe dari isi file (bukan dari header Content-Type / nama file). */

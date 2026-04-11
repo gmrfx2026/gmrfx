@@ -668,6 +668,8 @@ model HomeNewsItem {
   excerpt     String?
   contentHtml String         @default("")
   imageUrl    String?
+  /// URL gambar dari feed RSS (thumbnail); dipakai kartu bila `imageUrl` lokal/Blob tidak ada atau file hilang.
+  imageSourceUrl String?    @db.VarChar(2048)
   sourceUrl   String?
   sourceName  String?
   status      HomeNewsStatus @default(PUBLISHED)

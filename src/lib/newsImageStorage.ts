@@ -13,6 +13,7 @@ import { isVercelDeploy, resolvedBlobReadWriteToken } from "@/lib/uploadStorage"
  */
 export async function storeRemoteNewsImage(imageUrl: string): Promise<string | null> {
   let resolved = imageUrl.trim();
+  if (resolved.startsWith("//")) resolved = `https:${resolved}`;
   if (!/^https?:\/\//i.test(resolved)) return null;
 
   try {
