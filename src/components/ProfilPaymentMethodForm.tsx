@@ -21,6 +21,7 @@ export function ProfilPaymentMethodForm() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [serverUnavailable, setServerUnavailable] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -29,7 +30,17 @@ export function ProfilPaymentMethodForm() {
     ]).then(([opts, pm]) => {
       if (Array.isArray(opts?.banks)) setBanks(opts.banks);
       if (opts?.config?.usdtNetwork) setUsdtNetwork(opts.config.usdtNetwork);
-      setData(pm);
+      if (pm?.skipped === true || pm?.reason === "payment-method-unavailable") {
+        setServerUnavailable(true);
+        setData({
+          bankName: null,
+          bankAccountNumber: null,
+          bankAccountHolder: null,
+          usdtWithdrawAddress: null,
+        });
+      } else {
+        setData(pm);
+      }
     }).finally(() => setLoading(false));
   }, []);
 
@@ -46,7 +57,22 @@ export function ProfilPaymentMethodForm() {
 
   return (
     <form onSubmit={save} className="space-y-5">
+      {serverUnavailable ? (
+        <div
+          role="status"
+          className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/95"
+        >
+          <p className="font-medium text-amber-200">Data pembayaran belum aktif di server ini</p>
+          <p className="mt-1 text-xs text-amber-100/80 leading-relaxed">
+            Administrator perlu menjalankan migrasi Prisma yang menambah kolom rekening dan USDT di tabel User
+            (misalnya migrasi <code className="rounded bg-black/25 px-1 py-0.5 font-mono text-[11px]">20260404030000_withdraw_request</code>
+            ), lalu deploy ulang bila perlu. Form di bawah dinonaktifkan sampai migrasi selesai.
+          </p>
+        </div>
+      ) : null}
+
       {/* Bank */}
+      <fieldset disabled={serverUnavailable} className={serverUnavailable ? "space-y-5 opacity-60" : "space-y-5"}>
       <div className={card}>
         <h3 className="mb-4 text-sm font-semibold text-white">Rekening Bank</h3>
         {banks.length === 0 ? (
@@ -107,11 +133,13 @@ export function ProfilPaymentMethodForm() {
       )}
 
       <button
-        type="submit" disabled={busy}
+        type="submit"
+        disabled={busy || serverUnavailable}
         className="rounded-xl bg-broker-accent px-5 py-2.5 text-sm font-semibold text-broker-bg hover:opacity-90 disabled:opacity-50 transition"
       >
         {busy ? "Menyimpan…" : "Simpan Data Pembayaran"}
       </button>
+      </fieldset>
     </form>
   );
 }

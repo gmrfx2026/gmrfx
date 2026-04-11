@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 const ALLOWED = new Set([
   "HomeNewsItem|imageSourceUrl",
   "SharedIndicator|coverImageUrl",
+  /** Satu sentinel untuk migrasi withdraw / metode pembayaran di `User`. */
+  "User|bankName",
 ]);
 
 /** Hanya cache `true` — jika kolom belum ada, tiap request cek ulang (murah) agar setelah migrasi tanpa restart tetap terdeteksi. */

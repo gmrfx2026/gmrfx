@@ -1,10 +1,22 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import { prismaPgColumnExistsPublic } from "@/lib/prismaPgColumnExists";
 
 const BANKS = ["BCA", "BNI", "MANDIRI", "BRI"] as const;
+
+const PAYMENT_UNAVAILABLE_BODY = {
+  bankName: null,
+  bankAccountNumber: null,
+  bankAccountHolder: null,
+  usdtWithdrawAddress: null,
+  skipped: true,
+  reason: "payment-method-unavailable" as const,
+};
+
+const PAYMENT_UNAVAILABLE_MESSAGE =
+  "Fitur data pembayaran belum tersedia di server. Silakan deploy migrasi database terlebih dahulu.";
 
 const schema = z.object({
   bankName: z.enum(BANKS).nullable().optional(),
@@ -18,9 +30,22 @@ const schema = z.object({
     .optional(),
 });
 
+/** Hindari `instanceof` Prisma — bisa gagal di bundle server. */
+function isPrismaMissingTableOrColumn(e: unknown): boolean {
+  if (e == null || typeof e !== "object") return false;
+  const code = (e as { code?: string }).code;
+  return code === "P2021" || code === "P2022";
+}
+
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const hasCols = await prismaPgColumnExistsPublic("User", "bankName");
+  if (!hasCols) {
+    console.warn("[payment-method] Kolom payment method belum ada (pg_catalog); kirim nilai kosong.");
+    return NextResponse.json(PAYMENT_UNAVAILABLE_BODY);
+  }
 
   try {
     const user = await prisma.user.findUnique({
@@ -36,19 +61,9 @@ export async function GET() {
       }
     );
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      (error.code === "P2021" || error.code === "P2022")
-    ) {
+    if (isPrismaMissingTableOrColumn(error)) {
       console.warn("[payment-method] Kolom payment method belum tersedia di database; kirim nilai kosong.");
-      return NextResponse.json({
-        bankName: null,
-        bankAccountNumber: null,
-        bankAccountHolder: null,
-        usdtWithdrawAddress: null,
-        skipped: true,
-        reason: "payment-method-unavailable",
-      });
+      return NextResponse.json(PAYMENT_UNAVAILABLE_BODY);
     }
     throw error;
   }
@@ -64,7 +79,12 @@ export async function PUT(req: Request) {
 
   const data = parsed.data;
 
-  // Jika bankName dikosongkan, kosongkan juga nomor & nama pemilik
+  const hasCols = await prismaPgColumnExistsPublic("User", "bankName");
+  if (!hasCols) {
+    console.warn("[payment-method] Simpan dibatalkan: kolom User belum dimigrasi.");
+    return NextResponse.json({ error: PAYMENT_UNAVAILABLE_MESSAGE }, { status: 503 });
+  }
+
   const update: Record<string, unknown> = {};
   if ("bankName" in data) update.bankName = data.bankName ?? null;
   if ("bankAccountNumber" in data) update.bankAccountNumber = data.bankAccountNumber?.trim() || null;
@@ -75,15 +95,9 @@ export async function PUT(req: Request) {
     await prisma.user.update({ where: { id: session.user.id }, data: update });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      (error.code === "P2021" || error.code === "P2022")
-    ) {
+    if (isPrismaMissingTableOrColumn(error)) {
       console.warn("[payment-method] Kolom payment method belum tersedia di database; simpan dibatalkan.");
-      return NextResponse.json(
-        { error: "Fitur data pembayaran belum tersedia di server. Silakan deploy migrasi database terlebih dahulu." },
-        { status: 503 }
-      );
+      return NextResponse.json({ error: PAYMENT_UNAVAILABLE_MESSAGE }, { status: 503 });
     }
     throw error;
   }
