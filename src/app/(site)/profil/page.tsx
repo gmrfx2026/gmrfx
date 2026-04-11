@@ -1,8 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
-import { CommentTarget } from "@prisma/client";
+import { CommentTarget, MarketplaceEscrowStatus, Prisma } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import { toMemberSlug } from "@/lib/memberSlug";
@@ -30,7 +29,6 @@ import { listablePublicMemberWhere } from "@/lib/memberFollowListable";
 import { maskEmail } from "@/lib/memberEmailDisplay";
 import { normalizeSocialLinkForForm } from "@/lib/socialLinks";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
-import { MarketplaceEscrowStatus } from "@prisma/client";
 import {
   ProfilMarketplaceEscrowSection,
   type ProfilEscrowRow,
@@ -75,9 +73,77 @@ export default async function ProfilPage({
       ? "public"
       : "private";
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-  });
+  const baseUserSelect = {
+    id: true,
+    name: true,
+    email: true,
+    image: true,
+    walletBalance: true,
+    walletAddress: true,
+    memberSlug: true,
+    profileStatus: true,
+  } as const;
+
+  type ProfileUserBase = {
+    id: string;
+    name: string | null;
+    email: string;
+    image: string | null;
+    walletBalance: Prisma.Decimal;
+    walletAddress: string | null;
+    memberSlug: string | null;
+    profileStatus: string | null;
+  };
+
+  const user = await (async () => {
+    const withSecurityDefaults = (row: ProfileUserBase | null) =>
+      row
+        ? {
+            ...row,
+            followApprovalMode: "AUTO" as const,
+            socialTiktokUrl: null,
+            socialInstagramUrl: null,
+            socialFacebookUrl: null,
+            socialTelegramUrl: null,
+            socialYoutubeUrl: null,
+          }
+        : null;
+
+    try {
+      if (tab === "security") {
+        return await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: {
+            ...baseUserSelect,
+            followApprovalMode: true,
+            socialTiktokUrl: true,
+            socialInstagramUrl: true,
+            socialFacebookUrl: true,
+            socialTelegramUrl: true,
+            socialYoutubeUrl: true,
+          },
+        });
+      }
+
+      const baseUser = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: baseUserSelect,
+      });
+      return withSecurityDefaults(baseUser);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        (error.code === "P2022" || error.code === "P2021")
+      ) {
+        const fallback = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: baseUserSelect,
+        });
+        return withSecurityDefaults(fallback);
+      }
+      throw error;
+    }
+  })();
 
   if (!user) redirect("/login");
 
