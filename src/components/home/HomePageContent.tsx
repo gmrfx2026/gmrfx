@@ -20,6 +20,7 @@ import { resolveMarketplaceIndicatorCoverUrl } from "@/lib/marketplaceCoverImage
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 import { homeNewsAuthorForDisplay } from "@/lib/homeNewsAuthor";
 import { homeNewsDisplayImageUrl, imgReferrerPolicyForSrc } from "@/lib/homeNewsDisplayImage";
+import { findManyHomeNewsWithAuthorCard } from "@/lib/homeNewsItemFetch";
 import {
   HOME_HERO_EYEBROW_KEY,
   HOME_HERO_SUBTEXT_KEY,
@@ -64,19 +65,17 @@ export async function HomePageContent() {
       include: { author: { select: { name: true } } },
     }),
     showDomesticNews
-      ? prisma.homeNewsItem.findMany({
+      ? findManyHomeNewsWithAuthorCard({
           where: { scope: HomeNewsScope.DOMESTIC, status: HomeNewsStatus.PUBLISHED },
           orderBy: { publishedAt: "desc" },
           take: newsPerBlock,
-          include: { author: { select: { id: true, name: true, memberSlug: true } } },
         })
       : Promise.resolve([]),
     showIntlNews
-      ? prisma.homeNewsItem.findMany({
+      ? findManyHomeNewsWithAuthorCard({
           where: { scope: HomeNewsScope.INTERNATIONAL, status: HomeNewsStatus.PUBLISHED },
           orderBy: { publishedAt: "desc" },
           take: newsPerBlock,
-          include: { author: { select: { id: true, name: true, memberSlug: true } } },
         })
       : Promise.resolve([]),
     showMemberTicker

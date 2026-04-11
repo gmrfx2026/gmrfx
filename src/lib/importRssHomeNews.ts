@@ -86,6 +86,7 @@ export async function importRssHomeNewsFeed(
 
     const dup = await prisma.homeNewsItem.findFirst({
       where: { scope: opts.scope, sourceUrl: link },
+      select: { id: true },
     });
     if (dup) {
       skipped++;

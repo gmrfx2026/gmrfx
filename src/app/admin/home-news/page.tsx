@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { findManyHomeNewsWithAuthorCard } from "@/lib/homeNewsItemFetch";
 import {
   HOME_NEWS_RSS_DOMESTIC_URL_KEY,
   HOME_NEWS_RSS_INTERNATIONAL_URL_KEY,
@@ -11,10 +12,9 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminHomeNewsPage() {
   const [items, rssDn, rssInt] = await Promise.all([
-    prisma.homeNewsItem.findMany({
+    findManyHomeNewsWithAuthorCard({
       orderBy: { publishedAt: "desc" },
       take: 80,
-      include: { author: { select: { id: true, name: true, memberSlug: true } } },
     }),
     prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_DOMESTIC_URL_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: HOME_NEWS_RSS_INTERNATIONAL_URL_KEY } }),

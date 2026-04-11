@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { findFirstHomeNewsWithAuthorCard } from "@/lib/homeNewsItemFetch";
 import { HomeNewsStatus } from "@prisma/client";
 import { articleProseTypographyClass } from "@/lib/articleProseClassName";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
@@ -22,9 +23,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function BeritaDetailPage({ params }: { params: { slug: string } }) {
-  const row = await prisma.homeNewsItem.findFirst({
+  const row = await findFirstHomeNewsWithAuthorCard({
     where: { slug: params.slug, status: HomeNewsStatus.PUBLISHED },
-    include: { author: { select: { id: true, name: true, memberSlug: true } } },
   });
   if (!row) notFound();
 

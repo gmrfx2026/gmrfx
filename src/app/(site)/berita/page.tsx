@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { prisma } from "@/lib/prisma";
+import { findManyHomeNewsWithAuthorCard } from "@/lib/homeNewsItemFetch";
 import { HomeNewsScope, HomeNewsStatus } from "@prisma/client";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 import { homeNewsAuthorForDisplay } from "@/lib/homeNewsAuthor";
@@ -36,14 +36,13 @@ export default async function BeritaListPage({
         ? HomeNewsScope.INTERNATIONAL
         : undefined;
 
-  const items = await prisma.homeNewsItem.findMany({
+  const items = await findManyHomeNewsWithAuthorCard({
     where: {
       status: HomeNewsStatus.PUBLISHED,
       ...(scopeWhere !== undefined ? { scope: scopeWhere } : {}),
     },
     orderBy: { publishedAt: "desc" },
     take: 120,
-    include: { author: { select: { id: true, name: true, memberSlug: true } } },
   });
 
   const tab = (active: ScopeFilter, label: string, href: string) => (
