@@ -99,7 +99,11 @@ select.broker-native-select option {
 }
 .article-content.prose > img,
 .article-content.prose p > img {
-  @apply my-8;
+  /* w-full: isi lebar kolom; tanpa ini gambar sering tetap lebar intrinsik (kecil di kanan). */
+  @apply my-8 block w-full max-w-full h-auto;
+}
+.article-content.prose figure img {
+  @apply block w-full max-w-full h-auto;
 }
 .article-content.prose > figure {
   @apply my-8;
