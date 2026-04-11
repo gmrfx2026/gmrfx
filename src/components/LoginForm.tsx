@@ -25,13 +25,22 @@ export function LoginForm({
       email,
       password,
       redirect: false,
+      callbackUrl: cb,
     });
     setLoading(false);
-    if (res?.error) {
-      setErr("Email atau password salah.");
+    if (!res?.ok) {
+      setErr(res?.error ? "Email atau password salah." : "Gagal masuk. Coba lagi.");
       return;
     }
-    window.location.href = cb;
+    // URL dari server (redirect callback); pakai href penuh asal origin sama — hindari path saja yang bisa salah di edge case.
+    const raw = res.url ?? cb;
+    try {
+      const resolved = new URL(raw, window.location.origin);
+      const fallback = new URL(cb, window.location.origin).href;
+      window.location.assign(resolved.origin === window.location.origin ? resolved.href : fallback);
+    } catch {
+      window.location.assign(cb);
+    }
   }
 
   return (

@@ -3,6 +3,7 @@ import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { getSiteName } from "@/lib/siteNameSettings";
+import { auth } from "@/auth";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -70,11 +71,12 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
   const criticalCss = `
 :root { color-scheme: dark; }
 html { background-color: #0b0e11; }
@@ -97,7 +99,7 @@ body { margin: 0; min-height: 100vh; background-color: #0b0e11; color: #eaecef; 
             Kolom flex di sini supaya SiteHeader / main.flex-1 / SiteFooter (dari page atau (site)/layout)
             punya induk flex — tanpa ini, flex-1 di <main> tidak berlaku dan footer bisa “naik”, tampilan berantakan.
           */}
-          <Providers>
+          <Providers session={session}>
             <div className="flex min-h-screen w-full flex-1 flex-col">{children}</div>
           </Providers>
         </div>

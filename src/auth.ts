@@ -43,13 +43,18 @@ const providers = [
     : []),
 ];
 
+const authSecret = process.env.AUTH_SECRET;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  /** Hanya set jika ada nilai — `secret: undefined` bisa menimpa inferensi AUTH_SECRET dari env. */
+  ...(authSecret ? { secret: authSecret } : {}),
   /** Wajib untuk App Router — hindari inferensi `basePath` dari `AUTH_URL` yang pathname-nya `/` (bisa jadi `/` dan merusak `/api/auth`). */
   basePath: "/api/auth",
   /** Produksi (Vercel): percayai Host header; tanpa ini `auth()` bisa gagal di domain produksi. */
   trustHost: true,
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
+  jwt: { maxAge: 30 * 24 * 60 * 60 },
   pages: {
     signIn: "/login",
   },

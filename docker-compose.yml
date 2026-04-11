@@ -1,5 +1,6 @@
 # Postgres lokal — jalankan: docker compose up -d
-# Lalu set DATABASE_URL di .env (lihat .env.example)
+# Dua DB terpisah: GMRFX (5433) dan Dulur/Sahabat Cirebon (5434).
+# Pilih DATABASE_URL di .env sesuai situs yang Anda jalankan (lihat .env.example).
 services:
   postgres:
     image: postgres:16-alpine
@@ -14,5 +15,18 @@ services:
     volumes:
       - gmrfx_pgdata:/var/lib/postgresql/data
 
+  postgres-cirebon:
+    image: postgres:16-alpine
+    container_name: dulur-cirebon-postgres
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: dulur_cirebon
+      POSTGRES_PASSWORD: dulur_cirebon_local
+      POSTGRES_DB: dulur_cirebon
+    volumes:
+      - dulur_cirebon_pgdata:/var/lib/postgresql/data
+
 volumes:
   gmrfx_pgdata:
+  dulur_cirebon_pgdata:
