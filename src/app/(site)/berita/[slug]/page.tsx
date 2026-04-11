@@ -7,6 +7,7 @@ import { articleProseTypographyClass } from "@/lib/articleProseClassName";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 import { homeNewsAuthorForDisplay } from "@/lib/homeNewsAuthor";
+import { homeNewsDisplayImageUrl, imgReferrerPolicyForSrc } from "@/lib/homeNewsDisplayImage";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ export default async function BeritaDetailPage({ params }: { params: { slug: str
   const safeHtml = sanitizeArticleHtml(row.contentHtml);
   const label = row.scope === "DOMESTIC" ? "Berita dalam negeri" : "Berita internasional";
   const penulis = homeNewsAuthorForDisplay(row.author);
+  const heroImg = homeNewsDisplayImageUrl(row);
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12">
@@ -59,10 +61,16 @@ export default async function BeritaDetailPage({ params }: { params: { slug: str
           </>
         ) : null}
       </p>
-      {row.imageUrl ? (
+      {heroImg ? (
         <div className="mt-6 overflow-hidden rounded-xl border border-broker-border">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={row.imageUrl} alt="" className="max-h-[420px] w-full object-cover" loading="eager" />
+          <img
+            src={heroImg}
+            alt=""
+            referrerPolicy={imgReferrerPolicyForSrc(heroImg)}
+            className="max-h-[420px] w-full object-cover"
+            loading="eager"
+          />
         </div>
       ) : null}
       <div

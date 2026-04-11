@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { HomeNewsScope, HomeNewsStatus } from "@prisma/client";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 import { homeNewsAuthorForDisplay } from "@/lib/homeNewsAuthor";
+import { homeNewsDisplayImageUrl, imgReferrerPolicyForSrc } from "@/lib/homeNewsDisplayImage";
 
 export const metadata: Metadata = {
   title: "Berita — GMR FX",
@@ -74,6 +75,7 @@ export default async function BeritaListPage({
       <ul className="mt-10 space-y-4">
         {items.map((n) => {
           const penulis = homeNewsAuthorForDisplay(n.author);
+          const newsImg = homeNewsDisplayImageUrl(n);
           return (
             <li
               key={n.id}
@@ -83,12 +85,13 @@ export default async function BeritaListPage({
                 href={`/berita/${n.slug}`}
                 className="flex flex-col gap-3 p-5 sm:flex-row"
               >
-                {n.imageUrl ? (
+                {newsImg ? (
                   <div className="shrink-0 overflow-hidden rounded-lg border border-broker-border sm:w-40">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={n.imageUrl}
+                      src={newsImg}
                       alt=""
+                      referrerPolicy={imgReferrerPolicyForSrc(newsImg)}
                       className="h-28 w-full object-cover sm:h-24 sm:w-40"
                       loading="lazy"
                     />

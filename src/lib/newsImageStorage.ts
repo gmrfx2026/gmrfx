@@ -1,18 +1,15 @@
 import { randomUUID } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 import { put } from "@vercel/blob";
 import {
   ARTICLE_IMAGE_MAX_BYTES,
-  NEWS_IMAGES_SUBDIR,
   fileExtForArticleType,
   sniffArticleImageType,
 } from "@/lib/articleImagePolicy";
 import { isVercelDeploy, resolvedBlobReadWriteToken } from "@/lib/uploadStorage";
 
 /**
- * Unduh gambar dari URL (RSS) lalu simpan ke Blob atau `public/uploads/news-images/`.
- * Hanya JPG/PNG/WebP yang lolos magic byte.
+ * Unduh gambar dari URL (RSS): simpan ke Vercel Blob bila ada token; di self-host kembalikan URL asli
+ * (setelah validasi) agar tidak bergantung pada disk ephermeral. Hanya JPG/PNG/WebP yang lolos magic byte.
  */
 export async function storeRemoteNewsImage(imageUrl: string): Promise<string | null> {
   let resolved = imageUrl.trim();
@@ -43,6 +40,7 @@ export async function storeRemoteNewsImage(imageUrl: string): Promise<string | n
         return blob.url;
       } catch (e) {
         console.error("news image blob", e);
+        if (!isVercelDeploy()) return resolved;
         return null;
       }
     }
@@ -51,10 +49,12 @@ export async function storeRemoteNewsImage(imageUrl: string): Promise<string | n
       return null;
     }
 
-    const dir = path.join(process.cwd(), "public", "uploads", NEWS_IMAGES_SUBDIR);
-    await mkdir(dir, { recursive: true });
-    await writeFile(path.join(dir, filename), buf);
-    return `/uploads/${NEWS_IMAGES_SUBDIR}/${filename}`;
+    /**
+     * Self-host (Coolify, dll.): jangan simpan ke disk — volume sering tidak persisten,
+     * sehingga `/uploads/news-images/...` di DB mengarah ke file yang hilang setelah redeploy.
+     * URL asli sudah divalidasi (fetch + magic byte); hotlink untuk tampilan kartu berita.
+     */
+    return resolved;
   } catch (e) {
     console.error("storeRemoteNewsImage", e);
     return null;

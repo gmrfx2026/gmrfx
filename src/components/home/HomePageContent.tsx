@@ -19,6 +19,7 @@ import { marketplaceDescriptionPlainExcerpt } from "@/lib/marketplaceDescription
 import { resolveMarketplaceIndicatorCoverUrl } from "@/lib/marketplaceCoverImage";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 import { homeNewsAuthorForDisplay } from "@/lib/homeNewsAuthor";
+import { homeNewsDisplayImageUrl, imgReferrerPolicyForSrc } from "@/lib/homeNewsDisplayImage";
 import {
   HOME_HERO_EYEBROW_KEY,
   HOME_HERO_SUBTEXT_KEY,
@@ -238,18 +239,20 @@ export async function HomePageContent() {
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {domesticNews.map((n) => {
                 const penulis = homeNewsAuthorForDisplay(n.author);
+                const newsImg = homeNewsDisplayImageUrl(n);
                 return (
                   <div
                     key={n.id}
                     className="group flex flex-col overflow-hidden rounded-xl border border-broker-border bg-broker-surface/40 transition hover:border-broker-accent/40 hover:bg-broker-surface/70"
                   >
                     <Link href={`/berita/${n.slug}`} className="flex min-h-0 flex-1 flex-col">
-                      {n.imageUrl ? (
+                      {newsImg ? (
                         <div className="relative aspect-[16/9] w-full overflow-hidden border-b border-broker-border bg-black/30">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={n.imageUrl}
+                            src={newsImg}
                             alt=""
+                            referrerPolicy={imgReferrerPolicyForSrc(newsImg)}
                             className="h-full w-full object-cover transition group-hover:opacity-95"
                             loading="lazy"
                           />
@@ -301,18 +304,20 @@ export async function HomePageContent() {
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {intlNews.map((n) => {
               const penulis = homeNewsAuthorForDisplay(n.author);
+              const newsImg = homeNewsDisplayImageUrl(n);
               return (
                 <div
                   key={n.id}
                   className="group flex flex-col overflow-hidden rounded-xl border border-broker-border bg-broker-surface/40 transition hover:border-broker-accent/40 hover:bg-broker-surface/70"
                 >
                   <Link href={`/berita/${n.slug}`} className="flex min-h-0 flex-1 flex-col">
-                    {n.imageUrl ? (
+                    {newsImg ? (
                       <div className="relative aspect-[16/9] w-full overflow-hidden border-b border-broker-border bg-black/30">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={n.imageUrl}
+                          src={newsImg}
                           alt=""
+                          referrerPolicy={imgReferrerPolicyForSrc(newsImg)}
                           className="h-full w-full object-cover transition group-hover:opacity-95"
                           loading="lazy"
                         />
