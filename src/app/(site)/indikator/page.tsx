@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { findManySharedIndicatorsForCatalog } from "@/lib/sharedIndicatorCoverFetch";
 import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
 import { marketplaceDescriptionPlainExcerpt } from "@/lib/marketplaceDescription";
 import { resolveMarketplaceIndicatorCoverUrl } from "@/lib/marketplaceCoverImage";
@@ -25,23 +26,10 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function IndikatorCatalogPage() {
-  const rows = await prisma.sharedIndicator.findMany({
+  const rows = await findManySharedIndicatorsForCatalog({
     where: { published: true },
     orderBy: { updatedAt: "desc" },
     take: 100,
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      description: true,
-      priceIdr: true,
-      platform: true,
-      coverImageUrl: true,
-      updatedAt: true,
-      seller: {
-        select: { id: true, name: true, memberSlug: true },
-      },
-    },
   });
 
   const ids = rows.map((r) => r.id);

@@ -21,6 +21,7 @@ import { formatJakarta } from "@/lib/jakartaDateFormat";
 import { homeNewsAuthorForDisplay } from "@/lib/homeNewsAuthor";
 import { homeNewsDisplayImageUrl, imgReferrerPolicyForSrc } from "@/lib/homeNewsDisplayImage";
 import { findManyHomeNewsWithAuthorCard } from "@/lib/homeNewsItemFetch";
+import { findManySharedIndicatorsForHome } from "@/lib/sharedIndicatorCoverFetch";
 import {
   HOME_HERO_EYEBROW_KEY,
   HOME_HERO_SUBTEXT_KEY,
@@ -87,20 +88,10 @@ export async function HomePageContent() {
         })
       : Promise.resolve([]),
     showHomeIndicators
-      ? prisma.sharedIndicator.findMany({
+      ? findManySharedIndicatorsForHome({
           where: { published: true },
           orderBy: { updatedAt: "desc" },
           take: 6,
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            description: true,
-            priceIdr: true,
-            platform: true,
-            coverImageUrl: true,
-            seller: { select: { name: true } },
-          },
         })
       : Promise.resolve([]),
   ]);

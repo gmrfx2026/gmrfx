@@ -79,13 +79,23 @@ function selectWithAuthorCardCompat() {
   };
 }
 
+/**
+ * Jangan pakai `instanceof Prisma.PrismaClientKnownRequestError`: di bundle server Next.js
+ * class bisa ter-duplicate sehingga instanceof gagal dan fallback tidak pernah jalan.
+ */
 function isMissingImageSourceUrlColumn(e: unknown): boolean {
-  if (!(e instanceof Prisma.PrismaClientKnownRequestError) || e.code !== "P2022") return false;
-  const msg = e.message;
+  if (e == null || typeof e !== "object") return false;
+  const err = e as { code?: string; message?: string; meta?: Record<string, unknown> };
+  if (err.code !== "P2022") return false;
+  const msg = String(err.message ?? "");
   if (msg.includes("imageSourceUrl")) return true;
-  const meta = e.meta as { column?: string; field_name?: string } | undefined;
-  const col = meta?.column ?? meta?.field_name;
-  return typeof col === "string" && col.includes("imageSourceUrl");
+  const col =
+    typeof err.meta?.column === "string"
+      ? err.meta.column
+      : typeof err.meta?.field_name === "string"
+        ? err.meta.field_name
+        : "";
+  return col.includes("imageSourceUrl");
 }
 
 function normalizeHomeNewsWithAuthorCard(row: Record<string, unknown>): HomeNewsItemWithAuthorCard {
