@@ -5,20 +5,32 @@ import { MemberTicker } from "@/components/MemberTicker";
 
 /** Konten beranda (data + JSX). Dipakai dari `app/page.tsx` di luar layout `(site)`. */
 export async function HomePageContent() {
-  const [articles, members] = await Promise.all([
-    prisma.article.findMany({
-      where: { status: ArticleStatus.PUBLISHED },
-      orderBy: { publishedAt: "desc" },
-      take: 6,
-      include: { author: { select: { name: true } } },
-    }),
-    prisma.user.findMany({
-      where: { role: "USER", profileComplete: true },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-      select: { name: true, kabupaten: true },
-    }),
-  ]);
+  let dataUnavailable = false;
+
+  const articleQuery = prisma.article.findMany({
+    where: { status: ArticleStatus.PUBLISHED },
+    orderBy: { publishedAt: "desc" },
+    take: 6,
+    include: { author: { select: { name: true } } },
+  });
+
+  const memberQuery = prisma.user.findMany({
+    where: { role: "USER", profileComplete: true },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+    select: { name: true, kabupaten: true },
+  });
+
+  type Articles = Awaited<typeof articleQuery>;
+  type Members = Awaited<typeof memberQuery>;
+
+  const [articles, members] = await Promise.all([articleQuery, memberQuery]).catch(
+    (error): [Articles, Members] => {
+      dataUnavailable = true;
+      console.error("[HomePageContent] gagal memuat data homepage:", error);
+      return [[], []];
+    },
+  );
 
   return (
     <div>
@@ -52,6 +64,14 @@ export async function HomePageContent() {
       </section>
 
       <MemberTicker members={members} />
+
+      {dataUnavailable && (
+        <section className="mx-auto max-w-6xl px-4 pt-6">
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+            Sebagian data sementara belum dapat dimuat. Silakan coba lagi beberapa saat.
+          </div>
+        </section>
+      )}
 
       <section className="mx-auto max-w-6xl px-4 py-14">
         <div className="mb-8 flex items-end justify-between gap-4">

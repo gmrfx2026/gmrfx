@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Session } from "next-auth";
 import { auth } from "@/auth";
 import { HeaderAuth } from "./HeaderAuth";
 import { MobileSiteNav } from "./MobileSiteNav";
@@ -13,7 +14,13 @@ const nav = [
 ];
 
 export async function SiteHeader() {
-  const session = await auth();
+  let session: Session | null = null;
+
+  try {
+    session = await auth();
+  } catch (error) {
+    console.error("[SiteHeader] gagal memuat session:", error);
+  }
 
   const mobileLinks: { href: string; label: string }[] = [];
   for (const item of nav) {
