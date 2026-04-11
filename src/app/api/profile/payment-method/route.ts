@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 const BANKS = ["BCA", "BNI", "MANDIRI", "BRI"] as const;
@@ -21,11 +22,36 @@ export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { bankName: true, bankAccountNumber: true, bankAccountHolder: true, usdtWithdrawAddress: true },
-  });
-  return NextResponse.json(user ?? {});
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { bankName: true, bankAccountNumber: true, bankAccountHolder: true, usdtWithdrawAddress: true },
+    });
+    return NextResponse.json(
+      user ?? {
+        bankName: null,
+        bankAccountNumber: null,
+        bankAccountHolder: null,
+        usdtWithdrawAddress: null,
+      }
+    );
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === "P2021" || error.code === "P2022")
+    ) {
+      console.warn("[payment-method] Kolom payment method belum tersedia di database; kirim nilai kosong.");
+      return NextResponse.json({
+        bankName: null,
+        bankAccountNumber: null,
+        bankAccountHolder: null,
+        usdtWithdrawAddress: null,
+        skipped: true,
+        reason: "payment-method-unavailable",
+      });
+    }
+    throw error;
+  }
 }
 
 export async function PUT(req: Request) {
@@ -45,6 +71,20 @@ export async function PUT(req: Request) {
   if ("bankAccountHolder" in data) update.bankAccountHolder = data.bankAccountHolder?.trim() || null;
   if ("usdtWithdrawAddress" in data) update.usdtWithdrawAddress = data.usdtWithdrawAddress?.trim() || null;
 
-  await prisma.user.update({ where: { id: session.user.id }, data: update });
-  return NextResponse.json({ ok: true });
+  try {
+    await prisma.user.update({ where: { id: session.user.id }, data: update });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === "P2021" || error.code === "P2022")
+    ) {
+      console.warn("[payment-method] Kolom payment method belum tersedia di database; simpan dibatalkan.");
+      return NextResponse.json(
+        { error: "Fitur data pembayaran belum tersedia di server. Silakan deploy migrasi database terlebih dahulu." },
+        { status: 503 }
+      );
+    }
+    throw error;
+  }
 }
