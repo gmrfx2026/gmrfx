@@ -2,6 +2,7 @@ import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { seedEducationalArticles } from "../src/lib/educationalArticlesSeed";
 import { seedPiphunterIndicators } from "./seed-piphunter-indicators";
+import { seedDemoExpertAdvisors, seedDemoJobOffers } from "./seed-marketplace-extras";
 import { loadRootEnv } from "./loadEnv";
 
 loadRootEnv();
@@ -67,6 +68,11 @@ async function main() {
 
   const ph = await seedPiphunterIndicators(prisma);
   console.log(ph.ok ? ph.message : "PipHunter:", ph.message);
+
+  const ea = await seedDemoExpertAdvisors(prisma);
+  console.log(ea.ok ? ea.message : "EA demo:", ea.message);
+  const jobs = await seedDemoJobOffers(prisma);
+  console.log(jobs.ok ? jobs.message : "Penawaran demo:", jobs.message);
 
   console.log("Seed selesai. Galeri kategori:", cat.name);
 }

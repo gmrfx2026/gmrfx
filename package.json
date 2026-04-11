@@ -24,6 +24,7 @@
     "db:seed": "npx tsx prisma/seed.ts",
     "db:seed:articles": "npx tsx prisma/seed-articles.ts",
     "db:seed:piphunter": "npx tsx prisma/run-seed-piphunter.ts",
+    "db:seed:marketplace": "npx tsx prisma/run-seed-marketplace-extras.ts",
     "db:list-indicators": "node scripts/list-indicators.mjs",
     "db:seed-wilayah": "node prisma/seed-wilayah.cjs",
     "db:generate": "node scripts/prisma-generate.cjs",
