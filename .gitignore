@@ -75,6 +75,10 @@ out/
 # Local DB backups (scripts/backup-db.ps1)
 backups/
 
+# Export pg_dump npm run db:export:databaselokal
+databaselokal
+databaselokal.sql
+
 # Unggahan lokal (hanya struktur folder + .gitkeep)
 /public/uploads/article-images/*
 !/public/uploads/article-images/.gitkeep
