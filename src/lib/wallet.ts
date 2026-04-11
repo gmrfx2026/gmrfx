@@ -13,7 +13,10 @@ export async function generateUniqueWalletAddress(
     const b = LETTERS[Math.floor(Math.random() * LETTERS.length)];
     const n = String(Math.floor(10000 + Math.random() * 90000));
     const addr = `${a}${b}${n}`;
-    const exists = await db.user.findUnique({ where: { walletAddress: addr } });
+    const exists = await db.user.findUnique({
+      where: { walletAddress: addr },
+      select: { id: true },
+    });
     if (!exists) return addr;
   }
   throw new Error("Gagal membuat alamat wallet unik");
@@ -23,7 +26,10 @@ export async function ensureWalletForUser(
   db: PrismaClient,
   userId: string
 ): Promise<string> {
-  const user = await db.user.findUnique({ where: { id: userId } });
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { walletAddress: true },
+  });
   if (!user) throw new Error("User tidak ditemukan");
   if (user.walletAddress) return user.walletAddress;
   const walletAddress = await generateUniqueWalletAddress(db);
