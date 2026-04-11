@@ -2,6 +2,7 @@ import { put } from "@vercel/blob";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { randomBytes } from "crypto";
+import { isVercelDeploy, resolvedBlobReadWriteToken } from "@/lib/uploadStorage";
 
 export const MT_MARKETPLACE_MAX_BYTES = 20 * 1024 * 1024;
 
@@ -16,16 +17,6 @@ export function resolveMtMarketplaceExt(file: File): string | null {
   if (dot < 0) return null;
   const ext = n.slice(dot + 1);
   return ALLOWED_EXT.has(ext) ? ext : null;
-}
-
-function isVercel(): boolean {
-  return process.env.VERCEL === "1";
-}
-
-function blobRwToken(): string | undefined {
-  const key = ["BLOB", "READ", "WRITE", "TOKEN"].join("_");
-  const v = process.env[key];
-  return typeof v === "string" && v.trim() !== "" ? v.trim() : undefined;
 }
 
 function safeStoredName(originalName: string, fallback: string): string {
@@ -52,7 +43,7 @@ export async function storeMtMarketplaceFile(
   const idPart = randomBytes(8).toString("hex");
   const blobName = `${bucket}/${userId}/${idPart}.${ext}`;
 
-  const token = blobRwToken();
+  const token = resolvedBlobReadWriteToken();
   if (token) {
     try {
       const blob = await put(blobName, buf, {
@@ -74,7 +65,7 @@ export async function storeMtMarketplaceFile(
     }
   }
 
-  if (isVercel()) {
+  if (isVercelDeploy()) {
     throw new Error(
       "Unggah file membutuhkan Vercel Blob: set BLOB_READ_WRITE_TOKEN untuk Production (Storage → Blob)."
     );

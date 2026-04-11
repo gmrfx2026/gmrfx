@@ -79,8 +79,11 @@ export function ArticleInteractions({
     });
     setLoading(false);
     if (!res.ok) {
-      const j = await res.json().catch(() => ({}));
-      const err = j.error ?? "Gagal mengirim komentar";
+      const j = (await res.json().catch(() => ({}))) as { error?: string };
+      const err =
+        typeof j.error === "string" && j.error.trim()
+          ? j.error
+          : `Gagal mengirim komentar (HTTP ${res.status}).`;
       setMsg(err);
       show(err, "err");
       return;

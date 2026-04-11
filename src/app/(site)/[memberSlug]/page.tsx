@@ -4,6 +4,8 @@ import Link from "next/link";
 import { SmallUserAvatar } from "@/components/SmallUserAvatar";
 import { DeleteStatusButton } from "@/components/member/DeleteStatusButton";
 import { DeleteStatusCommentButton } from "@/components/member/DeleteStatusCommentButton";
+import { MemberStatusCommentLikeButton } from "@/components/member/MemberStatusCommentLikeButton";
+import { StatusCommentBody } from "@/components/member/StatusCommentBody";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ArticleStatus, CommentTarget } from "@prisma/client";
@@ -25,6 +27,7 @@ import {
 } from "@/lib/memberStatusPagination";
 import { listablePublicMemberWhere } from "@/lib/memberFollowListable";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
+import { enrichStatusComments, type EnrichedStatusComment } from "@/lib/enrichStatusComments";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -164,13 +167,7 @@ export default async function MemberBySlugPage({
   const commentByStatusId = new Map<
     string,
     {
-      comments: Awaited<
-        ReturnType<
-          typeof prisma.comment.findMany<{
-            include: { user: { select: { name: true; image: true } } };
-          }>
-        >
-      >;
+      comments: EnrichedStatusComment[];
       total: number;
       safePage: number;
       totalPages: number;
@@ -206,7 +203,8 @@ export default async function MemberBySlugPage({
           take: commentPageSize,
           include: { user: { select: { name: true, image: true } } },
         });
-        return { statusId, comments: rows, total, safePage, totalPages };
+        const enriched = await enrichStatusComments(prisma, rows, viewerId);
+        return { statusId, comments: enriched, total, safePage, totalPages };
       }),
     );
     for (const b of blocks) {
@@ -485,13 +483,32 @@ export default async function MemberBySlugPage({
                                   <DeleteStatusCommentButton commentId={c.id} />
                                 )}
                               </div>
-                              <p className="mt-0.5 text-broker-muted">{c.content}</p>
-                              <p className="mt-1 text-[11px] text-broker-muted/60">
-                                {formatJakarta(c.createdAt, {
-                                  dateStyle: "short",
-                                  timeStyle: "short",
-                                })}
-                              </p>
+                              <StatusCommentBody
+                                content={c.content}
+                                mentionsBySlug={c.mentionsBySlug}
+                                className="mt-0.5 whitespace-pre-wrap text-broker-muted"
+                              />
+                              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <p className="text-[11px] text-broker-muted/60">
+                                  {formatJakarta(c.createdAt, {
+                                    dateStyle: "short",
+                                    timeStyle: "short",
+                                  })}
+                                </p>
+                                {viewerId ? (
+                                  <MemberStatusCommentLikeButton
+                                    commentId={c.id}
+                                    initialCount={c.likeCount}
+                                    initialLiked={c.isLiked}
+                                  />
+                                ) : (
+                                  c.likeCount > 0 && (
+                                    <span className="text-[11px] text-broker-muted/70">
+                                      {c.likeCount} suka
+                                    </span>
+                                  )
+                                )}
+                              </div>
                             </div>
                           </li>
                         );

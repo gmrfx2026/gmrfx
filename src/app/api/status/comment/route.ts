@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { CommentTarget } from "@prisma/client";
 import { sanitizePlainText } from "@/lib/sanitizePlainText";
 import { clientKeyFromRequest, rateLimit } from "@/lib/simpleRateLimit";
+import { validateStatusCommentMentions } from "@/lib/statusCommentMentions";
 
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_POST = 24;
@@ -42,6 +43,11 @@ export async function POST(req: Request) {
 
   if (!status) {
     return NextResponse.json({ error: "Status tidak ditemukan" }, { status: 404 });
+  }
+
+  const mentionErr = await validateStatusCommentMentions(prisma, session.user.id, content);
+  if (mentionErr) {
+    return NextResponse.json({ error: mentionErr }, { status: 400 });
   }
 
   await prisma.comment.create({

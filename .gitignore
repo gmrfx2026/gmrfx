@@ -82,6 +82,8 @@ backups/
 !/public/uploads/avatars/.gitkeep
 /public/uploads/gallery-images/*
 !/public/uploads/gallery-images/.gitkeep
+/public/uploads/penawaran-attachments/**/*
+/public/uploads/jobs/**/*
 
 # TypeScript
 *.tsbuildinfo
@@ -104,3 +106,6 @@ tmp_cookies.txt
 
 .vercel
 .env*.local
+
+# SSL certificates lokal (dibuat oleh mkcert)
+certs/

@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
+import { isVercelDeploy, resolvedBlobReadWriteToken } from "@/lib/uploadStorage";
 
 export const runtime = "nodejs";
 
@@ -27,17 +28,6 @@ function resolveImageKind(file: File): { ext: string; contentType: string } | nu
   if (t === "image/png") return { ext: "png", contentType: "image/png" };
   if (t === "image/webp") return { ext: "webp", contentType: "image/webp" };
   return { ext: "jpg", contentType: "image/jpeg" };
-}
-
-function isVercel(): boolean {
-  return process.env.VERCEL === "1";
-}
-
-/** Token dari env; key disusun dinamis agar tidak di-inline `undefined` saat build lokal tanpa Blob. */
-function blobRwToken(): string | undefined {
-  const key = ["BLOB", "READ", "WRITE", "TOKEN"].join("_");
-  const v = process.env[key];
-  return typeof v === "string" && v.trim() !== "" ? v.trim() : undefined;
 }
 
 export async function POST(req: Request) {
@@ -67,7 +57,7 @@ export async function POST(req: Request) {
     const name = `${session.user.id}.${kind.ext}`;
     const buf = Buffer.from(await file.arrayBuffer());
 
-    const token = blobRwToken();
+    const token = resolvedBlobReadWriteToken();
     let publicUrl: string;
 
     if (token) {
@@ -89,7 +79,7 @@ export async function POST(req: Request) {
             : "Gagal mengunggah ke Vercel Blob. Cek Logs dan pengaturan store.";
         return NextResponse.json({ error: hint }, { status: 502 });
       }
-    } else if (isVercel()) {
+    } else if (isVercelDeploy()) {
       return NextResponse.json(
         {
           error:

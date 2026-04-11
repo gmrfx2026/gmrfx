@@ -39,6 +39,7 @@ export function RichTextEditor({
   const [urlErr, setUrlErr] = useState("");
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: { levels: [2, 3] },

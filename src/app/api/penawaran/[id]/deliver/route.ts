@@ -5,17 +5,12 @@ import { put } from "@vercel/blob";
 import { randomBytes } from "crypto";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
+import { isVercelDeploy, resolvedBlobReadWriteToken } from "@/lib/uploadStorage";
 
 export const dynamic = "force-dynamic";
 
 const MAX_BYTES = 20 * 1024 * 1024;
 const ALLOWED_EXT = new Set(["zip", "ex4", "ex5", "mq4", "mq5"]);
-
-function isVercel() { return process.env.VERCEL === "1"; }
-function blobToken() {
-  const v = process.env[["BLOB", "READ", "WRITE", "TOKEN"].join("_")];
-  return typeof v === "string" && v.trim() ? v.trim() : undefined;
-}
 
 // POST /api/penawaran/[id]/deliver — pemenang mengirim file hasil kerja
 export async function POST(req: Request, { params }: { params: { id: string } }) {
@@ -46,11 +41,11 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const fileName = file.name.slice(0, 255);
 
   let fileUrl: string;
-  const token = blobToken();
+  const token = resolvedBlobReadWriteToken();
   if (token) {
     const blob = await put(blobName, buf, { access: "public", contentType: "application/octet-stream", addRandomSuffix: false, token });
     fileUrl = blob.url;
-  } else if (isVercel()) {
+  } else if (isVercelDeploy()) {
     return NextResponse.json({ error: "BLOB_READ_WRITE_TOKEN belum dikonfigurasi" }, { status: 500 });
   } else {
     const dir = path.join(process.cwd(), "public", "uploads", "jobs", params.id);

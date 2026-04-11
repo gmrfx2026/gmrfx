@@ -14,6 +14,7 @@ import {
   parseWalletHistoryListParams,
 } from "@/lib/walletTransferFilters";
 import { ProfilStatusBlock } from "@/components/ProfilStatusBlock";
+import { enrichStatusComments } from "@/lib/enrichStatusComments";
 import { ProfilChatBox } from "@/components/ProfilChatBox";
 import { ProfilFollowSettings } from "@/components/ProfilFollowSettings";
 import { ProfilSocialLinksForm } from "@/components/ProfilSocialLinksForm";
@@ -146,13 +147,13 @@ export default async function ProfilPage({
       })
     : null;
 
-  const [statusComments, peers, walletHistoryBundle, articleBundle] = await Promise.all([
+  const [statusCommentRows, peers, walletHistoryBundle, articleBundle] = await Promise.all([
     showProfilStatusSection && latestStatus
       ? prisma.comment.findMany({
           where: { targetType: CommentTarget.STATUS, statusId: latestStatus.id, hidden: false },
           orderBy: { createdAt: "desc" },
           take: 30,
-          include: { user: { select: { name: true } } },
+          include: { user: { select: { name: true, image: true } } },
         })
       : Promise.resolve([]),
     showChat
@@ -263,6 +264,11 @@ export default async function ProfilPage({
         })()
       : Promise.resolve(null),
   ]);
+
+  const statusComments =
+    showProfilStatusSection && latestStatus
+      ? await enrichStatusComments(prisma, statusCommentRows, user.id)
+      : [];
 
   const marketplaceEscrowRaw = showWalletTransfer
     ? await prisma.marketplaceEscrowHold.findMany({
@@ -557,6 +563,8 @@ export default async function ProfilPage({
               content: c.content,
               createdAt: c.createdAt.toISOString(),
               author: c.user.name ?? "Member",
+              mentionsBySlug: c.mentionsBySlug,
+              likeCount: c.likeCount,
             }))}
           />
         </section>

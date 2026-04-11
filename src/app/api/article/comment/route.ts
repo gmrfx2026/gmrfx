@@ -40,14 +40,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Artikel tidak ditemukan" }, { status: 404 });
   }
 
-  await prisma.comment.create({
-    data: {
-      targetType: CommentTarget.ARTICLE,
-      articleId,
-      userId: session.user.id,
-      content,
-    },
-  });
+  try {
+    await prisma.comment.create({
+      data: {
+        targetType: CommentTarget.ARTICLE,
+        articleId,
+        userId: session.user.id,
+        content,
+      },
+    });
+  } catch (err) {
+    console.error("[POST /api/article/comment]", err);
+    const isDev = process.env.NODE_ENV === "development";
+    const message =
+      isDev && err instanceof Error
+        ? `Gagal mengirim komentar: ${err.message}`
+        : "Gagal mengirim komentar. Periksa koneksi database dan migrasi Prisma.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }

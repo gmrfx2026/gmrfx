@@ -4,18 +4,13 @@ import { put } from "@vercel/blob";
 import { randomBytes } from "crypto";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
+import { isVercelDeploy, resolvedBlobReadWriteToken } from "@/lib/uploadStorage";
 
 export const dynamic = "force-dynamic";
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 const ALLOWED_TYPES = new Set(["application/pdf"]);
 const ALLOWED_EXT = new Set(["pdf"]);
-
-function isVercel() { return process.env.VERCEL === "1"; }
-function blobToken() {
-  const v = process.env[["BLOB", "READ", "WRITE", "TOKEN"].join("_")];
-  return typeof v === "string" && v.trim() ? v.trim() : undefined;
-}
 
 // POST /api/penawaran/upload-attachment — upload PDF lampiran spesifikasi pekerjaan
 export async function POST(req: Request) {
@@ -49,7 +44,7 @@ export async function POST(req: Request) {
   const blobName = `penawaran-attachments/${session.user.id}/${idPart}.pdf`;
 
   let fileUrl: string;
-  const token = blobToken();
+  const token = resolvedBlobReadWriteToken();
 
   if (token) {
     const blob = await put(blobName, buf, {
@@ -59,7 +54,7 @@ export async function POST(req: Request) {
       token,
     });
     fileUrl = blob.url;
-  } else if (isVercel()) {
+  } else if (isVercelDeploy()) {
     return NextResponse.json({ error: "BLOB_READ_WRITE_TOKEN belum dikonfigurasi" }, { status: 500 });
   } else {
     const dir = path.join(process.cwd(), "public", "uploads", "penawaran-attachments", session.user.id);

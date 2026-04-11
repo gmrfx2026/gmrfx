@@ -218,6 +218,7 @@ model User {
   memberRatingsReceived MemberRating[] @relation("MemberRatingsReceived")
   memberRatingsGiven MemberRating[] @relation("MemberRatingsGiven")
   statusLikes         StatusLike[]
+  commentLikes        CommentLike[]
 
   /** Akun ini mengikuti siapa (following). */
   memberFollowsOutgoing MemberFollow[] @relation("MemberFollowsOutgoing")
@@ -613,6 +614,20 @@ model Comment {
   content       String
   hidden        Boolean       @default(false)
   createdAt     DateTime      @default(now())
+  likes         CommentLike[]
+}
+
+/// Suka pada komentar status (bukan mock — tersimpan di DB).
+model CommentLike {
+  id        String   @id @default(cuid())
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([commentId, userId])
+  @@index([userId])
 }
 
 /// Link afiliasi broker yang ditampilkan di halaman /go. Dikelola dari admin panel.

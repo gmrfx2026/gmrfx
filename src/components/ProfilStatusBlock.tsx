@@ -4,8 +4,17 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
+import { StatusCommentBody } from "@/components/member/StatusCommentBody";
+import type { MentionProfile } from "@/lib/statusCommentMentions";
 
-type C = { id: string; content: string; createdAt: string; author: string };
+type C = {
+  id: string;
+  content: string;
+  createdAt: string;
+  author: string;
+  mentionsBySlug: Record<string, MentionProfile>;
+  likeCount: number;
+};
 
 export function ProfilStatusBlock({
   initialStatus,
@@ -79,9 +88,14 @@ export function ProfilStatusBlock({
         {comments.map((c) => (
           <li key={c.id} className="rounded-lg border border-broker-border bg-broker-surface/30 p-3 text-sm">
             <p className="text-broker-accent">{c.author}</p>
-            <p className="text-broker-muted">{c.content}</p>
+            <StatusCommentBody
+              content={c.content}
+              mentionsBySlug={c.mentionsBySlug}
+              className="text-broker-muted"
+            />
             <p className="mt-1 text-xs text-broker-muted/60">
               {formatJakarta(c.createdAt, { dateStyle: "short", timeStyle: "short" })}
+              {c.likeCount > 0 ? ` · ${c.likeCount} suka` : null}
             </p>
           </li>
         ))}

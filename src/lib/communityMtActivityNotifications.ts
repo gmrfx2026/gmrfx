@@ -118,7 +118,7 @@ export async function notifyCommunityMtActivityWatchers(params: {
   if (watchers.length === 0) return;
 
   const linkUrl = communityAccountPath(params.publisherUserId, params.mtLogin);
-  const label = params.displayName.trim() || "Akun komunitas";
+  const label = params.displayName.trim() || "Akun trade publisher";
 
   type Row = {
     userId: string;

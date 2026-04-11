@@ -26,7 +26,7 @@ const DEFAULTS: Record<PortfolioMenuTabKey, { label: string; sortOrder: number }
   journal: { label: "Jurnal", sortOrder: 20 },
   trade_log: { label: "Trade log", sortOrder: 30 },
   playbook: { label: "Playbook", sortOrder: 40 },
-  community_accounts: { label: "Akun", sortOrder: 50 },
+  community_accounts: { label: "Akun trade publisher", sortOrder: 50 },
   community_following: { label: "Mengikuti (copy)", sortOrder: 60 },
   community_my_followers: { label: "Pengikut akun", sortOrder: 65 },
   community_publish: { label: "Publikasi komunitas", sortOrder: 70 },

@@ -8,16 +8,7 @@ import {
   fileExtForArticleType,
   sniffArticleImageType,
 } from "@/lib/articleImagePolicy";
-
-function blobRwToken(): string | undefined {
-  const key = ["BLOB", "READ", "WRITE", "TOKEN"].join("_");
-  const v = process.env[key];
-  return typeof v === "string" && v.trim() !== "" ? v.trim() : undefined;
-}
-
-function isVercel(): boolean {
-  return process.env.VERCEL === "1";
-}
+import { isVercelDeploy, resolvedBlobReadWriteToken } from "@/lib/uploadStorage";
 
 /**
  * Unduh gambar dari URL (RSS) lalu simpan ke Blob atau `public/uploads/news-images/`.
@@ -39,7 +30,7 @@ export async function storeRemoteNewsImage(imageUrl: string): Promise<string | n
     if (!kind) return null;
     const ext = fileExtForArticleType(kind);
     const filename = `${randomUUID()}.${ext}`;
-    const token = blobRwToken();
+    const token = resolvedBlobReadWriteToken();
 
     if (token) {
       try {
@@ -56,7 +47,7 @@ export async function storeRemoteNewsImage(imageUrl: string): Promise<string | n
       }
     }
 
-    if (isVercel() && !token) {
+    if (isVercelDeploy() && !token) {
       return null;
     }
 

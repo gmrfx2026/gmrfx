@@ -4,25 +4,15 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { isUserProfileComplete } from "@/lib/profileComplete";
 import {
   ARTICLE_IMAGES_SUBDIR,
   ARTICLE_IMAGE_MAX_BYTES,
   fileExtForArticleType,
   sniffArticleImageType,
 } from "@/lib/articleImagePolicy";
+import { isVercelDeploy, resolvedBlobReadWriteToken } from "@/lib/uploadStorage";
 
 export const runtime = "nodejs";
-
-function blobRwToken(): string | undefined {
-  const key = ["BLOB", "READ", "WRITE", "TOKEN"].join("_");
-  const v = process.env[key];
-  return typeof v === "string" && v.trim() !== "" ? v.trim() : undefined;
-}
-
-function isVercel(): boolean {
-  return process.env.VERCEL === "1";
-}
 
 const CONTENT_TYPES: Record<string, string> = {
   jpg: "image/jpeg",
@@ -30,15 +20,25 @@ const CONTENT_TYPES: Record<string, string> = {
   webp: "image/webp",
 };
 
+function isUploadBlob(v: unknown): v is Blob {
+  return (
+    typeof v === "object" &&
+    v !== null &&
+    typeof (v as Blob).arrayBuffer === "function" &&
+    typeof (v as Blob).size === "number"
+  );
+}
+
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.id || !(await isUserProfileComplete(session.user.id))) {
+  /** Sama seperti avatar / penawaran: cukup login. `profileComplete` hanya untuk kirim artikel ke admin. */
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const form = await req.formData();
   const file = form.get("file");
-  if (!file || !(file instanceof File)) {
+  if (!isUploadBlob(file)) {
     return NextResponse.json({ error: "File tidak ada" }, { status: 400 });
   }
   if (file.size > ARTICLE_IMAGE_MAX_BYTES) {
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
   const ext = fileExtForArticleType(kind);
   const filename = `${randomUUID()}.${ext}`;
-  const token = blobRwToken();
+  const token = resolvedBlobReadWriteToken();
 
   if (token) {
     try {
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
     }
   }
 
-  if (isVercel()) {
+  if (isVercelDeploy()) {
     return NextResponse.json(
       { error: "Upload gambar memerlukan konfigurasi storage. Hubungi administrator." },
       { status: 503 },
