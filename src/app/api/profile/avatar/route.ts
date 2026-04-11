@@ -1,5 +1,6 @@
 import { put } from "@vercel/blob";
 import { Prisma } from "@prisma/client";
+import type { Session } from "next-auth";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -40,7 +41,7 @@ function prismaRequestCode(e: unknown): string | undefined {
 
 export async function POST(req: Request) {
   try {
-    let session: Awaited<ReturnType<typeof auth>>;
+    let session: Session | null;
     try {
       session = await auth();
     } catch (e) {
