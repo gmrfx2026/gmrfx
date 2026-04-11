@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { MemberStatus } from "@prisma/client";
+import { MemberStatus, Prisma } from "@prisma/client";
 import { AdminActivateButton } from "./AdminActivateButton";
 
 export const metadata: Metadata = { title: "Member Belum Aktif — Admin GMR FX" };
@@ -11,11 +11,26 @@ function fmtDT(d: Date) {
 }
 
 export default async function MemberPendingPage() {
-  const members = await prisma.user.findMany({
-    where: { memberStatus: MemberStatus.PENDING },
-    orderBy: { createdAt: "desc" },
-    select: { id: true, name: true, email: true, phoneWhatsApp: true, createdAt: true },
-  });
+  const members = await (async () => {
+    try {
+      return await prisma.user.findMany({
+        where: { memberStatus: MemberStatus.PENDING },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, name: true, email: true, phoneWhatsApp: true, createdAt: true },
+      });
+    } catch (error) {
+      const isPendingEnumUnavailable =
+        error instanceof Prisma.PrismaClientUnknownRequestError ||
+        (error instanceof Prisma.PrismaClientKnownRequestError &&
+          (error.code === "P2021" || error.code === "P2022"));
+
+      if (isPendingEnumUnavailable) {
+        console.warn("[admin/members/pending] Enum/status PENDING belum tersedia di database; tampilkan daftar kosong.");
+        return [];
+      }
+      throw error;
+    }
+  })();
 
   return (
     <div>
