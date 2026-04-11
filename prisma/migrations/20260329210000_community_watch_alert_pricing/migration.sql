@@ -1,5 +1,5 @@
--- Harga/alert "Ikuti" untuk MtCommunityPublishedAccount dipindah ke 20260331121000
--- (tabel baru dibuat di 20260331120000_community_copy_trade — urutan timestamp lama salah).
+-- Hanya MtCommunityActivityWatch. Kolom harga alert "Ikuti" pada akun publish komunitas
+-- ada di migrasi 20260331121000 (setelah CREATE TABLE di 20260331120000).
 
 -- AlterTable
-ALTER TABLE "MtCommunityActivityWatch" ADD COLUMN "paidAmountIdr" DECIMAL(18,2) NOT NULL DEFAULT 0;
+ALTER TABLE "MtCommunityActivityWatch" ADD COLUMN IF NOT EXISTS "paidAmountIdr" DECIMAL(18,2) NOT NULL DEFAULT 0;
