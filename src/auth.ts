@@ -80,7 +80,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.profileComplete = user.profileComplete ?? false;
       }
       if (account?.provider === "google" && user?.email) {
-        const db = await prisma.user.findUnique({ where: { email: user.email } });
+        const db = await prisma.user.findUnique({
+          where: { email: user.email },
+          select: { id: true, role: true, profileComplete: true },
+        });
         if (db) {
           token.id = db.id;
           token.sub = db.id;
@@ -89,7 +92,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       }
       if (trigger === "update" && token.id) {
-        const db = await prisma.user.findUnique({ where: { id: token.id as string } });
+        const db = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { profileComplete: true, role: true, name: true },
+        });
         if (db) {
           token.profileComplete = db.profileComplete;
           token.role = db.role;

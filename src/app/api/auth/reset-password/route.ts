@@ -19,7 +19,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Konfirmasi password tidak cocok" }, { status: 400 });
   }
 
-  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+  const user = await prisma.user.findUnique({
+    where: { email: email.toLowerCase().trim() },
+    select: { id: true, passwordHash: true, phoneWhatsApp: true },
+  });
   if (!user || !user.passwordHash || !user.phoneWhatsApp) {
     return NextResponse.json({ error: "Akun tidak ditemukan atau menggunakan login Google" }, { status: 404 });
   }

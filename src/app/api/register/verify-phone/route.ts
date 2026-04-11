@@ -9,7 +9,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Email dan kode OTP wajib diisi" }, { status: 400 });
   }
 
-  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+  const user = await prisma.user.findUnique({
+    where: { email: email.toLowerCase().trim() },
+    select: { id: true, memberStatus: true, phoneWhatsApp: true },
+  });
   if (!user) {
     return NextResponse.json({ error: "Akun tidak ditemukan" }, { status: 404 });
   }

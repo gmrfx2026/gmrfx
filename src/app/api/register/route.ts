@@ -41,7 +41,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const dup = await prisma.user.findUnique({ where: { email } });
+    const dup = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, memberStatus: true, phoneWhatsApp: true },
+    });
     if (dup) {
       // Jika akun PENDING dan nomor sama, izinkan kirim ulang OTP
       if (dup.memberStatus === MemberStatus.PENDING && dup.phoneWhatsApp === d.phoneWhatsApp) {
