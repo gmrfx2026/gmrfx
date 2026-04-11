@@ -84,7 +84,13 @@ function visibilityAllows(vis: Visibility, session: Session | null): boolean {
 export async function getResolvedSiteHeaderNavItems(
   session: Session | null
 ): Promise<SiteHeaderNavResolvedItem[]> {
-  const rows = await prisma.siteHeaderNavItem.findMany();
+  let rows: Awaited<ReturnType<typeof prisma.siteHeaderNavItem.findMany>> = [];
+  try {
+    rows = await prisma.siteHeaderNavItem.findMany();
+  } catch (e) {
+    // Tanpa fallback, satu query gagal (DB down / migrasi belum jalan) merusak semua halaman dengan header.
+    console.error("[siteHeaderNav] findMany gagal, pakai default:", e);
+  }
   const byKey = new Map(rows.map((r) => [r.navKey, r]));
 
   const withOrder: {
