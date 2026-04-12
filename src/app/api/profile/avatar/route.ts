@@ -1,9 +1,8 @@
 import { put } from "@vercel/blob";
-import { Prisma } from "@prisma/client";
-import type { Session } from "next-auth";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { isVercelDeploy, resolvedBlobReadWriteToken } from "@/lib/uploadStorage";
@@ -32,25 +31,9 @@ function resolveImageKind(file: File): { ext: string; contentType: string } | nu
   return { ext: "jpg", contentType: "image/jpeg" };
 }
 
-/** `instanceof` Prisma kadang gagal jika client ter-bundle ganda; pakai `code` bila ada. */
-function prismaRequestCode(e: unknown): string | undefined {
-  if (!e || typeof e !== "object" || !("code" in e)) return undefined;
-  const c = (e as { code: unknown }).code;
-  return typeof c === "string" ? c : undefined;
-}
-
 export async function POST(req: Request) {
   try {
-    let session: Session | null;
-    try {
-      session = await auth();
-    } catch (e) {
-      console.error("avatar auth", e);
-      return NextResponse.json(
-        { error: "Sesi tidak valid. Keluar lalu masuk lagi, lalu coba unggah ulang." },
-        { status: 401 }
-      );
-    }
+    const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -58,12 +41,8 @@ export async function POST(req: Request) {
     let form: FormData;
     try {
       form = await req.formData();
-    } catch (e) {
-      console.error("avatar formData", e);
-      return NextResponse.json(
-        { error: "Gagal membaca unggahan. Perkecil ukuran file atau coba lagi." },
-        { status: 400 }
-      );
+    } catch {
+      return NextResponse.json({ error: "Payload upload tidak valid." }, { status: 400 });
     }
     const file = form.get("file");
     if (!file || !(file instanceof File)) {
@@ -82,13 +61,7 @@ export async function POST(req: Request) {
     }
 
     const name = `${session.user.id}.${kind.ext}`;
-    let buf: Buffer;
-    try {
-      buf = Buffer.from(await file.arrayBuffer());
-    } catch (e) {
-      console.error("avatar arrayBuffer", e);
-      return NextResponse.json({ error: "Gagal membaca isi file. Coba file lain." }, { status: 400 });
-    }
+    const buf = Buffer.from(await file.arrayBuffer());
 
     const token = resolvedBlobReadWriteToken();
     let publicUrl: string;
@@ -140,67 +113,39 @@ export async function POST(req: Request) {
         where: { id: session.user.id },
         data: { image: publicUrl },
       });
-    } catch (e) {
-      console.error("avatar prisma update", e);
-      const code = prismaRequestCode(e);
-      if (code === "P2025" || (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025")) {
-        return NextResponse.json(
-          { error: "Sesi tidak cocok dengan data di server. Keluar lalu masuk lagi, lalu coba unggah ulang." },
-          { status: 409 }
-        );
-      }
+    } catch (error) {
       if (
-        e instanceof Prisma.PrismaClientInitializationError ||
-        (e instanceof Error && /DATABASE_URL|connect|connection/i.test(e.message))
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        (error.code === "P2021" || error.code === "P2022")
       ) {
         return NextResponse.json(
-          { error: "Database tidak terhubung. Coba lagi sebentar atau hubungi admin." },
+          {
+            error:
+              "Kolom avatar belum aktif di database server ini. Administrator perlu menjalankan migrasi Prisma terlebih dahulu.",
+          },
           { status: 503 }
         );
       }
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        return NextResponse.json(
-          { error: "Gagal menyimpan foto profil ke database.", prismaCode: e.code },
-          { status: 503 }
-        );
+
+      if (error instanceof Prisma.PrismaClientUnknownRequestError) {
+        const raw = String(error.message || "").toLowerCase();
+        if (raw.includes("image") || raw.includes("column") || raw.includes("does not exist")) {
+          return NextResponse.json(
+            {
+              error:
+                "Schema database belum sinkron untuk menyimpan avatar. Coba lagi setelah migrasi selesai.",
+            },
+            { status: 503 }
+          );
+        }
       }
-      if (code && /^P\d/.test(code)) {
-        return NextResponse.json(
-          { error: "Gagal menyimpan foto profil ke database.", prismaCode: code },
-          { status: 503 }
-        );
-      }
-      if (e instanceof Prisma.PrismaClientValidationError) {
-        return NextResponse.json({ error: "Data profil tidak valid." }, { status: 400 });
-      }
-      if (e instanceof Error && e.message.includes("DATABASE_URL")) {
-        return NextResponse.json(
-          { error: "Konfigurasi server: DATABASE_URL belum diset atau tidak valid." },
-          { status: 503 }
-        );
-      }
-      return NextResponse.json(
-        { error: "Gagal menyimpan URL avatar. Cek koneksi database dan log server." },
-        { status: 503 }
-      );
+
+      throw error;
     }
 
     return NextResponse.json({ ok: true, url: publicUrl });
   } catch (e) {
     console.error("avatar POST", e);
-    const hint =
-      e instanceof Error
-        ? e.message.slice(0, 200)
-        : typeof e === "string"
-          ? e.slice(0, 200)
-          : "";
-    const dev = process.env.NODE_ENV === "development";
-    return NextResponse.json(
-      {
-        error: "Terjadi kesalahan saat memproses upload.",
-        ...(dev && hint ? { hint } : {}),
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Terjadi kesalahan saat memproses upload." }, { status: 500 });
   }
 }
