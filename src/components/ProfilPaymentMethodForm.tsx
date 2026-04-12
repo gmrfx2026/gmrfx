@@ -10,6 +10,11 @@ type PaymentMethod = {
   usdtWithdrawAddress: string | null;
 };
 
+type PaymentMethodResponse = PaymentMethod & {
+  skipped?: boolean;
+  reason?: string;
+};
+
 const input = "mt-1 w-full rounded-lg border border-broker-border bg-broker-bg px-3 py-2 text-sm text-white placeholder:text-broker-muted focus:outline-none focus:ring-1 focus:ring-broker-accent";
 const label = "block text-xs font-medium text-broker-muted";
 const card = "rounded-2xl border border-broker-border bg-broker-surface/50 p-5";
@@ -19,32 +24,32 @@ export function ProfilPaymentMethodForm() {
   const [usdtNetwork, setUsdtNetwork] = useState("BSC (BEP-20)");
   const [data, setData] = useState<PaymentMethod>({ bankName: null, bankAccountNumber: null, bankAccountHolder: null, usdtWithdrawAddress: null });
   const [busy, setBusy] = useState(false);
+  const [migrationRequired, setMigrationRequired] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [serverUnavailable, setServerUnavailable] = useState(false);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/wallet/withdraw-options").then(r => r.json()),
       fetch("/api/profile/payment-method").then(r => r.json()),
     ]).then(([opts, pm]) => {
+      const paymentMethod = (pm ?? {}) as Partial<PaymentMethodResponse>;
       if (Array.isArray(opts?.banks)) setBanks(opts.banks);
       if (opts?.config?.usdtNetwork) setUsdtNetwork(opts.config.usdtNetwork);
-      if (pm?.skipped === true || pm?.reason === "payment-method-unavailable") {
-        setServerUnavailable(true);
-        setData({
-          bankName: null,
-          bankAccountNumber: null,
-          bankAccountHolder: null,
-          usdtWithdrawAddress: null,
-        });
-      } else {
-        setData(pm);
+      if (paymentMethod.skipped && paymentMethod.reason === "payment-method-unavailable") {
+        setMigrationRequired(true);
       }
+      setData({
+        bankName: paymentMethod.bankName ?? null,
+        bankAccountNumber: paymentMethod.bankAccountNumber ?? null,
+        bankAccountHolder: paymentMethod.bankAccountHolder ?? null,
+        usdtWithdrawAddress: paymentMethod.usdtWithdrawAddress ?? null,
+      });
     }).finally(() => setLoading(false));
   }, []);
 
   async function save(e: React.FormEvent) {
+    if (migrationRequired) return;
     e.preventDefault(); setMsg(null); setBusy(true);
     const res = await fetch("/api/profile/payment-method", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
     const json = await res.json().catch(() => ({}));
@@ -57,22 +62,18 @@ export function ProfilPaymentMethodForm() {
 
   return (
     <form onSubmit={save} className="space-y-5">
-      {serverUnavailable ? (
-        <div
-          role="status"
-          className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/95"
-        >
-          <p className="font-medium text-amber-200">Data pembayaran belum aktif di server ini</p>
-          <p className="mt-1 text-xs text-amber-100/80 leading-relaxed">
+      {migrationRequired && (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4 text-sm text-amber-200">
+          <p className="font-semibold text-amber-300">Data pembayaran belum aktif di server ini</p>
+          <p className="mt-1 text-amber-200/90">
             Administrator perlu menjalankan migrasi Prisma yang menambah kolom rekening dan USDT di tabel User
-            (misalnya migrasi <code className="rounded bg-black/25 px-1 py-0.5 font-mono text-[11px]">20260404030000_withdraw_request</code>
-            ), lalu deploy ulang bila perlu. Form di bawah dinonaktifkan sampai migrasi selesai.
+            (misalnya migrasi 20260404030000_withdraw_request), lalu deploy ulang bila perlu. Form di bawah
+            dinonaktifkan sampai migrasi selesai.
           </p>
         </div>
-      ) : null}
+      )}
 
       {/* Bank */}
-      <fieldset disabled={serverUnavailable} className={serverUnavailable ? "space-y-5 opacity-60" : "space-y-5"}>
       <div className={card}>
         <h3 className="mb-4 text-sm font-semibold text-white">Rekening Bank</h3>
         {banks.length === 0 ? (
@@ -82,6 +83,7 @@ export function ProfilPaymentMethodForm() {
             <div>
               <label className={label}>Bank</label>
               <select
+                disabled={migrationRequired}
                 value={data.bankName ?? ""}
                 onChange={e => setData(d => ({ ...d, bankName: e.target.value || null }))}
                 className="mt-1 w-full rounded-lg border border-broker-border bg-broker-bg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-broker-accent"
@@ -93,6 +95,7 @@ export function ProfilPaymentMethodForm() {
             <div>
               <label className={label}>Nomor Rekening</label>
               <input
+                disabled={migrationRequired}
                 type="text" inputMode="numeric" maxLength={30}
                 value={data.bankAccountNumber ?? ""}
                 onChange={e => setData(d => ({ ...d, bankAccountNumber: e.target.value.replace(/\D/g, "") || null }))}
@@ -103,6 +106,7 @@ export function ProfilPaymentMethodForm() {
             <div>
               <label className={label}>Nama Pemilik Rekening</label>
               <input
+                disabled={migrationRequired}
                 type="text" maxLength={100}
                 value={data.bankAccountHolder ?? ""}
                 onChange={e => setData(d => ({ ...d, bankAccountHolder: e.target.value.toUpperCase() || null }))}
@@ -120,6 +124,7 @@ export function ProfilPaymentMethodForm() {
         <h3 className="mb-1 text-sm font-semibold text-white">Alamat Dompet USDT</h3>
         <p className="mb-3 text-xs text-broker-muted">Jaringan {usdtNetwork}. Pastikan alamat sudah benar — kesalahan tidak bisa dipulihkan.</p>
         <input
+          disabled={migrationRequired}
           type="text" maxLength={66}
           value={data.usdtWithdrawAddress ?? ""}
           onChange={e => setData(d => ({ ...d, usdtWithdrawAddress: e.target.value.trim() || null }))}
@@ -133,13 +138,11 @@ export function ProfilPaymentMethodForm() {
       )}
 
       <button
-        type="submit"
-        disabled={busy || serverUnavailable}
+        type="submit" disabled={busy || migrationRequired}
         className="rounded-xl bg-broker-accent px-5 py-2.5 text-sm font-semibold text-broker-bg hover:opacity-90 disabled:opacity-50 transition"
       >
         {busy ? "Menyimpan…" : "Simpan Data Pembayaran"}
       </button>
-      </fieldset>
     </form>
   );
 }
