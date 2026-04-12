@@ -5,7 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
-import { isVercelDeploy, resolvedBlobReadWriteToken } from "@/lib/uploadStorage";
+import {
+  isVercelDeploy,
+  resolvedBlobReadWriteToken,
+  resolvedLocalUploadsRoot,
+} from "@/lib/uploadStorage";
 
 export const runtime = "nodejs";
 
@@ -95,7 +99,7 @@ export async function POST(req: Request) {
       );
     } else {
       try {
-        const dir = path.join(process.cwd(), "public", "uploads", "avatars");
+        const dir = path.join(resolvedLocalUploadsRoot(), "avatars");
         await mkdir(dir, { recursive: true });
         await writeFile(path.join(dir, name), buf);
         publicUrl = `/uploads/avatars/${name}`;
