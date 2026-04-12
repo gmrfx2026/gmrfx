@@ -1,3 +1,5 @@
+import path from "path";
+
 const BLOB_ENV_KEY = ["BLOB", "READ", "WRITE", "TOKEN"].join("_");
 
 export function blobReadWriteToken(): string | undefined {
@@ -28,4 +30,11 @@ export function preferLocalUploads(): boolean {
 export function resolvedBlobReadWriteToken(): string | undefined {
   if (preferLocalUploads()) return undefined;
   return blobReadWriteToken();
+}
+
+/** Direktori lokal untuk file upload saat tidak memakai Blob. */
+export function resolvedLocalUploadsRoot(): string {
+  const configured = (process.env.UPLOAD_LOCAL_DIR ?? process.env.UPLOADS_DIR ?? "").trim();
+  if (!configured) return path.join(process.cwd(), "public", "uploads");
+  return path.isAbsolute(configured) ? configured : path.join(process.cwd(), configured);
 }
