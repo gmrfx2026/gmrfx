@@ -102,7 +102,7 @@ export async function POST(req: Request) {
         const dir = path.join(resolvedLocalUploadsRoot(), "avatars");
         await mkdir(dir, { recursive: true });
         await writeFile(path.join(dir, name), buf);
-        publicUrl = `/uploads/avatars/${name}`;
+        publicUrl = `/api/profile/avatar/${name}`;
       } catch (e) {
         console.error("avatar local write", e);
         return NextResponse.json(
