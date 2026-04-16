@@ -40,7 +40,13 @@ function FloatingChatDockInner({ userId }: { userId: string }) {
   }, []);
 
   const peerFromUrl = searchParams.get("peerId");
+  const peerIdOpenKey = peerFromUrl?.trim() ?? "";
   const initialMode = searchParams.get("chatMode") === "public" ? "public" : "private";
+
+  /** Buka panel jika ada deep link peer (mis. dari profil member), tanpa harus ?messenger=1 */
+  useEffect(() => {
+    if (peerIdOpenKey) setOpen(true);
+  }, [peerIdOpenKey]);
 
   useEffect(() => {
     if (searchParams.get("messenger") !== "1") return;
@@ -50,6 +56,17 @@ function FloatingChatDockInner({ userId }: { userId: string }) {
     const q = sp.toString();
     router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
   }, [searchParams, pathname, router]);
+
+  const onMessengerPeerSelect = useCallback(
+    (peerId: string) => {
+      setOpen(true);
+      const sp = new URLSearchParams(searchParams.toString());
+      sp.set("peerId", peerId);
+      const q = sp.toString();
+      router.replace(q ? `${pathname}?${q}` : `${pathname}?peerId=${encodeURIComponent(peerId)}`, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
 
   const loadPeers = useCallback(async () => {
     const q = peerFromUrl ? `?peerId=${encodeURIComponent(peerFromUrl)}` : "";
@@ -126,6 +143,7 @@ function FloatingChatDockInner({ userId }: { userId: string }) {
               initialPeerId={peerFromUrl ?? undefined}
               initialMode={initialMode}
               variant="messenger"
+              onMessengerPeerSelect={onMessengerPeerSelect}
             />
           </div>
         </div>

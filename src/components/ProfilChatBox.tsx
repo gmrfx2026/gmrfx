@@ -44,12 +44,15 @@ export function ProfilChatBox({
   initialPeerId,
   initialMode,
   variant = "page",
+  onMessengerPeerSelect,
 }: {
   peers: Peer[];
   selfId: string;
   initialPeerId?: string;
   initialMode?: ChatMode;
   variant?: "page" | "messenger";
+  /** Messenger: setelah klik member di sidebar — sinkron URL & buka panel (dari induk). */
+  onMessengerPeerSelect?: (peerId: string) => void;
 }) {
   const { show } = useToast();
   const [mode, setMode] = useState<ChatMode>(initialMode ?? "private");
@@ -378,7 +381,10 @@ export function ProfilChatBox({
             <button
               key={p.id}
               type="button"
-              onClick={() => setPeerId(p.id)}
+              onClick={() => {
+                setPeerId(p.id);
+                onMessengerPeerSelect?.(p.id);
+              }}
               title={raw + (p.online ? " · Online" : "")}
               className={`flex flex-col items-center gap-0.5 rounded-lg py-1.5 px-0.5 transition ${
                 peerId === p.id ? "bg-broker-accent/15 ring-1 ring-broker-accent/45" : "hover:bg-broker-bg/35"

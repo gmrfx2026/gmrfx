@@ -101,7 +101,7 @@ export default async function MemberBySlugPage({
   const session = await auth();
   const viewerId = session?.user?.id ?? null;
   const isSelf = viewerId != null && viewerId === member.id;
-  const chatPathForViewer = `/profil?tab=chat&peerId=${encodeURIComponent(member.id)}`;
+  const chatPathForViewer = `/profil?peerId=${encodeURIComponent(member.id)}`;
   const chatHref = isSelf
     ? null
     : viewerId
