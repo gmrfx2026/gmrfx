@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { auth } from "@/auth";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { HomePageContent } from "@/components/home/HomePageContent";
+import { FloatingChatDock } from "@/components/chat/FloatingChatDock";
 
 export const metadata: Metadata = {
   title: "GMR FX — Komunitas Trader, Edukasi & Berbagi Strategi",
@@ -56,6 +58,7 @@ export const dynamic = "force-dynamic";
 
 /** Beranda di `app/page.tsx` agar rute `/` selalu ter-resolve (bukan hanya di route group). */
 export default async function HomePage() {
+  const session = await auth();
   return (
     <>
       <script
@@ -67,6 +70,7 @@ export default async function HomePage() {
         <HomePageContent />
       </main>
       <SiteFooter />
+      {session?.user?.id ? <FloatingChatDock userId={session.user.id} /> : null}
     </>
   );
 }

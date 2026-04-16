@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { playChatIncomingBeep, readChatBeepPreference } from "@/lib/chatBeep";
 import { ProfilChatBox, type ChatPeer } from "@/components/ProfilChatBox";
@@ -26,10 +27,16 @@ function FloatingChatDockInner({ userId }: { userId: string }) {
   const [open, setOpen] = useState(false);
   const [peers, setPeers] = useState<ChatPeer[]>([]);
   const [unread, setUnread] = useState(0);
+  /** Portal ke body: hindari ancestor `overflow-x-hidden` / transform yang membuat fixed “nyasar”. */
+  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const prevUnreadRef = useRef(0);
+
+  useEffect(() => {
+    setPortalRoot(document.body);
+  }, []);
 
   const peerFromUrl = searchParams.get("peerId");
   const initialMode = searchParams.get("chatMode") === "public" ? "public" : "private";
@@ -87,25 +94,26 @@ function FloatingChatDockInner({ userId }: { userId: string }) {
 
   const onProfilMobile = pathname.startsWith("/profil");
 
-  /** Pakai sisi kanan fisik (bukan inline-start) agar selalu kanan di LTR. */
+  /** `!` memastikan menang atas gaya global; kanan fisik untuk LTR. */
   const dockSide = onProfilMobile
-    ? "left-auto right-4 max-[380px]:right-3"
-    : "left-auto right-4 max-[380px]:right-3 md:right-8";
+    ? "!left-auto !right-3 sm:!right-4"
+    : "!left-auto !right-3 sm:!right-4 md:!right-8";
 
   const dockBottom = onProfilMobile
     ? "bottom-[max(5.5rem,5rem+env(safe-area-inset-bottom))]"
     : "bottom-[max(1rem,env(safe-area-inset-bottom))] md:bottom-6";
 
-  return (
+  const dock = (
     <>
       {open ? (
         <div
           className={clsx(
-            "fixed z-[55] flex w-[min(100vw-1.5rem,380px)] flex-col overflow-hidden rounded-t-2xl border border-broker-border bg-broker-surface shadow-2xl shadow-black/50 md:rounded-2xl",
+            "fixed z-[160] flex w-[min(100vw-1.5rem,380px)] max-w-[100vw] flex-col overflow-hidden rounded-t-2xl border border-broker-border bg-broker-surface shadow-2xl shadow-black/50 md:rounded-2xl",
             dockSide,
             dockBottom,
             "h-[min(72vh,520px)]",
           )}
+          style={{ left: "auto" }}
           role="dialog"
           aria-label="Chat"
         >
@@ -136,11 +144,12 @@ function FloatingChatDockInner({ userId }: { userId: string }) {
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={clsx(
-          "fixed z-[55] flex h-14 w-14 items-center justify-center rounded-full border border-broker-border bg-gradient-to-br from-broker-accent to-broker-accentDim text-broker-bg shadow-lg shadow-black/40 transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-broker-accent focus-visible:ring-offset-2 focus-visible:ring-offset-broker-bg relative",
+          "fixed z-[160] flex h-14 w-14 items-center justify-center rounded-full border border-broker-border bg-gradient-to-br from-broker-accent to-broker-accentDim text-broker-bg shadow-lg shadow-black/40 transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-broker-accent focus-visible:ring-offset-2 focus-visible:ring-offset-broker-bg relative",
           dockSide,
           dockBottom,
           open ? "pointer-events-none scale-0 opacity-0" : "scale-100 opacity-100",
         )}
+        style={{ left: "auto" }}
         aria-label={open ? "Tutup chat" : "Buka chat"}
       >
         <ChatBubbleIcon className="h-7 w-7" />
@@ -152,6 +161,9 @@ function FloatingChatDockInner({ userId }: { userId: string }) {
       </button>
     </>
   );
+
+  if (!portalRoot) return null;
+  return createPortal(dock, portalRoot);
 }
 
 export function FloatingChatDock({ userId }: { userId: string }) {
