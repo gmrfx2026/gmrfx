@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CHAT_BEEP_STORAGE_KEY,
   playChatIncomingBeep,
@@ -9,6 +9,7 @@ import {
 import { useToast } from "@/components/ToastProvider";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 import { SmallUserAvatar } from "@/components/SmallUserAvatar";
+import { ChatEmojiPicker } from "@/components/chat/ChatEmojiPicker";
 
 export type ChatPeer = {
   id: string;
@@ -98,6 +99,11 @@ export function ProfilChatBox({
 
   const [isNarrow, setIsNarrow] = useState(false);
   const [mobileShowMemberList, setMobileShowMemberList] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Peer[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   /** Panel messenger mengambang selalu sempit (~380px); jangan pakai lebar viewport. */
   const stackPeersNav = variant === "messenger" || isNarrow;
@@ -116,6 +122,50 @@ export function ProfilChatBox({
       setMobileShowMemberList(false);
     }
   }, [stackPeersNav, initialPeerId, peers]);
+
+  /** Debounced global member search (hanya ketika panel list terbuka & query >= 2 char). */
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setSearchLoading(true);
+    const t = window.setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/chat/search-members?q=${encodeURIComponent(q)}`, {
+          credentials: "same-origin",
+        });
+        const data = (await r.json().catch(() => ({}))) as { peers?: Peer[] };
+        if (!cancelled) setSearchResults(Array.isArray(data.peers) ? data.peers : []);
+      } catch {
+        if (!cancelled) setSearchResults([]);
+      } finally {
+        if (!cancelled) setSearchLoading(false);
+      }
+    }, 300);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [searchQuery]);
+
+  /** Peers yang cocok dengan query dari daftar lokal (koneksi follow) + hasil search global yg belum ada di lokal. */
+  const combinedPeers = useMemo<Peer[]>(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return peers;
+    const localMatch = peers.filter((p) => {
+      const n = (p.name ?? "").toLowerCase();
+      const s = (p.memberSlug ?? "").toLowerCase();
+      const e = (p.email ?? "").toLowerCase();
+      return n.includes(q) || s.includes(q) || e.includes(q);
+    });
+    const seen = new Set(localMatch.map((p) => p.id));
+    const extra = searchResults.filter((p) => !seen.has(p.id) && p.id !== selfId);
+    return [...localMatch, ...extra];
+  }, [peers, searchQuery, searchResults, selfId]);
 
   const applyMessages = useCallback((next: Msg[]) => {
     const prevIds = lastMessageIdsRef.current;
@@ -423,49 +473,121 @@ export function ProfilChatBox({
   );
 
   function renderMessengerPeerList() {
-    if (mode !== "private" || peers.length === 0) return null;
+    if (mode !== "private") return null;
+    const q = searchQuery.trim();
+    const hasResults = combinedPeers.length > 0;
+    const localCount = q
+      ? peers.filter((p) => {
+          const n = (p.name ?? "").toLowerCase();
+          const s = (p.memberSlug ?? "").toLowerCase();
+          const e = (p.email ?? "").toLowerCase();
+          return n.includes(q.toLowerCase()) || s.includes(q.toLowerCase()) || e.includes(q.toLowerCase());
+        }).length
+      : peers.length;
+
     return (
-      <aside
-        className="flex w-full flex-1 flex-col gap-1 overflow-y-auto bg-broker-surface px-2 py-2 [-ms-overflow-style:none] [scrollbar-width:thin] [scrollbar-color:rgba(0,211,149,0.35)_transparent]"
-        aria-label="Daftar member"
-      >
-        <p className="px-1 pb-1 text-[11px] text-broker-muted">Ketuk nama untuk chat · ketuk avatar untuk profil</p>
-        {peers.map((p) => {
-          const raw = (p.name ?? p.email ?? "?").trim();
-          const short = raw.split(/\s+/)[0]?.slice(0, 24) ?? "?";
-          const ringWrap = `rounded-full p-0.5 ring-2 ring-offset-2 ring-offset-broker-surface ${
-            peerId === p.id ? "ring-broker-accent" : "ring-transparent"
-          }`;
-          return (
-            <div
-              key={p.id}
-              className={`flex items-center gap-3 rounded-xl py-2 pl-2 pr-2 transition ${
-                peerId === p.id ? "bg-broker-accent/15 ring-1 ring-broker-accent/45" : "hover:bg-broker-bg/35"
-              }`}
+      <div className="flex w-full flex-1 flex-col overflow-hidden bg-broker-surface">
+        <div className="shrink-0 px-2 pb-2 pt-1">
+          <div className="relative">
+            <span
+              aria-hidden
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-broker-muted"
             >
-              <a
-                href={peerPublicProfileHref(p)}
-                className={`shrink-0 cursor-pointer ${ringWrap}`}
-                title={`Buka profil publik — ${raw}`}
-              >
-                <SmallUserAvatar name={p.name} image={p.image ?? null} size="md" />
-              </a>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="7" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </span>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari member…"
+              aria-label="Cari member"
+              className="w-full rounded-full border border-broker-border bg-broker-bg py-2 pl-8 pr-8 text-sm text-white placeholder:text-broker-muted focus:border-broker-accent/60 focus:outline-none"
+            />
+            {searchQuery ? (
               <button
                 type="button"
-                onClick={() => {
-                  setPeerId(p.id);
-                  onMessengerPeerSelect?.(p.id);
-                  if (isMessenger) setMobileShowMemberList(false);
-                }}
-                title={raw + (p.online ? " · Online" : "")}
-                className="min-w-0 flex-1 truncate text-left text-sm font-medium text-white"
+                aria-label="Bersihkan pencarian"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-broker-muted hover:bg-broker-surface hover:text-white"
               >
-                {short}
+                ×
               </button>
-            </div>
-          );
-        })}
-      </aside>
+            ) : null}
+          </div>
+        </div>
+        <aside
+          className="flex w-full flex-1 flex-col gap-1 overflow-y-auto px-2 pb-2 [-ms-overflow-style:none] [scrollbar-width:thin] [scrollbar-color:rgba(0,211,149,0.35)_transparent]"
+          aria-label="Daftar member"
+        >
+          {!q ? (
+            <p className="px-1 pb-1 text-[11px] text-broker-muted">
+              {peers.length > 0
+                ? "Ketuk baris untuk chat · ketuk avatar untuk profil"
+                : "Belum ada teman. Gunakan kotak cari di atas untuk menemukan member lain."}
+            </p>
+          ) : null}
+          {q && q.length < 2 ? (
+            <p className="px-1 py-2 text-xs text-broker-muted">Ketik minimal 2 huruf untuk mencari member.</p>
+          ) : null}
+          {q && q.length >= 2 && searchLoading && !hasResults ? (
+            <p className="px-1 py-2 text-xs text-broker-muted">Mencari member…</p>
+          ) : null}
+          {q && q.length >= 2 && !searchLoading && !hasResults ? (
+            <p className="px-1 py-2 text-xs text-broker-muted">Tidak ada member yang cocok.</p>
+          ) : null}
+          {combinedPeers.map((p, idx) => {
+            const raw = (p.name ?? p.email ?? "?").trim();
+            const short = raw.split(/\s+/)[0]?.slice(0, 24) ?? "?";
+            const isLocal = idx < localCount;
+            const ringWrap = `rounded-full p-0.5 ring-2 ring-offset-2 ring-offset-broker-surface ${
+              peerId === p.id ? "ring-broker-accent" : "ring-transparent"
+            }`;
+            return (
+              <div
+                key={p.id}
+                className={`flex items-center gap-3 rounded-xl py-2 pl-2 pr-2 transition ${
+                  peerId === p.id ? "bg-broker-accent/15 ring-1 ring-broker-accent/45" : "hover:bg-broker-bg/35"
+                }`}
+              >
+                <a
+                  href={peerPublicProfileHref(p)}
+                  className={`shrink-0 cursor-pointer ${ringWrap}`}
+                  title={`Buka profil publik — ${raw}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="relative">
+                    <SmallUserAvatar name={p.name} image={p.image ?? null} size="md" />
+                    {p.online ? (
+                      <span
+                        aria-hidden
+                        className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-broker-surface bg-broker-accent"
+                      />
+                    ) : null}
+                  </div>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPeerId(p.id);
+                    onMessengerPeerSelect?.(p.id);
+                    if (isMessenger) setMobileShowMemberList(false);
+                  }}
+                  title={raw + (p.online ? " · Online" : "")}
+                  className="flex min-w-0 flex-1 flex-col items-start text-left"
+                >
+                  <span className="min-w-0 max-w-full truncate text-sm font-medium text-white">{short}</span>
+                  <span className="text-[10px] text-broker-muted">
+                    {isLocal ? (p.online ? "Aktif sekarang" : "Teman") : "Kirim permintaan chat"}
+                  </span>
+                </button>
+              </div>
+            );
+          })}
+        </aside>
+      </div>
     );
   }
 
@@ -475,30 +597,49 @@ export function ProfilChatBox({
   const messengerThreadPeerBar =
     isMessenger && mode === "private" && peerId && !mobileShowMemberList
       ? (() => {
-          const active = peers.find((p) => p.id === peerId);
+          const active =
+            peers.find((p) => p.id === peerId) ?? searchResults.find((p) => p.id === peerId);
           if (!active) return null;
           const label = (active.name ?? active.email ?? "?").trim();
+          const href = peerPublicProfileHref(active);
           return (
-            <div className="flex shrink-0 flex-col gap-2 border-b border-broker-border/80 bg-broker-bg/50 px-2 py-2 text-xs">
+            <div className="flex shrink-0 items-center gap-2 border-b border-broker-border bg-broker-surface px-2 py-2 shadow-sm">
               <button
                 type="button"
                 onClick={() => setMobileShowMemberList(true)}
-                className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-broker-accent/40 bg-broker-accent/15 px-3 py-2 text-xs font-semibold text-broker-accent hover:bg-broker-accent/25"
+                aria-label="Kembali ke daftar member"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-broker-accent transition hover:bg-broker-bg/50"
               >
-                <span aria-hidden>←</span>
-                Pilih member lain
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <line x1="19" y1="12" x2="5" y2="12" />
+                  <polyline points="12 19 5 12 12 5" />
+                </svg>
               </button>
-              <div className="flex items-center justify-between gap-2">
-                <span className="min-w-0 truncate text-broker-muted">
-                  Dengan <span className="font-semibold text-white">{label}</span>
+              <a
+                href={href}
+                className="shrink-0 rounded-full p-0.5 ring-2 ring-transparent transition hover:ring-broker-accent/60"
+                title={`Buka profil publik — ${label}`}
+              >
+                <div className="relative">
+                  <SmallUserAvatar name={active.name} image={active.image ?? null} size="md" />
+                  {active.online ? (
+                    <span
+                      aria-hidden
+                      className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-broker-surface bg-broker-accent"
+                    />
+                  ) : null}
+                </div>
+              </a>
+              <a
+                href={href}
+                className="flex min-w-0 flex-1 flex-col items-start text-left hover:underline"
+                title={`Buka profil publik — ${label}`}
+              >
+                <span className="min-w-0 max-w-full truncate text-sm font-semibold text-white">{label}</span>
+                <span className="text-[10px] text-broker-muted">
+                  {active.online ? "Aktif sekarang" : "Lihat profil"}
                 </span>
-                <a
-                  href={peerPublicProfileHref(active)}
-                  className="shrink-0 rounded-md px-2 py-1 font-medium text-broker-accent hover:bg-broker-accent/10 hover:underline"
-                >
-                  Profil
-                </a>
-              </div>
+              </a>
             </div>
           );
         })()
@@ -732,11 +873,12 @@ export function ProfilChatBox({
             onSubmit={send}
             className={
               isMessenger
-                ? "flex shrink-0 items-center gap-2 rounded-full border border-broker-border bg-broker-surface px-2 py-1.5 shadow-md"
-                : "flex gap-2"
+                ? "relative flex shrink-0 items-center gap-1 rounded-full border border-broker-border bg-broker-surface px-1.5 py-1.5 shadow-md"
+                : "relative flex gap-2"
             }
           >
             <input
+              ref={inputRef}
               className={
                 isMessenger
                   ? "min-w-0 flex-1 border-0 bg-transparent px-2 py-1 text-sm text-white outline-none placeholder:text-broker-muted"
@@ -747,15 +889,45 @@ export function ProfilChatBox({
               placeholder={mode === "public" ? "Pesan untuk chat umum…" : "Aa"}
             />
             <button
-              type="submit"
-              disabled={loading}
+              type="button"
+              onClick={() => setShowEmoji((v) => !v)}
+              aria-label="Pilih emoji"
+              title="Pilih emoji"
               className={
                 isMessenger
-                  ? "shrink-0 rounded-full bg-broker-accent px-4 py-2 text-sm font-semibold text-broker-bg disabled:opacity-50"
+                  ? "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg text-broker-muted transition hover:bg-broker-bg hover:text-white"
+                  : "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-lg text-broker-muted transition hover:bg-broker-surface hover:text-white"
+              }
+            >
+              <span aria-hidden>😊</span>
+            </button>
+            <ChatEmojiPicker
+              open={showEmoji}
+              onClose={() => setShowEmoji(false)}
+              onPick={(e) => {
+                setBody((b) => b + e);
+                inputRef.current?.focus();
+              }}
+              anchorClassName={isMessenger ? "bottom-12 right-1" : "bottom-12 right-0"}
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              aria-label="Kirim pesan"
+              className={
+                isMessenger
+                  ? "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-broker-accent text-broker-bg disabled:opacity-50"
                   : "shrink-0 rounded-lg bg-broker-accent px-4 py-2 text-sm font-semibold text-broker-bg disabled:opacity-50"
               }
             >
-              Kirim
+              {isMessenger ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+              ) : (
+                "Kirim"
+              )}
             </button>
           </form>
         )}
