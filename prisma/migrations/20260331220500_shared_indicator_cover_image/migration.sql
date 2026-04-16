@@ -1,2 +1,2 @@
--- AlterTable
-ALTER TABLE "SharedIndicator" ADD COLUMN "coverImageUrl" VARCHAR(1024);
+-- AlterTable (idempotent: kolom bisa sudah ada dari migrasi/DB lama)
+ALTER TABLE "SharedIndicator" ADD COLUMN IF NOT EXISTS "coverImageUrl" VARCHAR(1024);
