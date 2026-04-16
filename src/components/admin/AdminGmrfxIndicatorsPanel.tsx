@@ -23,6 +23,7 @@ type Row = {
   purchaseCount: number;
   mtLicenseProductCode: string | null;
   mtLicenseValidityDays: number | null;
+  coverImageUrl: string | null;
 };
 
 const emptyForm = {
@@ -48,6 +49,7 @@ export function AdminGmrfxIndicatorsPanel({
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [file, setFile] = useState<File | null>(null);
+  const [coverImage, setCoverImage] = useState<File | null>(null);
   const [descEditorKey, setDescEditorKey] = useState(0);
 
   const load = useCallback(async () => {
@@ -76,6 +78,7 @@ export function AdminGmrfxIndicatorsPanel({
     setEditId(null);
     setForm(emptyForm);
     setFile(null);
+    setCoverImage(null);
     setMsg(null);
     setErr(null);
     setDescEditorKey((k) => k + 1);
@@ -94,6 +97,7 @@ export function AdminGmrfxIndicatorsPanel({
         row.mtLicenseValidityDays != null ? String(row.mtLicenseValidityDays) : "365",
     });
     setFile(null);
+    setCoverImage(null);
     setMsg(null);
     setErr(null);
     setDescEditorKey((k) => k + 1);
@@ -120,6 +124,7 @@ export function AdminGmrfxIndicatorsPanel({
       setSaving(false);
       return;
     }
+    if (coverImage) fd.set("coverImage", coverImage);
 
     try {
       const url = editId ? `/api/admin/gmrfx-indicators/${editId}` : "/api/admin/gmrfx-indicators";
@@ -267,6 +272,22 @@ export function AdminGmrfxIndicatorsPanel({
           />
         </label>
 
+        <label className="block space-y-1">
+          <span className="text-xs font-medium text-gray-500">Gambar sampul katalog (JPG/PNG/WebP, opsional)</span>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+            disabled={!sellerConfigured}
+            onChange={(e) => setCoverImage(e.target.files?.[0] ?? null)}
+            className="w-full text-sm text-gray-600 file:mr-3 file:rounded file:border-0 file:bg-slate-600 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white disabled:opacity-50"
+          />
+          {coverImage ? (
+            <p className="text-xs text-gray-500">Akan diunggah: {coverImage.name}</p>
+          ) : editId ? (
+            <p className="text-xs text-gray-500">Kosongkan jika tidak mengganti sampul.</p>
+          ) : null}
+        </label>
+
         {msg && <p className="text-sm text-emerald-700">{msg}</p>}
         {err && <p className="text-sm text-red-600">{err}</p>}
 
@@ -292,6 +313,16 @@ export function AdminGmrfxIndicatorsPanel({
                 key={it.id}
                 className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
               >
+                {it.coverImageUrl ? (
+                  <div className="shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={it.coverImageUrl}
+                      alt=""
+                      className="h-16 w-28 object-cover"
+                    />
+                  </div>
+                ) : null}
                 <div className="min-w-0">
                   <p className="font-medium text-gray-900">{it.title}</p>
                   <p className="text-xs text-gray-500">

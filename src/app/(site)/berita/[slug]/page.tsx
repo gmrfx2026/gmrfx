@@ -7,6 +7,8 @@ import { articleProseTypographyClass } from "@/lib/articleProseClassName";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 import { homeNewsAuthorForDisplay } from "@/lib/homeNewsAuthor";
+import { resolvePublicDisplayUrl } from "@/lib/publicUploadUrl";
+import { BeritaHeroImage } from "@/components/berita/BeritaHeroImage";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +32,7 @@ export default async function BeritaDetailPage({ params }: { params: { slug: str
   const safeHtml = sanitizeArticleHtml(row.contentHtml);
   const label = row.scope === "DOMESTIC" ? "Berita dalam negeri" : "Berita internasional";
   const penulis = homeNewsAuthorForDisplay(row.author);
+  const heroSrc = row.imageUrl ? resolvePublicDisplayUrl(row.imageUrl) ?? row.imageUrl : null;
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12">
@@ -59,12 +62,7 @@ export default async function BeritaDetailPage({ params }: { params: { slug: str
           </>
         ) : null}
       </p>
-      {row.imageUrl ? (
-        <div className="mt-6 overflow-hidden rounded-xl border border-broker-border">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={row.imageUrl} alt="" className="max-h-[420px] w-full object-cover" loading="eager" />
-        </div>
-      ) : null}
+      {heroSrc ? <BeritaHeroImage src={heroSrc} title={row.title} /> : null}
       <div
         className={`${articleProseTypographyClass} mt-8`}
         dangerouslySetInnerHTML={{ __html: safeHtml }}

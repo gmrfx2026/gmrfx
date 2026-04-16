@@ -1,7 +1,8 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { resolvePublicDisplayUrl } from "@/lib/publicUploadUrl";
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 4;
@@ -36,7 +37,11 @@ export function MemberProfileAvatarZoom({
 
   const label = name?.trim() || "Member";
   const initial = label.slice(0, 1).toUpperCase();
-  const hasImage = Boolean(imageSrc);
+  const resolvedSrc = useMemo(
+    () => (imageSrc ? resolvePublicDisplayUrl(imageSrc) ?? imageSrc : null),
+    [imageSrc],
+  );
+  const hasImage = Boolean(resolvedSrc);
 
   const resetView = useCallback(() => {
     setScale(1);
@@ -161,10 +166,10 @@ export function MemberProfileAvatarZoom({
     }
   }
 
-  const thumb = imageSrc ? (
+  const thumb = resolvedSrc ? (
     // eslint-disable-next-line @next/next/no-img-element -- thumbnail klikable; pointer-events-none agar tap mengenai <button> (penting untuk mobile / Safari)
     <img
-      src={imageSrc}
+      src={resolvedSrc}
       alt=""
       className="pointer-events-none absolute inset-0 h-full w-full object-cover"
       draggable={false}
@@ -192,7 +197,7 @@ export function MemberProfileAvatarZoom({
         </div>
       )}
 
-      {open && hasImage && imageSrc && typeof document !== "undefined"
+      {open && hasImage && resolvedSrc && typeof document !== "undefined"
         ? createPortal(
             <div
               className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
@@ -221,7 +226,7 @@ export function MemberProfileAvatarZoom({
                   Wadah persegi + overflow-hidden + rounded-full = klip lingkaran tetap saat zoom
                   (object-contain pada img langsung menghasilkan oval jika rasio foto ≠ 1:1).
                 */}
-                <div className="relative aspect-square h-[min(72vmin,26rem)] w-[min(72vmin,26rem)] shrink-0 overflow-hidden rounded-full shadow-2xl ring-2 ring-white/15">
+                <div className="relative aspect-square h-[min(85vmin,36rem)] w-[min(85vmin,36rem)] shrink-0 overflow-hidden rounded-full shadow-2xl ring-2 ring-white/15">
                   <div
                     style={{
                       transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
@@ -236,7 +241,7 @@ export function MemberProfileAvatarZoom({
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={imageSrc}
+                      src={resolvedSrc}
                       alt=""
                       className="h-full w-full select-none object-cover"
                       draggable={false}

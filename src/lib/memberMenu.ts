@@ -44,14 +44,11 @@ export async function getResolvedMemberMenuItems(): Promise<MemberMenuResolvedIt
   const withOrder: { key: MemberMenuTabKey; label: string; href: string; sortOrder: number }[] = [];
 
   for (const tabKey of MEMBER_MENU_TAB_KEYS) {
+    if (tabKey === "chat") continue;
     const def = DEFAULTS[tabKey];
     const row = byKey.get(tabKey);
     if (row && !row.enabled) continue;
     let label = (row?.label ?? def.label).trim() || def.label;
-    // Bekas salah ketik di admin: label "Surat" pada tab chat (menu surat sudah dihapus).
-    if (tabKey === "chat" && /^surat$/i.test(label)) {
-      label = def.label;
-    }
     const sortOrder = row?.sortOrder ?? def.sortOrder;
     const href = tabKey === "portfolio" ? "/profil/portfolio" : `/profil?tab=${tabKey}`;
     withOrder.push({

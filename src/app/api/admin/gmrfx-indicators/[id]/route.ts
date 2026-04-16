@@ -13,9 +13,28 @@ import {
 import { parseMarketplacePlatform } from "@/lib/marketplacePlatform";
 import { normalizeMarketplaceDescriptionHtml } from "@/lib/marketplaceDescription";
 import { normalizeMtLicenseProductCode, parseMtLicenseValidityDays } from "@/lib/indicatorLicense";
+import { storeIndicatorCoverImage } from "@/lib/indicatorCoverImageUpload";
+import path from "path";
+import { isPublicUploadRelativePathAllowed } from "@/lib/publicFileAllowlist";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+async function tryUnlinkLocalIndicatorCover(url: string | null | undefined) {
+  if (!url) return;
+  const t = url.trim();
+  const m = /^\/api\/public-file\/(.+)$/i.exec(t);
+  const rel = m?.[1]?.replace(/\\/g, "/").replace(/^\/+/, "");
+  if (!rel || !isPublicUploadRelativePathAllowed(rel)) return;
+  const abs = path.join(process.cwd(), "public", "uploads", ...rel.split("/"));
+  const root = path.resolve(process.cwd(), "public", "uploads");
+  if (!abs.startsWith(root + path.sep)) return;
+  try {
+    await unlink(abs);
+  } catch {
+    /* ignore */
+  }
+}
 
 function parseBool(v: FormDataEntryValue | null): boolean {
   if (v == null) return false;
@@ -157,6 +176,18 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     }
   }
 
+  const coverImage = form.get("coverImage");
+  let nextCoverUrl = existing.coverImageUrl;
+  if (coverImage instanceof File && coverImage.size > 0) {
+    try {
+      await tryUnlinkLocalIndicatorCover(existing.coverImageUrl);
+      nextCoverUrl = await storeIndicatorCoverImage(id, coverImage);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Gagal mengunggah sampul";
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
+  }
+
   try {
     const row = await prisma.sharedIndicator.update({
       where: { id },
@@ -168,6 +199,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
         published,
         fileUrl: nextFileUrl,
         fileName: nextFileName,
+        coverImageUrl: nextCoverUrl,
         mtLicenseProductCode,
         mtLicenseValidityDays,
         isGmrfxOfficial: true,

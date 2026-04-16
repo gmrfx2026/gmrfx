@@ -1,4 +1,6 @@
 import { isIndicatorCoverId } from "@/lib/marketplaceIndicatorCoverSvgs";
+import { VERCEL_BLOB_SRC_RE } from "@/lib/articleImagePolicy";
+import { resolvePublicDisplayUrl } from "@/lib/publicUploadUrl";
 
 /** Path lama (file di public) — di UI dialihkan ke /api/indikator-cover/… (banyak id baru tidak punya file di public). */
 const LEGACY_INDICATOR_COVER_RE =
@@ -44,6 +46,13 @@ function pathnameForCoverSrc(raw: string): string | null {
 function resolveCoverFromPathname(path: string | null): string | null {
   if (!path) return null;
 
+  if (/\/api\/public-file\/indicator-covers\/[a-z0-9]+\.(?:jpg|jpeg|png|webp)$/i.test(path)) {
+    return path;
+  }
+  if (/\/uploads\/indicator-covers\/[a-z0-9]+\.(?:jpg|jpeg|png|webp)$/i.test(path)) {
+    return resolvePublicDisplayUrl(path) ?? path;
+  }
+
   const legacy = LEGACY_INDICATOR_COVER_RE.exec(path);
   if (legacy) {
     const base = legacy[1].toLowerCase();
@@ -71,7 +80,11 @@ export function resolveMarketplaceIndicatorCoverUrl(
   src: string | null | undefined,
   slug?: string | null
 ): string | null {
-  const path = src?.trim() ? pathnameForCoverSrc(src) : null;
+  const raw = src?.trim();
+  if (!raw) return null;
+  if (VERCEL_BLOB_SRC_RE.test(raw)) return raw;
+
+  const path = pathnameForCoverSrc(raw);
   const fromSrc = resolveCoverFromPathname(path);
   if (fromSrc) return fromSrc;
 

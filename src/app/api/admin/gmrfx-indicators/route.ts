@@ -8,6 +8,7 @@ import { INDICATOR_MAX_BYTES, resolveIndicatorExt, storeIndicatorFile } from "@/
 import { parseMarketplacePlatform } from "@/lib/marketplacePlatform";
 import { normalizeMarketplaceDescriptionHtml } from "@/lib/marketplaceDescription";
 import { normalizeMtLicenseProductCode, parseMtLicenseValidityDays } from "@/lib/indicatorLicense";
+import { storeIndicatorCoverImage } from "@/lib/indicatorCoverImageUpload";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,6 +51,7 @@ export async function GET() {
       updatedAt: true,
       mtLicenseProductCode: true,
       mtLicenseValidityDays: true,
+      coverImageUrl: true,
       _count: { select: { purchases: true } },
     },
   });
@@ -204,6 +206,21 @@ export async function POST(req: Request) {
         },
       });
     });
+
+    const cover = form.get("coverImage");
+    if (cover instanceof File && cover.size > 0) {
+      try {
+        const coverUrl = await storeIndicatorCoverImage(row.id, cover);
+        await prisma.sharedIndicator.update({
+          where: { id: row.id },
+          data: { coverImageUrl: coverUrl },
+        });
+      } catch (e) {
+        console.error("gmrfx indicator cover", e);
+        const msg = e instanceof Error ? e.message : "Gagal mengunggah sampul";
+        return NextResponse.json({ error: msg }, { status: 400 });
+      }
+    }
 
     return NextResponse.json({
       ok: true,

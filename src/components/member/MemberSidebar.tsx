@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { Fragment } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { playChatIncomingBeep, readChatBeepPreference } from "@/lib/chatBeep";
 import {
   CommunityNavEmbedded,
   getCommunityNavLinks,
@@ -72,68 +71,13 @@ export function MemberSidebar({
   const activeTab = getActiveTab(pathname, tab);
   const communityDockLinks = useMemo(() => getCommunityNavLinks(portfolioMenu), [portfolioMenu]);
 
-  const [chatUnread, setChatUnread] = useState(0);
-  const [toast, setToast] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
-  const prevChatUnreadRef = useRef(0);
   useEffect(() => setMounted(true), []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadCounts() {
-      let nextChat = 0;
-      try {
-        const r = await fetch("/api/chat/unread-count");
-        if (r.ok) {
-          const j = (await r.json()) as { unread?: number };
-          nextChat = Number(j?.unread ?? 0);
-        }
-      } catch {
-        /* ignore */
-      }
-
-      if (cancelled) return;
-
-      setChatUnread(nextChat);
-
-      if (nextChat > prevChatUnreadRef.current) {
-        setToast(`Ada chat baru (${nextChat}).`);
-        if (readChatBeepPreference()) {
-          playChatIncomingBeep();
-        }
-        prevChatUnreadRef.current = nextChat;
-        setTimeout(() => {
-          setToast((t) => (t && t.startsWith("Ada chat baru") ? null : t));
-        }, 3500);
-      } else {
-        prevChatUnreadRef.current = nextChat;
-      }
-    }
-
-    void loadCounts();
-    const interval = window.setInterval(() => {
-      void loadCounts();
-    }, 5000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-    };
-  }, []);
 
   const mobileDock =
     mounted &&
     createPortal(
       <div className="md:hidden">
-        {toast && (
-          <div
-            className="fixed left-3 right-3 z-50 rounded-xl border border-broker-border/80 bg-broker-surface/95 px-3 py-2 text-center text-sm text-white shadow-lg ring-1 ring-white/5 backdrop-blur-md"
-            style={{ bottom: "max(5.5rem, calc(5rem + env(safe-area-inset-bottom)))" }}
-          >
-            {toast}
-          </div>
-        )}
         <nav
           aria-label="Menu member"
           className="pointer-events-none fixed inset-x-0 bottom-0 z-40"
@@ -144,7 +88,6 @@ export function MemberSidebar({
               <div className="flex gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {items.map((it) => {
                   const active = it.key === activeTab;
-                  const badge = it.key === "chat" && chatUnread > 0 ? chatUnread : null;
                   return (
                     <div key={it.key} className="shrink-0">
                       <Link
@@ -157,11 +100,6 @@ export function MemberSidebar({
                         ].join(" ")}
                       >
                         <span className="line-clamp-2">{it.label}</span>
-                        {badge != null && (
-                          <span className="mt-1 rounded-full bg-broker-accent/25 px-1.5 py-px text-[10px] font-semibold text-broker-accent">
-                            {badge}
-                          </span>
-                        )}
                       </Link>
                     </div>
                   );
@@ -223,10 +161,9 @@ export function MemberSidebar({
             <nav className="mt-2 space-y-1">
               {items.map((it) => {
                 const active = it.key === activeTab;
-                const badge = it.key === "chat" && chatUnread > 0 ? chatUnread : null;
                 return (
                   <Fragment key={it.key}>
-                    <NavLinkRow it={it} active={active} badge={badge} />
+                    <NavLinkRow it={it} active={active} badge={null} />
 
                     {/* Sub-nav Portofolio — hanya PortfolioNavEmbedded, tanpa Komunitas */}
                     {it.key === "portfolio" && (
@@ -266,11 +203,6 @@ export function MemberSidebar({
             <CommunityNavEmbedded menu={portfolioMenu} />
           </div>
 
-          {toast && (
-            <div className="mt-3 hidden rounded-xl border border-broker-border/80 bg-broker-surface/90 px-3 py-2 text-sm text-white shadow-lg md:block">
-              {toast}
-            </div>
-          )}
         </aside>
       </div>
     </>

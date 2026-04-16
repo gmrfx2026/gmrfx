@@ -14,7 +14,6 @@ import {
 } from "@/lib/walletTransferFilters";
 import { ProfilStatusBlock } from "@/components/ProfilStatusBlock";
 import { enrichStatusComments } from "@/lib/enrichStatusComments";
-import { ProfilChatBox } from "@/components/ProfilChatBox";
 import { ProfilFollowSettings } from "@/components/ProfilFollowSettings";
 import { ProfilSocialLinksForm } from "@/components/ProfilSocialLinksForm";
 import { ProfilNotificationsPanel } from "@/components/ProfilNotificationsPanel";
@@ -68,11 +67,15 @@ export default async function ProfilPage({
   const tab = tabRaw;
   const requestedPeerId = searchParams?.peerId ? String(searchParams.peerId) : null;
   const requestedChatMode = searchParams?.chatMode ? String(searchParams.chatMode).toLowerCase() : null;
-  const initialChatMode = requestedPeerId
-    ? "private"
-    : requestedChatMode === "public"
-      ? "public"
-      : "private";
+
+  if (tab === "chat") {
+    const sp = new URLSearchParams();
+    sp.set("tab", "home");
+    sp.set("messenger", "1");
+    if (requestedPeerId) sp.set("peerId", requestedPeerId);
+    if (requestedChatMode === "public") sp.set("chatMode", "public");
+    redirect(`/profil?${sp.toString()}`);
+  }
 
   const baseUserSelect = {
     id: true,
@@ -169,42 +172,11 @@ export default async function ProfilPage({
   /** Blok status di dashboard: tidak ditampilkan di Home (linimasa ada di halaman publik). */
   const showProfilStatusSection = showStatus && tab !== "home";
   const showWalletTransfer = tab === "wallet";
-  const showChat = tab === "chat";
   const showSecurity = tab === "security";
   const showNotifications = tab === "notifications";
   const showIndicators = tab === "indikator";
   const showExpert = tab === "expert";
   const showArticles = tab === "home" || tab === "artikel";
-
-  const onlineWindowMinutes = 5;
-  const onlineCutoff = new Date(Date.now() - onlineWindowMinutes * 60 * 1000);
-
-  let onlinePeerIds: string[] = [];
-  if (showChat) {
-    const [privateOnlineRows, publicOnlineRows] = await Promise.all([
-      prisma.chatMessage.findMany({
-        where: {
-          createdAt: { gte: onlineCutoff },
-          senderId: { not: user.id },
-        },
-        select: { senderId: true },
-        distinct: ["senderId"],
-        take: 100,
-      }),
-      prisma.publicChatMessage.findMany({
-        where: {
-          createdAt: { gte: onlineCutoff },
-          senderId: { not: user.id },
-        },
-        select: { senderId: true },
-        distinct: ["senderId"],
-        take: 100,
-      }),
-    ]);
-
-    onlinePeerIds = [...privateOnlineRows, ...publicOnlineRows].map((r) => r.senderId);
-  }
-  const onlinePeerIdSet = new Set(onlinePeerIds);
 
   const latestStatus = showProfilStatusSection
     ? await prisma.statusEntry.findFirst({
@@ -214,7 +186,7 @@ export default async function ProfilPage({
       })
     : null;
 
-  const [statusCommentRows, peers, walletHistoryBundle, articleBundle] = await Promise.all([
+  const [statusCommentRows, walletHistoryBundle, articleBundle] = await Promise.all([
     showProfilStatusSection && latestStatus
       ? prisma.comment.findMany({
           where: { targetType: CommentTarget.STATUS, statusId: latestStatus.id, hidden: false },
@@ -222,43 +194,6 @@ export default async function ProfilPage({
           take: 30,
           include: { user: { select: { name: true, image: true } } },
         })
-      : Promise.resolve([]),
-    showChat
-      ? (async () => {
-          const candidateIds = new Set<string>(onlinePeerIds);
-          if (requestedPeerId && requestedPeerId !== user.id) candidateIds.add(requestedPeerId);
-          candidateIds.delete(user.id);
-
-          const candidateArr = Array.from(candidateIds);
-
-          const baseWhere = {
-            profileComplete: true,
-            memberStatus: "ACTIVE" as const,
-          };
-
-          const users =
-            candidateArr.length > 0
-              ? await prisma.user.findMany({
-                  where: { ...baseWhere, id: { in: candidateArr } },
-                  orderBy: { name: "asc" },
-                  take: 40,
-                  select: { id: true, name: true, email: true },
-                })
-              : await prisma.user.findMany({
-                  where: { ...baseWhere, id: { not: user.id } },
-                  orderBy: { name: "asc" },
-                  take: 40,
-                  select: { id: true, name: true, email: true },
-                });
-
-          return users.map((u) => ({
-            id: u.id,
-            name: u.name,
-            /** Selalu disamarkan: daftar peer chat tidak memuat diri sendiri. */
-            email: u.email ? maskEmail(u.email) : null,
-            online: onlinePeerIdSet.has(u.id),
-          }));
-        })()
       : Promise.resolve([]),
     showWalletTransfer
       ? (async () => {
@@ -650,16 +585,6 @@ export default async function ProfilPage({
         />
       )}
 
-      {showChat && (
-        <section className="border-t border-broker-border pt-10">
-          <ProfilChatBox
-            peers={peers}
-            selfId={user.id}
-            initialPeerId={requestedPeerId ?? undefined}
-            initialMode={initialChatMode}
-          />
-        </section>
-      )}
     </div>
   );
 }
