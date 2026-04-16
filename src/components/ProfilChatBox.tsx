@@ -16,6 +16,8 @@ export type ChatPeer = {
   email: string | null;
   online?: boolean;
   image?: string | null;
+  /** Slug profil publik; jika kosong dipakai `/member/[id]`. */
+  memberSlug?: string | null;
 };
 
 type Peer = ChatPeer;
@@ -37,6 +39,12 @@ type DmAccess = {
   requesterName?: string | null;
   introMessage?: string | null;
 };
+
+function peerPublicProfileHref(p: Peer): string {
+  const slug = p.memberSlug?.trim();
+  if (slug) return `/${slug}`;
+  return `/member/${encodeURIComponent(p.id)}`;
+}
 
 export function ProfilChatBox({
   peers,
@@ -87,6 +95,27 @@ export function ProfilChatBox({
     setBeepEnabled(saved);
     beepEnabledRef.current = saved;
   }, []);
+
+  const [isNarrow, setIsNarrow] = useState(false);
+  const [mobileShowMemberList, setMobileShowMemberList] = useState(true);
+
+  /** Panel messenger mengambang selalu sempit (~380px); jangan pakai lebar viewport. */
+  const stackPeersNav = variant === "messenger" || isNarrow;
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const apply = () => setIsNarrow(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
+    if (!stackPeersNav) return;
+    if (initialPeerId && peers.some((p) => p.id === initialPeerId)) {
+      setMobileShowMemberList(false);
+    }
+  }, [stackPeersNav, initialPeerId, peers]);
 
   const applyMessages = useCallback((next: Msg[]) => {
     const prevIds = lastMessageIdsRef.current;
@@ -304,6 +333,9 @@ export function ProfilChatBox({
 
   const isMessenger = variant === "messenger";
 
+  const showMessengerBackToList =
+    isMessenger && mode === "private" && peers.length > 0 && !mobileShowMemberList;
+
   if (mode === "private" && !peers.length) {
     if (isMessenger) {
       return (
@@ -335,10 +367,25 @@ export function ProfilChatBox({
 
   const messengerToolbar = (
     <div className="shrink-0 border-b border-broker-border bg-broker-surface px-2 py-2 shadow-sm sm:px-3">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-semibold text-white">Chat</p>
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <label className="hidden items-center gap-1.5 text-[10px] text-broker-muted sm:flex">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          {showMessengerBackToList ? (
+            <button
+              type="button"
+              onClick={() => setMobileShowMemberList(true)}
+              className="flex shrink-0 items-center gap-1 rounded-lg border border-broker-border bg-broker-bg px-2 py-1.5 text-xs font-medium text-broker-muted hover:border-broker-accent/40 hover:text-white"
+              aria-label="Kembali ke daftar member"
+            >
+              <span className="text-broker-accent" aria-hidden>
+                ←
+              </span>
+              <span>Daftar</span>
+            </button>
+          ) : null}
+          <p className="min-w-0 truncate text-sm font-semibold text-white">Chat</p>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+          <label className="flex items-center gap-1.5 text-[10px] text-broker-muted">
             <input
               type="checkbox"
               checked={beepEnabled}
@@ -357,7 +404,14 @@ export function ProfilChatBox({
             />
             Beep
           </label>
-          <button type="button" onClick={() => setMode("private")} className={modeBtn(mode === "private", true)}>
+          <button
+            type="button"
+            onClick={() => {
+              setMode("private");
+              if (isMessenger) setMobileShowMemberList(!peerId);
+            }}
+            className={modeBtn(mode === "private", true)}
+          >
             Privat
           </button>
           <button type="button" onClick={() => setMode("public")} className={modeBtn(mode === "public", true)}>
@@ -368,43 +422,87 @@ export function ProfilChatBox({
     </div>
   );
 
-  const messengerPeerSidebar =
-    mode === "private" && peers.length > 0 ? (
+  function renderMessengerPeerList() {
+    if (mode !== "private" || peers.length === 0) return null;
+    return (
       <aside
-        className="flex w-[6.25rem] shrink-0 flex-col items-stretch gap-1.5 overflow-y-auto border-r border-broker-border bg-broker-surface px-1.5 py-2.5 sm:w-28 sm:px-2 [-ms-overflow-style:none] [scrollbar-width:thin] [scrollbar-color:rgba(0,211,149,0.35)_transparent]"
+        className="flex w-full flex-1 flex-col gap-1 overflow-y-auto bg-broker-surface px-2 py-2 [-ms-overflow-style:none] [scrollbar-width:thin] [scrollbar-color:rgba(0,211,149,0.35)_transparent]"
         aria-label="Daftar member"
       >
+        <p className="px-1 pb-1 text-[11px] text-broker-muted">Ketuk nama untuk chat · ketuk avatar untuk profil</p>
         {peers.map((p) => {
           const raw = (p.name ?? p.email ?? "?").trim();
-          const short = raw.split(/\s+/)[0]?.slice(0, 14) ?? "?";
+          const short = raw.split(/\s+/)[0]?.slice(0, 24) ?? "?";
+          const ringWrap = `rounded-full p-0.5 ring-2 ring-offset-2 ring-offset-broker-surface ${
+            peerId === p.id ? "ring-broker-accent" : "ring-transparent"
+          }`;
           return (
-            <button
+            <div
               key={p.id}
-              type="button"
-              onClick={() => {
-                setPeerId(p.id);
-                onMessengerPeerSelect?.(p.id);
-              }}
-              title={raw + (p.online ? " · Online" : "")}
-              className={`flex flex-col items-center gap-1 rounded-xl py-2 px-1 transition ${
+              className={`flex items-center gap-3 rounded-xl py-2 pl-2 pr-2 transition ${
                 peerId === p.id ? "bg-broker-accent/15 ring-1 ring-broker-accent/45" : "hover:bg-broker-bg/35"
               }`}
             >
-              <span
-                className={`rounded-full p-0.5 ring-2 ring-offset-2 ring-offset-broker-surface ${
-                  peerId === p.id ? "ring-broker-accent" : "ring-transparent"
-                }`}
+              <a
+                href={peerPublicProfileHref(p)}
+                className={`shrink-0 cursor-pointer ${ringWrap}`}
+                title={`Buka profil publik — ${raw}`}
               >
                 <SmallUserAvatar name={p.name} image={p.image ?? null} size="md" />
-              </span>
-              <span className="max-w-full truncate text-center text-[10px] font-medium leading-snug text-broker-muted sm:text-xs">
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  setPeerId(p.id);
+                  onMessengerPeerSelect?.(p.id);
+                  if (isMessenger) setMobileShowMemberList(false);
+                }}
+                title={raw + (p.online ? " · Online" : "")}
+                className="min-w-0 flex-1 truncate text-left text-sm font-medium text-white"
+              >
                 {short}
-              </span>
-            </button>
+              </button>
+            </div>
           );
         })}
       </aside>
-    ) : null;
+    );
+  }
+
+  const narrowPrivateMemberList =
+    isMessenger && mode === "private" && peers.length > 0 && mobileShowMemberList;
+
+  const messengerThreadPeerBar =
+    isMessenger && mode === "private" && peerId && !mobileShowMemberList
+      ? (() => {
+          const active = peers.find((p) => p.id === peerId);
+          if (!active) return null;
+          const label = (active.name ?? active.email ?? "?").trim();
+          return (
+            <div className="flex shrink-0 flex-col gap-2 border-b border-broker-border/80 bg-broker-bg/50 px-2 py-2 text-xs">
+              <button
+                type="button"
+                onClick={() => setMobileShowMemberList(true)}
+                className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-broker-accent/40 bg-broker-accent/15 px-3 py-2 text-xs font-semibold text-broker-accent hover:bg-broker-accent/25"
+              >
+                <span aria-hidden>←</span>
+                Pilih member lain
+              </button>
+              <div className="flex items-center justify-between gap-2">
+                <span className="min-w-0 truncate text-broker-muted">
+                  Dengan <span className="font-semibold text-white">{label}</span>
+                </span>
+                <a
+                  href={peerPublicProfileHref(active)}
+                  className="shrink-0 rounded-md px-2 py-1 font-medium text-broker-accent hover:bg-broker-accent/10 hover:underline"
+                >
+                  Profil
+                </a>
+              </div>
+            </div>
+          );
+        })()
+      : null;
 
   const pageChatHeader = (
     <div className="flex items-center justify-between gap-3">
@@ -671,11 +769,16 @@ export function ProfilChatBox({
           {pageChatHeader}
           {mainContent}
         </>
+      ) : narrowPrivateMemberList ? (
+        <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">
+          {messengerToolbar}
+          {renderMessengerPeerList()}
+        </div>
       ) : (
         <div className="flex h-full min-h-0 w-full flex-row">
-          {messengerPeerSidebar}
           <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             {messengerToolbar}
+            {messengerThreadPeerBar}
             {mainContent}
           </div>
         </div>

@@ -34,6 +34,7 @@ function FloatingChatDockInner({ userId }: { userId: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const prevUnreadRef = useRef(0);
+  const unreadBaselineReadyRef = useRef(false);
 
   useEffect(() => {
     setPortalRoot(document.body);
@@ -90,12 +91,29 @@ function FloatingChatDockInner({ userId }: { userId: string }) {
       try {
         const r = await fetch("/api/chat/unread-count", { credentials: "same-origin" });
         if (!r.ok) return;
-        const j = (await r.json()) as { unread?: number };
+        const j = (await r.json()) as { unread?: number; latestUnreadFromId?: string | null };
         const next = Number(j?.unread ?? 0);
         if (cancelled) return;
         setUnread(next);
-        if (next > prevUnreadRef.current && readChatBeepPreference()) {
-          playChatIncomingBeep();
+
+        if (!unreadBaselineReadyRef.current) {
+          unreadBaselineReadyRef.current = true;
+          prevUnreadRef.current = next;
+          return;
+        }
+
+        if (next > prevUnreadRef.current) {
+          setOpen(true);
+          const from = j.latestUnreadFromId?.trim();
+          if (from && from !== userId) {
+            const sp = new URLSearchParams(window.location.search);
+            sp.set("peerId", from);
+            const q = sp.toString();
+            router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+          }
+          if (readChatBeepPreference()) {
+            playChatIncomingBeep();
+          }
         }
         prevUnreadRef.current = next;
       } catch {
@@ -108,7 +126,7 @@ function FloatingChatDockInner({ userId }: { userId: string }) {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, []);
+  }, [pathname, router, userId]);
 
   const onProfilMobile = pathname.startsWith("/profil");
 

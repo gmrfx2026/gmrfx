@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { MemberFollowStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { maskEmail } from "@/lib/memberEmailDisplay";
@@ -44,11 +45,26 @@ export async function GET(req: Request) {
   const onlinePeerIds = [...privateOnlineRows, ...publicOnlineRows].map((r) => r.senderId);
   const onlinePeerIdSet = new Set(onlinePeerIds);
 
-  const candidateIds = new Set<string>(onlinePeerIds);
-  if (requestedPeerId && requestedPeerId !== userId) candidateIds.add(requestedPeerId);
-  candidateIds.delete(userId);
+  /** Hanya member yang terhubung follow ACCEPTED (saya mengikuti atau mengikuti saya). */
+  const followRows = await prisma.memberFollow.findMany({
+    where: {
+      status: MemberFollowStatus.ACCEPTED,
+      OR: [{ followerId: userId }, { followingId: userId }],
+    },
+    select: { followerId: true, followingId: true },
+  });
 
-  const candidateArr = Array.from(candidateIds);
+  const connectedPeerIds = new Set<string>();
+  for (const row of followRows) {
+    const other = row.followerId === userId ? row.followingId : row.followerId;
+    if (other !== userId) connectedPeerIds.add(other);
+  }
+
+  if (requestedPeerId && requestedPeerId !== userId) {
+    connectedPeerIds.add(requestedPeerId);
+  }
+
+  const candidateArr = Array.from(connectedPeerIds);
 
   const baseWhere = {
     profileComplete: true,
@@ -60,21 +76,17 @@ export async function GET(req: Request) {
       ? await prisma.user.findMany({
           where: { ...baseWhere, id: { in: candidateArr } },
           orderBy: { name: "asc" },
-          take: 40,
-          select: { id: true, name: true, email: true, image: true },
+          take: 80,
+          select: { id: true, name: true, email: true, image: true, memberSlug: true },
         })
-      : await prisma.user.findMany({
-          where: { ...baseWhere, id: { not: userId } },
-          orderBy: { name: "asc" },
-          take: 40,
-          select: { id: true, name: true, email: true, image: true },
-        });
+      : [];
 
   const peers = users.map((u) => ({
     id: u.id,
     name: u.name,
     email: u.email ? maskEmail(u.email) : null,
     image: u.image ? resolvePublicDisplayUrl(u.image) ?? u.image : null,
+    memberSlug: u.memberSlug,
     online: onlinePeerIdSet.has(u.id),
   }));
 
