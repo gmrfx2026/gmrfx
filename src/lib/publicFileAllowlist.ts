@@ -1,4 +1,4 @@
-import { ARTICLE_IMAGE_SRC_RE, NEWS_IMAGE_SRC_RE } from "@/lib/articleImagePolicy";
+import { ARTICLE_IMAGE_SRC_RE, NEWS_IMAGE_LOOSE_SRC_RE, NEWS_IMAGE_SRC_RE } from "@/lib/articleImagePolicy";
 
 const AVATAR_REL_RE = /^avatars\/[a-z0-9]+\.(jpg|jpeg|png|webp)$/i;
 
@@ -9,7 +9,9 @@ export function isPublicUploadRelativePathAllowed(rel: string): boolean {
   const n = rel.replace(/\\/g, "/").replace(/^\/+/, "").replace(/\/+$/, "");
   if (!n || n.includes("..")) return false;
   const pseudo = `/uploads/${n}`;
-  if (NEWS_IMAGE_SRC_RE.test(pseudo) || ARTICLE_IMAGE_SRC_RE.test(pseudo)) return true;
+  if (NEWS_IMAGE_SRC_RE.test(pseudo) || NEWS_IMAGE_LOOSE_SRC_RE.test(pseudo) || ARTICLE_IMAGE_SRC_RE.test(pseudo)) {
+    return true;
+  }
   if (AVATAR_REL_RE.test(n)) return true;
   if (INDICATOR_COVER_REL_RE.test(n)) return true;
   return false;

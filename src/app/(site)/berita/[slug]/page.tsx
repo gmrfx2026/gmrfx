@@ -7,7 +7,7 @@ import { articleProseTypographyClass } from "@/lib/articleProseClassName";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 import { homeNewsAuthorForDisplay } from "@/lib/homeNewsAuthor";
-import { resolvePublicDisplayUrl } from "@/lib/publicUploadUrl";
+import { resolveHomeNewsCardImageSrc } from "@/lib/homeNewsImage";
 import { BeritaHeroImage } from "@/components/berita/BeritaHeroImage";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +32,7 @@ export default async function BeritaDetailPage({ params }: { params: { slug: str
   const safeHtml = sanitizeArticleHtml(row.contentHtml);
   const label = row.scope === "DOMESTIC" ? "Berita dalam negeri" : "Berita internasional";
   const penulis = homeNewsAuthorForDisplay(row.author);
-  const heroSrc = row.imageUrl ? resolvePublicDisplayUrl(row.imageUrl) ?? row.imageUrl : null;
+  const heroSrc = resolveHomeNewsCardImageSrc(row);
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12">

@@ -13,6 +13,10 @@ export const ARTICLE_IMAGE_SRC_RE =
 export const NEWS_IMAGE_SRC_RE =
   /^\/uploads\/news-images\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|jpeg|png|webp)$/i;
 
+/** Nama file lokal lain (bukan UUID) di `news-images/`, aman tanpa slash. */
+export const NEWS_IMAGE_LOOSE_SRC_RE =
+  /^\/uploads\/news-images\/[a-z0-9][a-z0-9._-]{0,238}\.(jpg|jpeg|png|webp)$/i;
+
 /** Vercel Blob public URL: https://<store>.public.blob.vercel-storage.com/<path> */
 export const VERCEL_BLOB_SRC_RE =
   /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\/.+/i;
@@ -23,6 +27,9 @@ export const EXTERNAL_HTTPS_IMAGE_RE = /^https:\/\/.+/i;
 /** Gambar yang dilayani lewat API (path lokal → sama host). */
 export const PUBLIC_FILE_ARTICLE_NEWS_RE =
   /^\/api\/public-file\/(?:(?:news-images|article-images)\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:jpg|jpeg|png|webp))$/i;
+
+export const PUBLIC_FILE_NEWS_LOOSE_RE =
+  /^\/api\/public-file\/news-images\/[a-z0-9][a-z0-9._-]{0,238}\.(?:jpg|jpeg|png|webp)$/i;
 
 export function isAllowedArticleImageSrc(src: string): boolean {
   const s = String(src ?? "").trim();
@@ -38,7 +45,9 @@ export function isAllowedNewsImageSrc(src: string): boolean {
   const s = String(src ?? "").trim();
   return (
     NEWS_IMAGE_SRC_RE.test(s) ||
+    NEWS_IMAGE_LOOSE_SRC_RE.test(s) ||
     PUBLIC_FILE_ARTICLE_NEWS_RE.test(s) ||
+    PUBLIC_FILE_NEWS_LOOSE_RE.test(s) ||
     VERCEL_BLOB_SRC_RE.test(s) ||
     EXTERNAL_HTTPS_IMAGE_RE.test(s)
   );

@@ -19,7 +19,7 @@ import { marketplaceDescriptionPlainExcerpt } from "@/lib/marketplaceDescription
 import { resolveMarketplaceIndicatorCoverUrl } from "@/lib/marketplaceCoverImage";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 import { homeNewsAuthorForDisplay } from "@/lib/homeNewsAuthor";
-import { resolvePublicDisplayUrl } from "@/lib/publicUploadUrl";
+import { resolveHomeNewsCardImageSrc } from "@/lib/homeNewsImage";
 import {
   HOME_HERO_EYEBROW_KEY,
   HOME_HERO_SUBTEXT_KEY,
@@ -239,7 +239,7 @@ export async function HomePageContent() {
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {domesticNews.map((n) => {
                 const penulis = homeNewsAuthorForDisplay(n.author);
-                const newsImg = n.imageUrl ? resolvePublicDisplayUrl(n.imageUrl) ?? n.imageUrl : null;
+                const newsImg = resolveHomeNewsCardImageSrc(n);
                 return (
                   <div
                     key={n.id}
@@ -303,7 +303,7 @@ export async function HomePageContent() {
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {intlNews.map((n) => {
               const penulis = homeNewsAuthorForDisplay(n.author);
-              const newsImg = n.imageUrl ? resolvePublicDisplayUrl(n.imageUrl) ?? n.imageUrl : null;
+              const newsImg = resolveHomeNewsCardImageSrc(n);
               return (
                 <div
                   key={n.id}

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { HomeNewsScope, HomeNewsStatus } from "@prisma/client";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 import { homeNewsAuthorForDisplay } from "@/lib/homeNewsAuthor";
-import { resolvePublicDisplayUrl } from "@/lib/publicUploadUrl";
+import { resolveHomeNewsCardImageSrc } from "@/lib/homeNewsImage";
 
 export const metadata: Metadata = {
   title: "Berita — GMR FX",
@@ -75,7 +75,7 @@ export default async function BeritaListPage({
       <ul className="mt-10 space-y-4">
         {items.map((n) => {
           const penulis = homeNewsAuthorForDisplay(n.author);
-          const newsImg = n.imageUrl ? resolvePublicDisplayUrl(n.imageUrl) ?? n.imageUrl : null;
+          const newsImg = resolveHomeNewsCardImageSrc(n);
           return (
             <li
               key={n.id}
