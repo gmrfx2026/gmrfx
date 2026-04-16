@@ -25,6 +25,8 @@ export type SiteHeaderNavResolvedItem = {
   label: string;
   /** Tautan Admin: gaya emas di header. */
   adminAccent: boolean;
+  /** Sub-menu khusus (mis. Indikator → GMRFX / General). */
+  submenu?: { href: string; label: string }[];
 };
 
 type Visibility = "always" | "guest_only" | "logged_in" | "admin_only";
@@ -99,6 +101,7 @@ export async function getResolvedSiteHeaderNavItems(
     label: string;
     sortOrder: number;
     adminAccent: boolean;
+    submenu?: { href: string; label: string }[];
   }[] = [];
 
   for (const key of SITE_HEADER_NAV_KEYS) {
@@ -112,12 +115,21 @@ export async function getResolvedSiteHeaderNavItems(
     const label = (row?.label ?? def.label).trim() || def.label;
     const sortOrder = row?.sortOrder ?? def.sortOrder;
 
+    const submenu =
+      key === "indikator"
+        ? [
+            { href: "/indikator/gmrfx", label: "GMRFX" },
+            { href: "/indikator", label: "General" },
+          ]
+        : undefined;
+
     withOrder.push({
       key,
       href: meta.href,
       label,
       sortOrder,
       adminAccent: key === "admin",
+      submenu,
     });
   }
 

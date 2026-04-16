@@ -6,6 +6,7 @@ import { buildIndicatorSlugBase, uniqueIndicatorSlug } from "@/lib/indicatorSlug
 import { INDICATOR_MAX_BYTES, resolveIndicatorExt, storeIndicatorFile } from "@/lib/indicatorUpload";
 import { parseMarketplacePlatform } from "@/lib/marketplacePlatform";
 import { normalizeMarketplaceDescriptionHtml } from "@/lib/marketplaceDescription";
+import { normalizeMtLicenseProductCode, parseMtLicenseValidityDays } from "@/lib/indicatorLicense";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,7 +40,7 @@ export async function GET() {
   }
 
   const rows = await prisma.sharedIndicator.findMany({
-    where: { sellerId: session.user.id },
+    where: { sellerId: session.user.id, isGmrfxOfficial: false },
     orderBy: { updatedAt: "desc" },
     select: {
       id: true,
@@ -52,6 +53,8 @@ export async function GET() {
       published: true,
       createdAt: true,
       updatedAt: true,
+      mtLicenseProductCode: true,
+      mtLicenseValidityDays: true,
       _count: { select: { purchases: true } },
     },
   });
@@ -113,10 +116,24 @@ export async function POST(req: Request) {
   let priceIdr: Decimal;
   let platform: string;
   let published: boolean;
+  let mtLicenseProductCode: string | null;
+  let mtLicenseValidityDays: number | null;
   try {
     priceIdr = parsePriceIdr(form.get("priceIdr"));
     platform = parseMarketplacePlatform(form.get("platform"));
     published = parseBool(form.get("published"));
+    const codeRaw = String(form.get("mtLicenseProductCode") ?? "").trim();
+    const codeNorm = normalizeMtLicenseProductCode(codeRaw.length > 0 ? codeRaw : null);
+    if (codeRaw.length > 0 && !codeNorm) {
+      throw new Error("Kode lisensi MT tidak valid (huruf, angka, garis bawah; maks. 64)");
+    }
+    mtLicenseProductCode = codeNorm;
+    if (mtLicenseProductCode) {
+      const daysRaw = parseMtLicenseValidityDays(form.get("mtLicenseValidityDays"));
+      mtLicenseValidityDays = daysRaw ?? 365;
+    } else {
+      mtLicenseValidityDays = null;
+    }
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Data tidak valid";
     return NextResponse.json({ error: msg }, { status: 400 });
@@ -167,6 +184,9 @@ export async function POST(req: Request) {
           fileName,
           platform,
           published,
+          isGmrfxOfficial: false,
+          mtLicenseProductCode,
+          mtLicenseValidityDays,
         },
         select: {
           id: true,

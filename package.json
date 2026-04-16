@@ -29,6 +29,7 @@
     "db:check:marketplace": "npx tsx prisma/check-marketplace-data.ts",
     "db:export:databaselokal": "node scripts/export-databaselokal.cjs",
     "db:list-indicators": "node scripts/list-indicators.mjs",
+    "gmrfx:set-official-seller": "node scripts/set-gmrfx-official-seller.mjs",
     "db:seed-wilayah": "node prisma/seed-wilayah.cjs",
     "db:generate": "node scripts/prisma-generate.cjs",
     "db:generate:force": "node scripts/prisma-generate-force.cjs"

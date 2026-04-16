@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { SmallUserAvatar } from "@/components/SmallUserAvatar";
 import { DeleteStatusButton } from "@/components/member/DeleteStatusButton";
@@ -28,6 +27,7 @@ import {
 import { listablePublicMemberWhere } from "@/lib/memberFollowListable";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 import { enrichStatusComments, type EnrichedStatusComment } from "@/lib/enrichStatusComments";
+import { MemberProfileAvatarZoom } from "@/components/member/MemberProfileAvatarZoom";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -319,18 +319,7 @@ export default async function MemberBySlugPage({
 
       <div className="mt-6 flex flex-col gap-6 sm:mt-8 md:flex-row md:items-start md:gap-8">
         <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-start md:flex-col md:items-center">
-          <div className="relative mx-auto h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-broker-accent/40 bg-broker-surface shadow-lg shadow-black/20 sm:mx-0 sm:h-24 sm:w-24">
-            {member.image?.startsWith("/") ? (
-              <Image src={member.image} alt="" fill className="object-cover" unoptimized />
-            ) : member.image ? (
-              // eslint-disable-next-line @next/next/no-img-element -- URL eksternal di luar remotePatterns next/image
-              <img src={member.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-2xl text-broker-muted">
-                {(member.name ?? "M").slice(0, 1).toUpperCase()}
-              </div>
-            )}
-          </div>
+          <MemberProfileAvatarZoom imageSrc={member.image} name={member.name} />
 
           {!isSelf && (
             <div className="flex w-full justify-center sm:justify-start md:w-full md:justify-center">
@@ -381,6 +370,7 @@ export default async function MemberBySlugPage({
             variant="belowFollow"
             shareUrl={shareProfileUrl}
             shareTitle={member.name ?? "Member GMR FX"}
+            showExternalShareButtons={false}
           />
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { OtpPurpose } from "@prisma/client";
 import { prisma } from "./prisma";
+import { getOtpFixedTestingConfig } from "./otpFixedSettings";
 import { getSiteName } from "./siteNameSettings";
 
 const OTP_TTL_MS = 10 * 60 * 1000;
@@ -56,8 +57,14 @@ export async function createOtp(
   purpose: OtpPurpose,
   phone: string
 ): Promise<string> {
-  const dev = process.env.DEV_OTP_CODE;
-  const code = dev && dev.length >= 4 ? dev : randomSixDigit();
+  const envDev = process.env.DEV_OTP_CODE?.trim();
+  const adminFixed = await getOtpFixedTestingConfig();
+  const code =
+    envDev && envDev.length >= 4
+      ? envDev
+      : adminFixed.enabled && adminFixed.code.length >= 4
+        ? adminFixed.code
+        : randomSixDigit();
   const expiresAt = new Date(Date.now() + OTP_TTL_MS);
 
   await prisma.otpChallenge.create({
@@ -75,8 +82,17 @@ export async function verifyOtp(
   phone: string,
   code: string
 ): Promise<boolean> {
-  const dev = process.env.DEV_OTP_CODE;
-  if (dev && code === dev) {
+  const envDev = process.env.DEV_OTP_CODE?.trim();
+  if (envDev && envDev.length >= 4 && code === envDev) {
+    await prisma.otpChallenge.updateMany({
+      where: { userId, purpose, phone, consumed: false },
+      data: { consumed: true },
+    });
+    return true;
+  }
+
+  const adminFixed = await getOtpFixedTestingConfig();
+  if (adminFixed.enabled && adminFixed.code && code === adminFixed.code) {
     await prisma.otpChallenge.updateMany({
       where: { userId, purpose, phone, consumed: false },
       data: { consumed: true },

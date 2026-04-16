@@ -24,6 +24,8 @@ export function AdminSettingsForm({
   initialOauthPhoneVerifyRequired,
   initialManualPhoneVerifyRequired,
   initialSiteName,
+  initialOtpFixedForTesting,
+  initialOtpFixedCode,
 }: {
   initialFee: string;
   initialArticleCommentsPerPage: string;
@@ -45,6 +47,8 @@ export function AdminSettingsForm({
   initialOauthPhoneVerifyRequired: boolean;
   initialManualPhoneVerifyRequired: boolean;
   initialSiteName: string;
+  initialOtpFixedForTesting: boolean;
+  initialOtpFixedCode: string;
 }) {
   const router = useRouter();
   const [v, setV] = useState(initialFee);
@@ -71,10 +75,17 @@ export function AdminSettingsForm({
   const [oauthPhoneVerify, setOauthPhoneVerify] = useState(initialOauthPhoneVerifyRequired);
   const [manualPhoneVerify, setManualPhoneVerify] = useState(initialManualPhoneVerifyRequired);
   const [siteName, setSiteName] = useState(initialSiteName);
+  const [otpFixedForTesting, setOtpFixedForTesting] = useState(initialOtpFixedForTesting);
+  const [otpFixedCode, setOtpFixedCode] = useState(initialOtpFixedCode);
   const [msg, setMsg] = useState("");
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    const otpCodeDigits = otpFixedCode.replace(/\D/g, "").slice(0, 6);
+    if (otpFixedForTesting && otpCodeDigits.length !== 6) {
+      setMsg("Mode OTP tetap: isi tepat 6 digit angka.");
+      return;
+    }
     const res = await fetch("/api/admin/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -99,6 +110,8 @@ export function AdminSettingsForm({
         oauthPhoneVerifyRequired: oauthPhoneVerify,
         manualPhoneVerifyRequired: manualPhoneVerify,
         siteName,
+        otpFixedForTesting,
+        ...(otpFixedForTesting ? { otpFixedCode: otpCodeDigits } : {}),
       }),
     });
     setMsg(res.ok ? "Disimpan." : "Gagal");
@@ -396,6 +409,41 @@ export function AdminSettingsForm({
             </span>
           </span>
         </label>
+
+        <div className="mt-4 border-t border-gray-200 pt-4">
+          <p className="text-sm font-medium text-gray-800">OTP WhatsApp (mode pengujian)</p>
+          <p className="mt-1 text-xs text-gray-500">
+            Produksi: matikan opsi ini agar kode OTP <strong>acak</strong> setiap kali. Aktifkan hanya saat
+            debugging; semua alur OTP (daftar, lupa password, penarikan, dll.) memakai kode tetap. Jika{" "}
+            <code className="rounded bg-gray-100 px-1">DEV_OTP_CODE</code> di server diisi, nilai env itu
+            didahulukan daripada pengaturan di sini.
+          </p>
+          <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={otpFixedForTesting}
+              onChange={(e) => setOtpFixedForTesting(e.target.checked)}
+              className="mt-1 h-4 w-4 shrink-0"
+            />
+            <span>
+              <span className="font-medium text-gray-800">Pakai OTP tetap (bukan acak)</span>
+              <span className="mt-0.5 block text-xs text-gray-500">
+                Kode berikut dikirim lewat Fonnte dan disimpan di basis data seperti biasa.
+              </span>
+            </span>
+          </label>
+          <label className="mt-3 block text-sm">
+            <span className="text-gray-600">Kode 6 digit</span>
+            <input
+              className="mt-1 w-full max-w-xs rounded border border-gray-300 px-3 py-2 font-mono text-sm"
+              value={otpFixedCode}
+              onChange={(e) => setOtpFixedCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="123456"
+              maxLength={6}
+              disabled={!otpFixedForTesting}
+            />
+          </label>
+        </div>
       </div>
 
       <button type="submit" className="rounded bg-green-600 px-4 py-2 text-sm text-white">

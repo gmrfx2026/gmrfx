@@ -37,6 +37,10 @@ import {
 } from "@/lib/depositUsdtSettings";
 import { OAUTH_PHONE_VERIFY_KEY, MANUAL_PHONE_VERIFY_KEY } from "@/lib/oauthPhoneVerifySettings";
 import { SITE_NAME_KEY, DEFAULT_SITE_NAME } from "@/lib/siteNameSettings";
+import {
+  OTP_FIXED_FOR_TESTING_KEY,
+  OTP_FIXED_CODE_KEY,
+} from "@/lib/otpFixedSettings";
 
 export async function GET() {
   const session = await auth();
@@ -303,6 +307,30 @@ export async function PATCH(req: Request) {
     });
     // Invalidate cache agar perubahan nama situs langsung berlaku
     revalidateTag(SITE_NAME_KEY);
+  }
+
+  if (body.otpFixedForTesting !== undefined) {
+    const on = Boolean(body.otpFixedForTesting);
+    await prisma.systemSetting.upsert({
+      where: { key: OTP_FIXED_FOR_TESTING_KEY },
+      create: { key: OTP_FIXED_FOR_TESTING_KEY, value: on ? "1" : "0" },
+      update: { value: on ? "1" : "0" },
+    });
+  }
+
+  if (body.otpFixedCode !== undefined) {
+    const raw = String(body.otpFixedCode ?? "").trim();
+    if (!/^\d{6}$/.test(raw)) {
+      return NextResponse.json(
+        { error: "Kode OTP tetap harus tepat 6 digit angka" },
+        { status: 400 },
+      );
+    }
+    await prisma.systemSetting.upsert({
+      where: { key: OTP_FIXED_CODE_KEY },
+      create: { key: OTP_FIXED_CODE_KEY, value: raw },
+      update: { value: raw },
+    });
   }
 
   return NextResponse.json({ ok: true });

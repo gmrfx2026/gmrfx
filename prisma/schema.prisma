@@ -246,6 +246,7 @@ model User {
 
   sharedIndicatorsSold SharedIndicator[]     @relation("SharedIndicatorSeller")
   indicatorPurchases   IndicatorPurchase[]   @relation("IndicatorPurchaseBuyer")
+  mtIndicatorLicenses  MtIndicatorLicense[]
   sharedEasSold        SharedExpertAdvisor[] @relation("SharedExpertAdvisorSeller")
   eaPurchases          ExpertAdvisorPurchase[] @relation("ExpertAdvisorPurchaseBuyer")
   marketplaceEscrowAsBuyer  MarketplaceEscrowHold[] @relation("MarketplaceEscrowBuyer")
@@ -770,9 +771,18 @@ model SharedIndicator {
 
   purchases IndicatorPurchase[]
   ratings   IndicatorRating[]
+  mtLicenses MtIndicatorLicense[]
+
+  /// Kode produk untuk API lisensi MT (mis. GMRFX_ZZ). Kosong = tanpa lisensi otomatis.
+  mtLicenseProductCode  String? @db.VarChar(64)
+  /// Masa berlaku lisensi (hari) sejak pembelian; wajib jika `mtLicenseProductCode` diisi.
+  mtLicenseValidityDays Int?
+  /// Indikator resmi GMRFX (lisensi via API); diatur admin — bukan dari unggahan member biasa.
+  isGmrfxOfficial Boolean @default(false)
 
   @@index([sellerId])
   @@index([published])
+  @@index([published, isGmrfxOfficial])
 }
 
 /// Rating bintang 1–5 untuk indikator (satu nilai per user per produk).
@@ -803,9 +813,35 @@ model IndicatorPurchase {
   revokedAt   DateTime?
 
   escrowHold MarketplaceEscrowHold?
+  mtLicense  MtIndicatorLicense?
 
   @@unique([indicatorId, buyerId])
   @@index([buyerId])
+}
+
+/// Lisensi indikator MT4/MT5 — key dinamis per pembelian, terikat akun (email) & masa berlaku.
+model MtIndicatorLicense {
+  id               String   @id @default(cuid())
+  productCode      String   @db.VarChar(64)
+  licenseKeyHash   String   @unique
+  licenseKeyCipher String   @db.Text
+  licenseKeyHint   String   @db.VarChar(32)
+  /// Email pemilik saat lisensi dibuat (audit); verifikasi memakai email terkini di `User`.
+  emailNormalized  String   @db.VarChar(320)
+  userId           String
+  indicatorId      String
+  purchaseId       String   @unique
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime @default(now())
+
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  indicator SharedIndicator @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
+  purchase  IndicatorPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  @@index([userId, productCode])
+  @@index([indicatorId])
+  @@index([productCode])
 }
 
 /// Expert Advisor (EA) / robot trading yang dijual member (gratis atau berbayar IDR).

@@ -30,7 +30,13 @@ export default async function AdminIndikatorPage() {
     <div>
       <div className="mb-5">
         <h1 className="text-xl font-bold text-gray-900">Marketplace Indikator</h1>
-        <p className="mt-0.5 text-sm text-gray-500">Kelola semua indikator yang diunggah oleh member.</p>
+        <p className="mt-0.5 text-sm text-gray-500">
+          Kelola semua indikator yang diunggah oleh member. Lisensi MT (key pembeli) dikelola di{" "}
+          <Link href="/admin/marketplace/mt-licenses" className="font-medium text-blue-600 hover:underline">
+            Lisensi MT indikator
+          </Link>
+          .
+        </p>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-3">
@@ -49,7 +55,19 @@ export default async function AdminIndikatorPage() {
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>
-              {["Judul", "Penjual", "Harga", "Platform", "Beli", "Rating", "Tgl Upload", "Status", "Aksi"].map((h) => (
+              {[
+                "Judul",
+                "Penjual",
+                "Harga",
+                "Platform",
+                "GMRFX",
+                "Lisensi MT",
+                "Beli",
+                "Rating",
+                "Tgl Upload",
+                "Status",
+                "Aksi",
+              ].map((h) => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -65,6 +83,25 @@ export default async function AdminIndikatorPage() {
                 <td className="px-4 py-3 text-gray-600 text-xs">{item.seller.name ?? item.seller.email}</td>
                 <td className="px-4 py-3 whitespace-nowrap text-gray-700">{fmtIDR(Number(item.priceIdr))}</td>
                 <td className="px-4 py-3 text-gray-500 uppercase text-xs">{item.platform}</td>
+                <td className="px-4 py-3 text-center text-xs">
+                  {item.isGmrfxOfficial ? (
+                    <span className="rounded-full bg-violet-100 px-2 py-0.5 font-semibold text-violet-800">Ya</span>
+                  ) : (
+                    <span className="text-gray-400">—</span>
+                  )}
+                </td>
+                <td className="max-w-[140px] px-4 py-3 text-xs text-gray-600">
+                  {item.mtLicenseProductCode ? (
+                    <>
+                      <span className="font-mono font-semibold text-violet-800">{item.mtLicenseProductCode}</span>
+                      {item.mtLicenseValidityDays != null ? (
+                        <span className="block text-[10px] text-gray-400">{item.mtLicenseValidityDays} hari</span>
+                      ) : null}
+                    </>
+                  ) : (
+                    <span className="text-gray-400">—</span>
+                  )}
+                </td>
                 <td className="px-4 py-3 text-center text-gray-600">{item._count.purchases}</td>
                 <td className="px-4 py-3 text-center text-gray-600">{item._count.ratings}</td>
                 <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">{fmtDT(item.createdAt)}</td>
@@ -84,7 +121,7 @@ export default async function AdminIndikatorPage() {
               </tr>
             ))}
             {items.length === 0 && (
-              <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-400 text-sm">Belum ada indikator.</td></tr>
+              <tr><td colSpan={11} className="px-4 py-8 text-center text-gray-400 text-sm">Belum ada indikator.</td></tr>
             )}
           </tbody>
         </table>

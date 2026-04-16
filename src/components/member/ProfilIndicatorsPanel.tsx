@@ -21,6 +21,8 @@ type Row = {
   platform: string;
   published: boolean;
   purchaseCount: number;
+  mtLicenseProductCode: string | null;
+  mtLicenseValidityDays: number | null;
 };
 
 const emptyForm = {
@@ -29,6 +31,8 @@ const emptyForm = {
   priceIdr: "0",
   platform: "mt5",
   published: false,
+  mtLicenseProductCode: "",
+  mtLicenseValidityDays: "365",
 };
 
 export function ProfilIndicatorsPanel() {
@@ -82,6 +86,9 @@ export function ProfilIndicatorsPanel() {
       priceIdr: String(row.priceIdr),
       platform: row.platform,
       published: row.published,
+      mtLicenseProductCode: row.mtLicenseProductCode ?? "",
+      mtLicenseValidityDays:
+        row.mtLicenseValidityDays != null ? String(row.mtLicenseValidityDays) : "365",
     });
     setFile(null);
     setMsg(null);
@@ -101,6 +108,8 @@ export function ProfilIndicatorsPanel() {
     fd.set("priceIdr", form.priceIdr.trim() || "0");
     fd.set("platform", form.platform);
     fd.set("published", form.published ? "true" : "false");
+    fd.set("mtLicenseProductCode", form.mtLicenseProductCode.trim());
+    fd.set("mtLicenseValidityDays", form.mtLicenseValidityDays.trim() || "365");
     if (file) fd.set("file", file);
     else if (!editId) {
       setErr("File wajib untuk indikator baru");
@@ -140,6 +149,12 @@ export function ProfilIndicatorsPanel() {
           <Link href="/indikator" className="font-medium text-broker-accent hover:underline">
             /indikator
           </Link>
+        </p>
+        <p className="mt-2 text-sm text-broker-muted">
+          <strong className="text-white/90">Lisensi MT (opsional):</strong> isi kode produk (mis.{" "}
+          <code className="rounded bg-broker-bg/60 px-1 text-xs text-emerald-300">GMRFX_ZZ</code>) dan masa berlaku
+          (hari). Setelah pembeli membayar, sistem membuat license key unik — mereka memakai email akun GMR FX + key di
+          MetaTrader. Hanya berlaku untuk indikator <strong className="text-white/80">berbayar</strong>.
         </p>
       </div>
 
@@ -208,6 +223,30 @@ export function ProfilIndicatorsPanel() {
           </label>
         </div>
 
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block space-y-1">
+            <span className="text-xs text-broker-muted">Kode lisensi MT (opsional)</span>
+            <input
+              maxLength={64}
+              value={form.mtLicenseProductCode}
+              onChange={(e) => setForm((f) => ({ ...f, mtLicenseProductCode: e.target.value }))}
+              placeholder="GMRFX_ZZ"
+              className="w-full rounded-lg border border-broker-border bg-broker-bg px-3 py-2 font-mono text-sm text-white placeholder:text-broker-muted/50"
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-xs text-broker-muted">Masa berlaku lisensi (hari)</span>
+            <input
+              type="number"
+              min={1}
+              max={3650}
+              value={form.mtLicenseValidityDays}
+              onChange={(e) => setForm((f) => ({ ...f, mtLicenseValidityDays: e.target.value }))}
+              className="w-full rounded-lg border border-broker-border bg-broker-bg px-3 py-2 text-sm text-white"
+            />
+          </label>
+        </div>
+
         <label className="flex items-center gap-2 text-sm text-broker-muted">
           <input
             type="checkbox"
@@ -262,6 +301,9 @@ export function ProfilIndicatorsPanel() {
                     {it.published ? "Publik" : "Draft"} · {formatMarketplacePlatformLabel(it.platform)} ·{" "}
                     {it.priceIdr <= 0 ? "Gratis" : `Rp ${it.priceIdr.toLocaleString("id-ID")}`} ·{" "}
                     {it.purchaseCount} pembelian
+                    {it.mtLicenseProductCode
+                      ? ` · Lisensi MT: ${it.mtLicenseProductCode} (${it.mtLicenseValidityDays ?? 365} hari)`
+                      : ""}
                   </p>
                   <Link
                     href={`/indikator/${it.slug}`}

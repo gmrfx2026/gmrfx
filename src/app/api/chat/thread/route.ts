@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { chatDbErrorMessage } from "@/lib/chatDbErrorMessage";
 import { getPrivateDmAccess } from "@/lib/chatDmAccess";
 import { prisma } from "@/lib/prisma";
+import { memberEmailForViewer } from "@/lib/memberEmailDisplay";
 
 function orderedPair(a: string, b: string): [string, string] {
   return a < b ? [a, b] : [b, a];
@@ -31,7 +32,13 @@ export async function GET(req: Request) {
     const conv = await prisma.chatConversation.findUnique({
       where: { userAId_userBId: { userAId, userBId } },
       include: {
-        messages: { orderBy: { createdAt: "desc" }, take: 50 },
+        messages: {
+          orderBy: { createdAt: "desc" },
+          take: 50,
+          include: {
+            sender: { select: { id: true, name: true, email: true, image: true, memberSlug: true } },
+          },
+        },
       },
     });
 
@@ -46,6 +53,7 @@ export async function GET(req: Request) {
       });
     }
 
+    const viewerId = session.user.id;
     const messages = (conv?.messages ?? [])
       .slice()
       .reverse()
@@ -53,6 +61,10 @@ export async function GET(req: Request) {
         id: m.id,
         body: m.body,
         senderId: m.senderId,
+        senderName:
+          m.sender.name ?? memberEmailForViewer(m.sender.email, m.sender.id, viewerId),
+        senderImage: m.sender.image,
+        senderMemberSlug: m.sender.memberSlug,
         createdAt: m.createdAt.toISOString(),
       }));
 

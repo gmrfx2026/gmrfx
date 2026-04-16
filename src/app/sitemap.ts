@@ -10,6 +10,7 @@ const staticRoutes: MetadataRoute.Sitemap = [
   { url: `${BASE}/artikel`,             changeFrequency: "daily",   priority: 0.9 },
   { url: `${BASE}/berita`,              changeFrequency: "daily",   priority: 0.9 },
   { url: `${BASE}/indikator`,           changeFrequency: "weekly",  priority: 0.8 },
+  { url: `${BASE}/indikator/gmrfx`,     changeFrequency: "weekly",  priority: 0.85 },
   { url: `${BASE}/ea`,                  changeFrequency: "weekly",  priority: 0.8 },
   { url: `${BASE}/penawaran`,           changeFrequency: "daily",   priority: 0.7 },
   { url: `${BASE}/galeri`,              changeFrequency: "weekly",  priority: 0.6 },

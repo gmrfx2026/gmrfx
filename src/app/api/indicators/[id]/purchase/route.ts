@@ -9,6 +9,10 @@ import {
   ESCROW_WALLET_NOTE_PREFIX,
   getMarketplaceEscrowDays,
 } from "@/lib/marketplaceEscrow";
+import {
+  createIndicatorMtLicenseTx,
+  normalizeMtLicenseProductCode,
+} from "@/lib/indicatorLicense";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +35,15 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
     await prisma.$transaction(async (tx) => {
       const ind = await tx.sharedIndicator.findUnique({
         where: { id: indicatorId },
+        select: {
+          id: true,
+          title: true,
+          sellerId: true,
+          published: true,
+          priceIdr: true,
+          mtLicenseProductCode: true,
+          mtLicenseValidityDays: true,
+        },
       });
 
       if (!ind || !ind.published) {
@@ -55,7 +68,10 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
         throw new Error("Anda sudah membeli indikator ini");
       }
 
-      const buyer = await tx.user.findUnique({ where: { id: buyerId } });
+      const buyer = await tx.user.findUnique({
+        where: { id: buyerId },
+        select: { walletAddress: true, email: true, walletBalance: true },
+      });
       if (!buyer?.walletAddress) {
         throw new Error("Lengkapi alamat wallet di profil untuk membeli");
       }
@@ -75,6 +91,21 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
           amountIdr: price,
         },
       });
+
+      const productCode = normalizeMtLicenseProductCode(ind.mtLicenseProductCode);
+      if (productCode) {
+        const rawDays = ind.mtLicenseValidityDays;
+        const validityDays =
+          rawDays != null && rawDays >= 1 ? Math.min(3650, rawDays) : 365;
+        await createIndicatorMtLicenseTx(tx, {
+          purchaseId: purchase.id,
+          buyerId,
+          buyerEmail: buyer.email,
+          indicatorId,
+          productCode,
+          validityDays,
+        });
+      }
 
       const txId = newTransactionId("IND");
       const wt = await tx.walletTransfer.create({

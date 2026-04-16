@@ -1,3 +1,5 @@
+import { parseSafeHttpUrl } from "@/lib/socialLinks";
+
 function IconTikTok({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -60,43 +62,48 @@ export function MemberSocialLinks({
   youtubeUrl,
   className = "",
 }: MemberSocialLinksProps) {
-  const items: { href: string; label: string; Icon: typeof IconTikTok; hoverClass: string }[] = [];
+   const items: { href: string; label: string; Icon: typeof IconTikTok; hoverClass: string }[] = [];
 
-  if (tiktokUrl?.trim()) {
+  const tiktok = parseSafeHttpUrl(tiktokUrl);
+  if (tiktok) {
     items.push({
-      href: tiktokUrl.trim(),
+      href: tiktok,
       label: "TikTok",
       Icon: IconTikTok,
       hoverClass: "hover:text-white",
     });
   }
-  if (instagramUrl?.trim()) {
+  const instagram = parseSafeHttpUrl(instagramUrl);
+  if (instagram) {
     items.push({
-      href: instagramUrl.trim(),
+      href: instagram,
       label: "Instagram",
       Icon: IconInstagram,
       hoverClass: "hover:text-pink-400",
     });
   }
-  if (facebookUrl?.trim()) {
+  const facebook = parseSafeHttpUrl(facebookUrl);
+  if (facebook) {
     items.push({
-      href: facebookUrl.trim(),
+      href: facebook,
       label: "Facebook",
       Icon: IconFacebook,
       hoverClass: "hover:text-sky-400",
     });
   }
-  if (telegramUrl?.trim()) {
+  const telegram = parseSafeHttpUrl(telegramUrl);
+  if (telegram) {
     items.push({
-      href: telegramUrl.trim(),
+      href: telegram,
       label: "Telegram",
       Icon: IconTelegram,
       hoverClass: "hover:text-sky-300",
     });
   }
-  if (youtubeUrl?.trim()) {
+  const youtube = parseSafeHttpUrl(youtubeUrl);
+  if (youtube) {
     items.push({
-      href: youtubeUrl.trim(),
+      href: youtube,
       label: "YouTube",
       Icon: IconYoutube,
       hoverClass: "hover:text-red-500",

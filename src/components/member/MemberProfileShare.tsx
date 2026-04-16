@@ -54,6 +54,8 @@ export function MemberProfileShare({
   shareTitle,
   className = "",
   variant = "belowProfile",
+  /** Ikon bagikan ke WhatsApp/Telegram/Facebook/X. Di halaman profil dinonaktifkan agar tidak tercampur dengan tautan sosial milik member. */
+  showExternalShareButtons = true,
 }: {
   shareUrl: string;
   shareTitle: string;
@@ -63,6 +65,7 @@ export function MemberProfileShare({
    * `belowFollow`: bawah tombol Ikuti / login, tengah, jarak atas proporsional.
    */
   variant?: "belowProfile" | "toolbar" | "belowFollow";
+  showExternalShareButtons?: boolean;
 }) {
   const { show } = useToast();
   const [copied, setCopied] = useState(false);
@@ -135,18 +138,20 @@ export function MemberProfileShare({
           <IconLink className="h-3.5 w-3.5" />
           {copied ? "Disalin" : "Salin tautan"}
         </button>
-        {links.map(({ label, href, Icon, hover }) => (
-          <a
-            key={label}
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`${btnClass} ${hover}`}
-            aria-label={`Bagikan ke ${label}`}
-          >
-            <Icon className={iconClass} />
-          </a>
-        ))}
+        {showExternalShareButtons
+          ? links.map(({ label, href, Icon, hover }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${btnClass} ${hover}`}
+                aria-label={`Bagikan ke ${label}`}
+              >
+                <Icon className={iconClass} />
+              </a>
+            ))
+          : null}
       </div>
     </div>
   );

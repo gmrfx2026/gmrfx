@@ -39,6 +39,12 @@ import {
   isManualPhoneVerifyRequired,
 } from "@/lib/oauthPhoneVerifySettings";
 import { SITE_NAME_KEY, DEFAULT_SITE_NAME } from "@/lib/siteNameSettings";
+import {
+  isOtpFixedForTesting,
+  normalizeOtpFixedCode,
+  OTP_FIXED_FOR_TESTING_KEY,
+  OTP_FIXED_CODE_KEY,
+} from "@/lib/otpFixedSettings";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +70,8 @@ export default async function AdminSettingsPage() {
     oauthPhoneVerify,
     manualPhoneVerify,
     siteNameRow,
+    otpFixedFlag,
+    otpFixedCodeRow,
   ] = await Promise.all([
     prisma.systemSetting.findUnique({ where: { key: "platform_fee_percent" } }),
     prisma.systemSetting.findUnique({ where: { key: ARTICLE_COMMENTS_PER_PAGE_KEY } }),
@@ -85,6 +93,8 @@ export default async function AdminSettingsPage() {
     prisma.systemSetting.findUnique({ where: { key: OAUTH_PHONE_VERIFY_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: MANUAL_PHONE_VERIFY_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: SITE_NAME_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: OTP_FIXED_FOR_TESTING_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: OTP_FIXED_CODE_KEY } }),
   ]);
 
   return (
@@ -118,6 +128,8 @@ export default async function AdminSettingsPage() {
           initialOauthPhoneVerifyRequired={isOauthPhoneVerifyRequired(oauthPhoneVerify?.value)}
           initialManualPhoneVerifyRequired={isManualPhoneVerifyRequired(manualPhoneVerify?.value)}
           initialSiteName={siteNameRow?.value?.trim() || DEFAULT_SITE_NAME}
+          initialOtpFixedForTesting={isOtpFixedForTesting(otpFixedFlag?.value)}
+          initialOtpFixedCode={normalizeOtpFixedCode(otpFixedCodeRow?.value)}
         />
       </div>
     </div>

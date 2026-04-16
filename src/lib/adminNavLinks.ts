@@ -23,6 +23,8 @@ export const ADMIN_NAV_LINKS = [
   { href: "/admin/deposits",          label: "Deposit USDT" },
   { href: "/admin/wallet-adjust",     label: "Sesuaikan Saldo" },
   { href: "/admin/marketplace-escrow",label: "Escrow marketplace" },
+  { href: "/admin/gmrfx-indicators", label: "Indikator GMRFX" },
+  { href: "/admin/marketplace/mt-licenses", label: "Lisensi MT indikator" },
   { href: "/admin/articles",          label: "Artikel" },
   { href: "/admin/home-news",         label: "Berita beranda" },
   { href: "/admin/affiliate-go",      label: "Statistik /go" },
@@ -124,6 +126,16 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         href: "/admin/marketplace/indikator",
         label: "Indikator",
         icon: "M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z",
+      },
+      {
+        href: "/admin/gmrfx-indicators",
+        label: "Indikator GMRFX",
+        icon: "M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z",
+      },
+      {
+        href: "/admin/marketplace/mt-licenses",
+        label: "Lisensi MT indikator",
+        icon: "M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z",
       },
       {
         href: "/admin/marketplace/ea",

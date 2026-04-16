@@ -22,6 +22,7 @@ import { ProfilSecurityForms } from "@/components/ProfilSecurityForms";
 import { ProfilAvatarUpload } from "@/components/ProfilAvatarUpload";
 import { ProfilArticlesSection } from "@/components/ProfilArticlesSection";
 import { ProfilIndicatorsPanel } from "@/components/member/ProfilIndicatorsPanel";
+import { ProfilMyMtIndicatorLicenses } from "@/components/member/ProfilMyMtIndicatorLicenses";
 import { ProfilEaPanel } from "@/components/member/ProfilEaPanel";
 import { MemberFollowStatsLinks } from "@/components/member/MemberFollowStatsLinks";
 import { parsePrefixedListQuery, resolvePagedWindow } from "@/lib/adminListParams";
@@ -597,6 +598,7 @@ export default async function ProfilPage({
 
       {showIndicators && (
         <section className="border-t border-broker-border pt-10">
+          <ProfilMyMtIndicatorLicenses />
           <ProfilIndicatorsPanel />
         </section>
       )}

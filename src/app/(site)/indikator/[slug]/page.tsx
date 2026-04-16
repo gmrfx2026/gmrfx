@@ -11,6 +11,7 @@ import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { Decimal } from "@prisma/client/runtime/library";
 import { resolveMarketplaceIndicatorCoverUrl } from "@/lib/marketplaceCoverImage";
 import { MarketplaceProductStarRating } from "@/components/marketplace/MarketplaceProductStarRating";
+import { IndicatorMtLicensePanel } from "@/components/indikator/IndicatorMtLicensePanel";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,7 @@ export default async function IndikatorDetailPage({ params }: Props) {
       coverImageUrl: true,
       updatedAt: true,
       sellerId: true,
+      isGmrfxOfficial: true,
       seller: {
         select: { id: true, name: true, memberSlug: true },
       },
@@ -78,6 +80,51 @@ export default async function IndikatorDetailPage({ params }: Props) {
       },
     });
     hasPurchase = Boolean(p);
+  }
+
+  let mtLicenseForBuyer: {
+    licenseId: string;
+    productCode: string;
+    hint: string;
+    expiresAtIso: string;
+    active: boolean;
+    accountEmail: string;
+  } | null = null;
+
+  if (userId && hasPurchase) {
+    const [pur, account] = await Promise.all([
+      prisma.indicatorPurchase.findUnique({
+        where: { indicatorId_buyerId: { indicatorId: ind.id, buyerId: userId } },
+        select: { id: true, revokedAt: true },
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true },
+      }),
+    ]);
+    if (pur && pur.revokedAt == null && account?.email) {
+      const lic = await prisma.mtIndicatorLicense.findUnique({
+        where: { purchaseId: pur.id },
+        select: {
+          id: true,
+          productCode: true,
+          licenseKeyHint: true,
+          expiresAt: true,
+          revokedAt: true,
+        },
+      });
+      if (lic) {
+        const now = Date.now();
+        mtLicenseForBuyer = {
+          licenseId: lic.id,
+          productCode: lic.productCode,
+          hint: lic.licenseKeyHint,
+          expiresAtIso: lic.expiresAt.toISOString(),
+          active: lic.revokedAt == null && lic.expiresAt.getTime() > now,
+          accountEmail: account.email,
+        };
+      }
+    }
   }
 
   const canDownload =
@@ -145,6 +192,14 @@ export default async function IndikatorDetailPage({ params }: Props) {
         <Link href="/indikator" className="hover:text-broker-accent">
           Indikator
         </Link>
+        {ind.isGmrfxOfficial ? (
+          <>
+            <span className="mx-1">/</span>
+            <Link href="/indikator/gmrfx" className="hover:text-broker-accent">
+              GMRFX
+            </Link>
+          </>
+        ) : null}
         <span className="mx-1">/</span>
         <span className="text-broker-muted/80">{ind.title}</span>
       </p>
@@ -162,7 +217,14 @@ export default async function IndikatorDetailPage({ params }: Props) {
         </div>
       ) : null}
 
-      <h1 className={`text-3xl font-bold text-white ${cover ? "mt-4" : "mt-3"}`}>{ind.title}</h1>
+      <h1 className={`text-3xl font-bold text-white ${cover ? "mt-4" : "mt-3"}`}>
+        {ind.title}
+        {ind.isGmrfxOfficial ? (
+          <span className="ml-2 align-middle text-base font-semibold normal-case text-violet-300">
+            · GMRFX
+          </span>
+        ) : null}
+      </h1>
       <p className="mt-2 text-sm text-broker-muted">
         Penjual:{" "}
         <Link href={`/${sellerSlug}`} className="font-medium text-broker-accent hover:underline">
@@ -211,6 +273,8 @@ export default async function IndikatorDetailPage({ params }: Props) {
           isOwn={isOwn}
         />
       </div>
+
+      {mtLicenseForBuyer ? <IndicatorMtLicensePanel license={mtLicenseForBuyer} /> : null}
 
       <p className="mt-8 text-xs text-broker-muted/80">
         Diperbarui {ind.updatedAt.toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}

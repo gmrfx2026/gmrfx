@@ -6,6 +6,7 @@ import { unlink } from "fs/promises";
 import { INDICATOR_MAX_BYTES, localIndicatorFileAbsolutePath, resolveIndicatorExt, storeIndicatorFile } from "@/lib/indicatorUpload";
 import { parseMarketplacePlatform } from "@/lib/marketplacePlatform";
 import { normalizeMarketplaceDescriptionHtml } from "@/lib/marketplaceDescription";
+import { normalizeMtLicenseProductCode, parseMtLicenseValidityDays } from "@/lib/indicatorLicense";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,6 +50,12 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (!existing) {
     return NextResponse.json({ error: "Indikator tidak ditemukan" }, { status: 404 });
   }
+  if (existing.isGmrfxOfficial) {
+    return NextResponse.json(
+      { error: "Indikator resmi GMRFX hanya dapat diubah dari panel admin → Indikator GMRFX." },
+      { status: 403 }
+    );
+  }
 
   let form: FormData;
   try {
@@ -73,10 +80,24 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   let priceIdr: Decimal;
   let platform: string;
   let published: boolean;
+  let mtLicenseProductCode: string | null;
+  let mtLicenseValidityDays: number | null;
   try {
     priceIdr = parsePriceIdr(form.get("priceIdr"));
     platform = parseMarketplacePlatform(form.get("platform"));
     published = parseBool(form.get("published"));
+    const codeRaw = String(form.get("mtLicenseProductCode") ?? "").trim();
+    const codeNorm = normalizeMtLicenseProductCode(codeRaw.length > 0 ? codeRaw : null);
+    if (codeRaw.length > 0 && !codeNorm) {
+      throw new Error("Kode lisensi MT tidak valid (huruf, angka, garis bawah; maks. 64)");
+    }
+    mtLicenseProductCode = codeNorm;
+    if (mtLicenseProductCode) {
+      const daysRaw = parseMtLicenseValidityDays(form.get("mtLicenseValidityDays"));
+      mtLicenseValidityDays = daysRaw ?? 365;
+    } else {
+      mtLicenseValidityDays = null;
+    }
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Data tidak valid";
     return NextResponse.json({ error: msg }, { status: 400 });
@@ -145,6 +166,8 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
         published,
         fileUrl: nextFileUrl,
         fileName: nextFileName,
+        mtLicenseProductCode,
+        mtLicenseValidityDays,
       },
       select: {
         id: true,

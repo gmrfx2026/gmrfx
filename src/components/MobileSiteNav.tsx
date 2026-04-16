@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useEffect, useId, useState } from "react";
 
-export type MobileNavLink = { href: string; label: string; adminAccent?: boolean };
+export type MobileNavEntry =
+  | { type: "link"; href: string; label: string; adminAccent?: boolean }
+  | { type: "group"; label: string; adminAccent?: boolean; children: { href: string; label: string }[] };
 
-export function MobileSiteNav({ links }: { links: MobileNavLink[] }) {
+export function MobileSiteNav({ links }: { links: MobileNavEntry[] }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
 
@@ -52,22 +54,48 @@ export function MobileSiteNav({ links }: { links: MobileNavLink[] }) {
             className="fixed right-0 top-16 z-50 max-h-[calc(100vh-4rem)] w-[min(100vw,18rem)] overflow-y-auto border-l border-b border-broker-border bg-broker-surface py-3 shadow-xl"
           >
             <ul className="flex flex-col gap-0.5 px-2">
-              {links.map((item) => (
-                <li key={`${item.href}-${item.label}`}>
-                  <Link
-                    href={item.href}
-                    className={[
-                      "block rounded-lg px-3 py-2.5 text-sm transition hover:bg-broker-surface",
-                      item.adminAccent
-                        ? "font-medium text-broker-gold hover:text-broker-gold"
-                        : "text-broker-muted hover:text-white",
-                    ].join(" ")}
-                    onClick={() => setOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
+              {links.map((item) =>
+                item.type === "group" ? (
+                  <li key={`group-${item.label}`} className="py-1">
+                    <p
+                      className={[
+                        "px-3 py-1 text-xs font-semibold uppercase tracking-wide",
+                        item.adminAccent ? "text-broker-gold" : "text-broker-muted",
+                      ].join(" ")}
+                    >
+                      {item.label}
+                    </p>
+                    <ul className="mt-0.5 space-y-0.5 border-l border-broker-border/60 pl-2 ml-2">
+                      {item.children.map((ch) => (
+                        <li key={ch.href}>
+                          <Link
+                            href={ch.href}
+                            className="block rounded-lg px-3 py-2 text-sm text-broker-muted transition hover:bg-broker-surface hover:text-white"
+                            onClick={() => setOpen(false)}
+                          >
+                            {ch.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ) : (
+                  <li key={`${item.href}-${item.label}`}>
+                    <Link
+                      href={item.href}
+                      className={[
+                        "block rounded-lg px-3 py-2.5 text-sm transition hover:bg-broker-surface",
+                        item.adminAccent
+                          ? "font-medium text-broker-gold hover:text-broker-gold"
+                          : "text-broker-muted hover:text-white",
+                      ].join(" ")}
+                      onClick={() => setOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                )
+              )}
             </ul>
           </nav>
         </>

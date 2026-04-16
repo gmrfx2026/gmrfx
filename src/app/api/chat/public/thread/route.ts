@@ -14,7 +14,7 @@ export async function GET() {
     const rows = await prisma.publicChatMessage.findMany({
       orderBy: { createdAt: "asc" },
       take: 200,
-      include: { sender: { select: { name: true, email: true } } },
+      include: { sender: { select: { name: true, email: true, image: true, memberSlug: true } } },
     });
 
     const viewerId = session.user.id;
@@ -26,6 +26,8 @@ export async function GET() {
         senderName:
           m.sender.name ??
           memberEmailForViewer(m.sender.email, m.senderId, viewerId),
+        senderImage: m.sender.image,
+        senderMemberSlug: m.sender.memberSlug,
         createdAt: m.createdAt.toISOString(),
       })),
     });

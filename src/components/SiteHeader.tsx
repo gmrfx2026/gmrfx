@@ -2,19 +2,33 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { MemberPresencePing } from "./MemberPresencePing";
 import { HeaderAuth } from "./HeaderAuth";
-import { MobileSiteNav } from "./MobileSiteNav";
+import { MobileSiteNav, type MobileNavEntry } from "./MobileSiteNav";
 import { NotificationBell } from "./NotificationBell";
 import { getResolvedSiteHeaderNavItems } from "@/lib/siteHeaderNav";
+import { HeaderIndikatorMenu } from "./HeaderIndikatorMenu";
 
 export async function SiteHeader() {
   const session = await auth();
   const navItems = await getResolvedSiteHeaderNavItems(session);
 
-  const mobileLinks = navItems.map((it) => ({
-    href: it.href,
-    label: it.label,
-    adminAccent: it.adminAccent,
-  }));
+  const mobileLinks: MobileNavEntry[] = [];
+  for (const it of navItems) {
+    if (it.submenu?.length) {
+      mobileLinks.push({
+        type: "group",
+        label: it.label,
+        adminAccent: it.adminAccent,
+        children: it.submenu,
+      });
+    } else {
+      mobileLinks.push({
+        type: "link",
+        href: it.href,
+        label: it.label,
+        adminAccent: it.adminAccent,
+      });
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-broker-border bg-broker-bg backdrop-blur-none md:bg-broker-bg/90 md:backdrop-blur-md">
@@ -28,20 +42,29 @@ export async function SiteHeader() {
           </span>
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
-          {navItems.map((item) => (
-            <Link
-              key={item.key}
-              href={item.href}
-              className={[
-                "rounded-md px-3 py-2 text-sm transition hover:bg-broker-surface",
-                item.adminAccent
-                  ? "font-medium text-broker-gold hover:text-broker-gold"
-                  : "text-broker-muted hover:text-white",
-              ].join(" ")}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) =>
+            item.key === "indikator" && item.submenu?.length ? (
+              <HeaderIndikatorMenu
+                key={item.key}
+                label={item.label}
+                items={item.submenu}
+                adminAccent={item.adminAccent}
+              />
+            ) : (
+              <Link
+                key={item.key}
+                href={item.href}
+                className={[
+                  "rounded-md px-3 py-2 text-sm transition hover:bg-broker-surface",
+                  item.adminAccent
+                    ? "font-medium text-broker-gold hover:text-broker-gold"
+                    : "text-broker-muted hover:text-white",
+                ].join(" ")}
+              >
+                {item.label}
+              </Link>
+            )
+          )}
         </nav>
         <div className="flex items-center gap-2">
           <MobileSiteNav links={mobileLinks} />
