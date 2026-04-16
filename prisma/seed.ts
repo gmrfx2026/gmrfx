@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { seedEducationalArticles } from "../src/lib/educationalArticlesSeed";
 import { seedPiphunterIndicators } from "./seed-piphunter-indicators";
 import { seedDemoExpertAdvisors, seedDemoJobOffers } from "./seed-marketplace-extras";
+import { seedGmrfxZzExample } from "./seed-gmrfx-zz-example";
 import { loadRootEnv } from "./loadEnv";
 
 loadRootEnv();
@@ -78,6 +79,9 @@ async function main() {
   console.log(ea.ok ? ea.message : "EA demo:", ea.message);
   const jobs = await seedDemoJobOffers(prisma);
   console.log(jobs.ok ? jobs.message : "Penawaran demo:", jobs.message);
+
+  const gmrfxZz = await seedGmrfxZzExample(prisma);
+  console.log(gmrfxZz.ok ? gmrfxZz.message : "Contoh GMRFX ZZ:", gmrfxZz.message);
 
   console.log("Seed selesai. Galeri kategori:", cat.name);
 }

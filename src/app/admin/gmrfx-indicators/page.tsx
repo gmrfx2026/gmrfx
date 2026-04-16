@@ -50,6 +50,10 @@ export default async function AdminGmrfxIndicatorsPage() {
         <h1 className="text-xl font-bold text-gray-900">Indikator GMRFX (resmi)</h1>
         <p className="mt-0.5 text-sm text-gray-500">
           Produk muncul di menu situs <strong className="text-gray-700">Indikator → GMRFX</strong> dan di katalog umum.{" "}
+          Contoh siap pakai (lisensi <code className="rounded bg-gray-100 px-1 text-xs">GMRFX_ZZ</code>, slug{" "}
+          <code className="rounded bg-gray-100 px-1 text-xs">gmrfx-zz-v321-contoh</code>) dibuat oleh seed:{" "}
+          <code className="rounded bg-gray-100 px-1 text-xs">npm run db:seed</code> atau{" "}
+          <code className="rounded bg-gray-100 px-1 text-xs">npm run db:seed:gmrfx-zz</code>.{" "}
           Lisensi pembeli dikelola di{" "}
           <Link href="/admin/marketplace/mt-licenses" className="font-medium text-blue-600 hover:underline">
             Lisensi MT indikator
