@@ -12,6 +12,7 @@
     "dev:https": "node server-https.js",
     "dev:clean": "npm run clean && next dev -p 3000",
     "build": "next build",
+    "postbuild": "node scripts/ensure-upload-dirs.mjs",
     "migrate": "prisma migrate deploy",
     "build:next": "next build",
     "db:migrate": "prisma migrate deploy",

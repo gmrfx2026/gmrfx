@@ -86,6 +86,10 @@ databaselokal.sql
 !/public/uploads/avatars/.gitkeep
 /public/uploads/gallery-images/*
 !/public/uploads/gallery-images/.gitkeep
+/public/uploads/indicator-covers/*
+!/public/uploads/indicator-covers/.gitkeep
+/public/uploads/news-images/*
+!/public/uploads/news-images/.gitkeep
 /public/uploads/penawaran-attachments/**/*
 /public/uploads/jobs/**/*
 
