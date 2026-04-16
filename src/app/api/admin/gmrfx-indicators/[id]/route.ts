@@ -14,6 +14,7 @@ import { parseMarketplacePlatform } from "@/lib/marketplacePlatform";
 import { normalizeMarketplaceDescriptionHtml } from "@/lib/marketplaceDescription";
 import { normalizeMtLicenseProductCode, parseMtLicenseValidityDays } from "@/lib/indicatorLicense";
 import { storeIndicatorCoverImage } from "@/lib/indicatorCoverImageUpload";
+import { extractMultipartPart, toFileWithName } from "@/lib/formDataMultipart";
 import path from "path";
 import { isPublicUploadRelativePathAllowed } from "@/lib/publicFileAllowlist";
 
@@ -140,11 +141,12 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     }
   }
 
-  const file = form.get("file");
+  const filePart = extractMultipartPart(form.get("file"));
   let nextFileUrl = existing.fileUrl;
   let nextFileName = existing.fileName;
 
-  if (file && file instanceof File && file.size > 0) {
+  if (filePart) {
+    const file = toFileWithName(filePart);
     if (!resolveIndicatorExt(file)) {
       return NextResponse.json(
         { error: "Format file: .zip, .ex4, .ex5, .mq4, atau .mq5" },
@@ -176,12 +178,12 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     }
   }
 
-  const coverImage = form.get("coverImage");
+  const coverPart = extractMultipartPart(form.get("coverImage"));
   let nextCoverUrl = existing.coverImageUrl;
-  if (coverImage instanceof File && coverImage.size > 0) {
+  if (coverPart) {
     try {
       await tryUnlinkLocalIndicatorCover(existing.coverImageUrl);
-      nextCoverUrl = await storeIndicatorCoverImage(id, coverImage);
+      nextCoverUrl = await storeIndicatorCoverImage(id, coverPart.blob);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Gagal mengunggah sampul";
       return NextResponse.json({ error: msg }, { status: 400 });

@@ -9,6 +9,7 @@ import { parseMarketplacePlatform } from "@/lib/marketplacePlatform";
 import { normalizeMarketplaceDescriptionHtml } from "@/lib/marketplaceDescription";
 import { normalizeMtLicenseProductCode, parseMtLicenseValidityDays } from "@/lib/indicatorLicense";
 import { storeIndicatorCoverImage } from "@/lib/indicatorCoverImageUpload";
+import { extractMultipartPart, toFileWithName } from "@/lib/formDataMultipart";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -90,10 +91,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Body tidak valid" }, { status: 400 });
   }
 
-  const file = form.get("file");
-  if (!file || !(file instanceof File)) {
+  const filePart = extractMultipartPart(form.get("file"));
+  if (!filePart) {
     return NextResponse.json({ error: "File wajib diunggah" }, { status: 400 });
   }
+
+  const file = toFileWithName(filePart);
 
   if (!resolveIndicatorExt(file)) {
     return NextResponse.json(
@@ -207,10 +210,10 @@ export async function POST(req: Request) {
       });
     });
 
-    const cover = form.get("coverImage");
-    if (cover instanceof File && cover.size > 0) {
+    const coverPart = extractMultipartPart(form.get("coverImage"));
+    if (coverPart) {
       try {
-        const coverUrl = await storeIndicatorCoverImage(row.id, cover);
+        const coverUrl = await storeIndicatorCoverImage(row.id, coverPart.blob);
         await prisma.sharedIndicator.update({
           where: { id: row.id },
           data: { coverImageUrl: coverUrl },

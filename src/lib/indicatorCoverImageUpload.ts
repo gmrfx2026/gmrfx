@@ -10,7 +10,7 @@ import { isVercelDeploy, resolvedBlobReadWriteToken } from "@/lib/uploadStorage"
 
 const SUBDIR = "indicator-covers";
 
-export async function storeIndicatorCoverImage(indicatorId: string, file: File): Promise<string> {
+export async function storeIndicatorCoverImage(indicatorId: string, file: Blob): Promise<string> {
   const buf = Buffer.from(await file.arrayBuffer());
   if (buf.length < 12 || buf.length > ARTICLE_IMAGE_MAX_BYTES) {
     throw new Error("Ukuran gambar tidak valid (maks. ~2,5 MB)");
@@ -35,7 +35,9 @@ export async function storeIndicatorCoverImage(indicatorId: string, file: File):
   }
 
   if (isVercelDeploy()) {
-    throw new Error("Unggah sampul membutuhkan Vercel Blob (BLOB_READ_WRITE_TOKEN)");
+    throw new Error(
+      "Unggah sampul di Vercel membutuhkan BLOB_READ_WRITE_TOKEN (Production). Buka Vercel → Project → Settings → Environment Variables, atau Storage → Blob → Connect.",
+    );
   }
 
   const dir = path.join(process.cwd(), "public", "uploads", SUBDIR);

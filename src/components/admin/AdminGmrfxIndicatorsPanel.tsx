@@ -3,6 +3,7 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { formatMarketplacePlatformLabel } from "@/lib/marketplacePlatform";
+import { resolvePublicDisplayUrl } from "@/lib/publicUploadUrl";
 import { useCallback, useEffect, useState } from "react";
 
 const MarketplaceRichDescription = dynamic(
@@ -317,7 +318,7 @@ export function AdminGmrfxIndicatorsPanel({
                   <div className="shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={it.coverImageUrl}
+                      src={resolvePublicDisplayUrl(it.coverImageUrl) ?? it.coverImageUrl}
                       alt=""
                       className="h-16 w-28 object-cover"
                     />
