@@ -12,16 +12,15 @@ export function isVercelDeploy(): boolean {
 /**
  * Simpan unggahan ke `public/uploads/` (lewati Vercel Blob).
  *
- * - Otomatis di `next dev` (`NODE_ENV=development`), kecuali `UPLOAD_STORAGE=blob`.
- * - Paksa lokal: `UPLOAD_STORAGE=local`
- * - Di Vercel selalu false (Blob atau error konfigurasi).
+ * - **VPS / Docker / PM2 (bukan Vercel):** default **lokal** (`public/uploads/`) — tidak perlu Blob.
+ * - **Vercel:** default Blob; wajib `BLOB_READ_WRITE_TOKEN` (filesystem serverless read-only).
+ * - Paksa Blob di host sendiri: `UPLOAD_STORAGE=blob` + `BLOB_READ_WRITE_TOKEN`.
  */
 export function preferLocalUploads(): boolean {
   if (isVercelDeploy()) return false;
   const v = (process.env.UPLOAD_STORAGE ?? "").trim().toLowerCase();
   if (v === "blob") return false;
-  if (v === "local") return true;
-  return process.env.NODE_ENV === "development";
+  return true;
 }
 
 /** Token Blob hanya dipakai jika tidak memaksa penyimpanan lokal. */

@@ -36,7 +36,7 @@ export async function storeIndicatorCoverImage(indicatorId: string, file: Blob):
 
   if (isVercelDeploy()) {
     throw new Error(
-      "Unggah sampul di Vercel membutuhkan BLOB_READ_WRITE_TOKEN (Production). Buka Vercel → Project → Settings → Environment Variables, atau Storage → Blob → Connect.",
+      "Di Vercel, unggah sampul membutuhkan BLOB_READ_WRITE_TOKEN. Di VPS, set penyimpanan lokal (default) — jangan set UPLOAD_STORAGE=blob tanpa token.",
     );
   }
 
