@@ -1,4 +1,5 @@
 import { resolvePublicDisplayUrl } from "@/lib/publicUploadUrl";
+import { upgradeRemoteImageUrl } from "@/lib/upgradeRemoteImageUrl";
 
 /** Src gambar pertama (mendukung atribut acak di <img …>). */
 const FIRST_IMG_SRC = /<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i;
@@ -6,7 +7,9 @@ const FIRST_IMG_SRC = /<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i;
 function firstImgSrcFromHtml(html: string): string | null {
   const m = FIRST_IMG_SRC.exec(html);
   const s = m?.[1]?.trim();
-  return s || null;
+  if (s) return s;
+  const lazy = html.match(/<img\b[^>]*\bdata-src\s*=\s*["']([^"']+)["']/i);
+  return lazy?.[1]?.trim() || null;
 }
 
 function isDataUrl(s: string): boolean {
@@ -15,6 +18,13 @@ function isDataUrl(s: string): boolean {
 
 function isHttpsUrl(s: string): boolean {
   return /^https:\/\//i.test(s);
+}
+
+/** URL absolut (https/http//) untuk kartu: naikkan ke https; path lokal dibiarkan. */
+function displayRemoteCardUrl(url: string): string {
+  const t = url.trim();
+  if (!t || t.startsWith("/") || t.toLowerCase().startsWith("data:")) return t;
+  return upgradeRemoteImageUrl(t);
 }
 
 /** Samakan `src` untuk bandingkan hero vs isi artikel (entity HTML, dll.). */
@@ -59,17 +69,17 @@ export function resolveHomeNewsCardImageSrc(item: {
   const col = item.imageUrl?.trim() ?? "";
   const htmlSrc = firstImgSrcFromHtml(item.contentHtml);
 
-  if (htmlSrc && !isDataUrl(htmlSrc) && isHttpsUrl(htmlSrc)) {
-    return htmlSrc;
+  if (htmlSrc && !isDataUrl(htmlSrc) && (isHttpsUrl(htmlSrc) || /^http:\/\//i.test(htmlSrc) || htmlSrc.startsWith("//"))) {
+    return displayRemoteCardUrl(htmlSrc);
   }
   if (col && !isDataUrl(col) && isHttpsUrl(col)) {
-    return resolvePublicDisplayUrl(col) ?? col;
+    return resolvePublicDisplayUrl(col) ?? displayRemoteCardUrl(col);
   }
   if (col && !isDataUrl(col)) {
-    return resolvePublicDisplayUrl(col) ?? col;
+    return resolvePublicDisplayUrl(col) ?? displayRemoteCardUrl(col);
   }
   if (htmlSrc && !isDataUrl(htmlSrc)) {
-    return resolvePublicDisplayUrl(htmlSrc) ?? htmlSrc;
+    return resolvePublicDisplayUrl(htmlSrc) ?? displayRemoteCardUrl(htmlSrc);
   }
   return null;
 }

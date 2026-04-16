@@ -9,6 +9,7 @@ import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { sanitizePlainText } from "@/lib/sanitizePlainText";
 import { slugify } from "@/lib/slug";
 import { stripHtmlToPlainText } from "@/lib/stripHtml";
+import { upgradeImgSrcsInHtml, upgradeRemoteImageUrl } from "@/lib/upgradeRemoteImageUrl";
 
 type RssItemExt = RSSParser.Item & { "content:encoded"?: string };
 
@@ -88,7 +89,7 @@ export async function importRssHomeNewsFeed(
       const slug = slugify(title);
 
       let contentHtml: string;
-      const raw = rawContentHtml(item);
+      const raw = upgradeImgSrcsInHtml(rawContentHtml(item));
 
       if (opts.paraphrase) {
         contentHtml = sanitizeArticleHtml(
@@ -104,7 +105,11 @@ export async function importRssHomeNewsFeed(
       let imageUrl: string | null = null;
       const imgRemote = pickImageUrlFromItem(item);
       if (imgRemote) {
-        imageUrl = await storeRemoteNewsImage(imgRemote);
+        const imgForStore = upgradeRemoteImageUrl(imgRemote.trim());
+        imageUrl = await storeRemoteNewsImage(imgForStore);
+        if (!imageUrl && /^https:\/\//i.test(imgForStore)) {
+          imageUrl = imgForStore;
+        }
       }
 
       const publishedAt = item.isoDate ? new Date(item.isoDate) : item.pubDate ? new Date(item.pubDate) : new Date();

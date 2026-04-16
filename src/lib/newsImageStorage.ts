@@ -8,6 +8,7 @@ import {
   fileExtForArticleType,
   sniffArticleImageType,
 } from "@/lib/articleImagePolicy";
+import { upgradeRemoteImageUrl } from "@/lib/upgradeRemoteImageUrl";
 import { isVercelDeploy, resolvedBlobReadWriteToken } from "@/lib/uploadStorage";
 
 /**
@@ -15,8 +16,8 @@ import { isVercelDeploy, resolvedBlobReadWriteToken } from "@/lib/uploadStorage"
  * Hanya JPG/PNG/WebP yang lolos magic byte.
  */
 export async function storeRemoteNewsImage(imageUrl: string): Promise<string | null> {
-  let resolved = imageUrl.trim();
-  if (!/^https?:\/\//i.test(resolved)) return null;
+  let resolved = upgradeRemoteImageUrl(imageUrl.trim());
+  if (!/^https:\/\//i.test(resolved)) return null;
 
   try {
     const res = await fetch(resolved, {

@@ -24,6 +24,9 @@ export const VERCEL_BLOB_SRC_RE =
 /** URL gambar eksternal apa pun via HTTPS (untuk gambar yang disisipkan dari URL web). */
 export const EXTERNAL_HTTPS_IMAGE_RE = /^https:\/\/.+/i;
 
+/** RSS/kan luar kadang masih http — disanitasi setelah upgrade ke https di impor; tetap izinkan http sebagai cadangan. */
+export const EXTERNAL_HTTP_IMAGE_RE = /^http:\/\/.+/i;
+
 /** Gambar yang dilayani lewat API (path lokal → sama host). */
 export const PUBLIC_FILE_ARTICLE_NEWS_RE =
   /^\/api\/public-file\/(?:(?:news-images|article-images)\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:jpg|jpeg|png|webp))$/i;
@@ -49,7 +52,8 @@ export function isAllowedNewsImageSrc(src: string): boolean {
     PUBLIC_FILE_ARTICLE_NEWS_RE.test(s) ||
     PUBLIC_FILE_NEWS_LOOSE_RE.test(s) ||
     VERCEL_BLOB_SRC_RE.test(s) ||
-    EXTERNAL_HTTPS_IMAGE_RE.test(s)
+    EXTERNAL_HTTPS_IMAGE_RE.test(s) ||
+    EXTERNAL_HTTP_IMAGE_RE.test(s)
   );
 }
 
