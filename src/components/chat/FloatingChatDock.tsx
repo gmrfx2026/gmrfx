@@ -6,6 +6,22 @@ import { playChatIncomingBeep, readChatBeepPreference } from "@/lib/chatBeep";
 import { ProfilChatBox, type ChatPeer } from "@/components/ProfilChatBox";
 import clsx from "clsx";
 
+function ChatBubbleIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
+    </svg>
+  );
+}
+
 function FloatingChatDockInner({ userId }: { userId: string }) {
   const [open, setOpen] = useState(false);
   const [peers, setPeers] = useState<ChatPeer[]>([]);
@@ -71,31 +87,40 @@ function FloatingChatDockInner({ userId }: { userId: string }) {
 
   const onProfilMobile = pathname.startsWith("/profil");
 
+  /** Pakai sisi kanan fisik (bukan inline-start) agar selalu kanan di LTR. */
+  const dockSide = onProfilMobile
+    ? "left-auto right-4 max-[380px]:right-3"
+    : "left-auto right-4 max-[380px]:right-3 md:right-8";
+
+  const dockBottom = onProfilMobile
+    ? "bottom-[max(5.5rem,5rem+env(safe-area-inset-bottom))]"
+    : "bottom-[max(1rem,env(safe-area-inset-bottom))] md:bottom-6";
+
   return (
     <>
       {open ? (
         <div
           className={clsx(
-            "fixed z-[55] flex w-[min(100vw-1.5rem,380px)] flex-col overflow-hidden rounded-t-2xl border border-gray-200 bg-white shadow-2xl shadow-black/25 md:rounded-2xl",
-            onProfilMobile
-              ? "bottom-[max(5.5rem,5rem+env(safe-area-inset-bottom))] right-3 h-[min(72vh,520px)]"
-              : "bottom-[max(1rem,env(safe-area-inset-bottom))] right-3 h-[min(72vh,520px)] md:bottom-6 md:right-6",
+            "fixed z-[55] flex w-[min(100vw-1.5rem,380px)] flex-col overflow-hidden rounded-t-2xl border border-broker-border bg-broker-surface shadow-2xl shadow-black/50 md:rounded-2xl",
+            dockSide,
+            dockBottom,
+            "h-[min(72vh,520px)]",
           )}
           role="dialog"
           aria-label="Chat"
         >
-          <div className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-[#0084FF] px-3 py-2 text-white">
-            <p className="text-sm font-semibold">Pesan</p>
+          <div className="flex shrink-0 items-center justify-between border-b border-broker-border bg-broker-bg px-3 py-2.5">
+            <p className="text-sm font-semibold text-white">Pesan</p>
             <button
               type="button"
-              className="rounded-full px-2 py-1 text-lg leading-none hover:bg-white/10"
+              className="rounded-lg px-2 py-1 text-lg leading-none text-broker-muted transition hover:bg-broker-surface hover:text-white"
               onClick={() => setOpen(false)}
               aria-label="Tutup chat"
             >
               ×
             </button>
           </div>
-          <div className="min-h-0 flex-1">
+          <div className="min-h-0 flex-1 border-t border-broker-border/60 bg-broker-bg">
             <ProfilChatBox
               peers={peers}
               selfId={userId}
@@ -111,17 +136,16 @@ function FloatingChatDockInner({ userId }: { userId: string }) {
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={clsx(
-          "fixed z-[55] flex h-14 w-14 items-center justify-center rounded-full bg-[#0084FF] text-2xl text-white shadow-lg shadow-black/30 transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0084FF] relative",
-          onProfilMobile
-            ? "bottom-[max(5.5rem,5rem+env(safe-area-inset-bottom))] right-3"
-            : "bottom-[max(1rem,env(safe-area-inset-bottom))] right-3 md:bottom-6 md:right-6",
-          open ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100",
+          "fixed z-[55] flex h-14 w-14 items-center justify-center rounded-full border border-broker-border bg-gradient-to-br from-broker-accent to-broker-accentDim text-broker-bg shadow-lg shadow-black/40 transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-broker-accent focus-visible:ring-offset-2 focus-visible:ring-offset-broker-bg relative",
+          dockSide,
+          dockBottom,
+          open ? "pointer-events-none scale-0 opacity-0" : "scale-100 opacity-100",
         )}
         aria-label={open ? "Tutup chat" : "Buka chat"}
       >
-        <span aria-hidden>💬</span>
+        <ChatBubbleIcon className="h-7 w-7" />
         {unread > 0 ? (
-          <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-broker-danger px-1 text-[10px] font-bold text-white shadow-sm">
             {unread > 99 ? "99+" : unread}
           </span>
         ) : null}

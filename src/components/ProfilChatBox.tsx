@@ -304,7 +304,7 @@ export function ProfilChatBox({
   if (mode === "private" && !peers.length) {
     if (isMessenger) {
       return (
-        <div className="flex flex-1 items-center justify-center p-6 text-center text-sm text-gray-600">
+        <div className="flex flex-1 items-center justify-center p-6 text-center text-sm text-broker-muted">
           Belum ada member lain untuk diajak chat.
         </div>
       );
@@ -318,14 +318,14 @@ export function ProfilChatBox({
   }
 
   const input = isMessenger
-    ? "mt-1 w-full rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm"
+    ? "mt-1 w-full rounded-full border border-broker-border bg-broker-bg px-4 py-2.5 text-sm text-white placeholder:text-broker-muted shadow-sm"
     : "mt-1 w-full rounded-lg border border-broker-border bg-broker-bg px-3 py-2 text-sm text-white";
 
   const modeBtn = (active: boolean, isMessengerUi: boolean) =>
     isMessengerUi
       ? active
-        ? "rounded-full bg-[#0084FF] px-3 py-1 text-xs font-semibold text-white shadow-sm"
-        : "rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-200"
+        ? "rounded-full bg-broker-accent px-3 py-1 text-xs font-semibold text-broker-bg shadow-sm"
+        : "rounded-full border border-broker-border bg-broker-bg px-3 py-1 text-xs font-semibold text-broker-muted hover:border-broker-accent/40 hover:text-white"
       : active
         ? "rounded-lg bg-broker-accent px-3 py-2 text-sm font-semibold text-broker-bg"
         : "rounded-lg bg-broker-surface text-sm font-semibold text-broker-muted hover:text-white";
@@ -375,11 +375,11 @@ export function ProfilChatBox({
           </div>
         </div>
       ) : (
-        <div className="shrink-0 border-b border-gray-200 bg-white px-3 py-2 shadow-sm">
+        <div className="shrink-0 border-b border-broker-border bg-broker-surface px-3 py-2 shadow-sm">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-gray-900">Chat</p>
+            <p className="text-sm font-semibold text-white">Chat</p>
             <div className="flex items-center gap-2">
-              <label className="hidden items-center gap-1.5 text-[10px] text-gray-500 sm:flex">
+              <label className="hidden items-center gap-1.5 text-[10px] text-broker-muted sm:flex">
                 <input
                   type="checkbox"
                   checked={beepEnabled}
@@ -394,7 +394,7 @@ export function ProfilChatBox({
                     }
                     if (on) playChatIncomingBeep();
                   }}
-                  className="h-3.5 w-3.5 rounded border-gray-300"
+                  className="h-3.5 w-3.5 rounded border-broker-border bg-broker-bg text-broker-accent focus:ring-broker-accent"
                 />
                 Beep
               </label>
@@ -414,8 +414,8 @@ export function ProfilChatBox({
                   type="button"
                   onClick={() => setPeerId(p.id)}
                   title={(p.name ?? p.email ?? p.id) + (p.online ? " · Online" : "")}
-                  className={`shrink-0 rounded-full p-0.5 ring-2 ring-offset-2 ring-offset-white transition ${
-                    peerId === p.id ? "ring-[#0084FF]" : "ring-transparent hover:ring-gray-200"
+                  className={`shrink-0 rounded-full p-0.5 ring-2 ring-offset-2 ring-offset-broker-bg transition ${
+                    peerId === p.id ? "ring-broker-accent" : "ring-transparent hover:ring-broker-border"
                   }`}
                 >
                   <SmallUserAvatar name={p.name} image={p.image ?? null} size="md" />
@@ -454,17 +454,17 @@ export function ProfilChatBox({
             <div
               className={
                 isMessenger
-                  ? "rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-700 shadow-sm"
+                  ? "rounded-xl border border-broker-border bg-broker-surface/80 p-3 text-sm text-broker-muted shadow-sm"
                   : "rounded-lg border border-broker-border bg-broker-surface/40 p-4 text-sm text-broker-muted"
               }
             >
-              <p className={isMessenger ? "font-medium text-gray-900" : "font-medium text-white"}>
+              <p className={isMessenger ? "font-medium text-white" : "font-medium text-white"}>
                 {dmAccess.state === "declined_out"
                   ? "Permintaan chat sebelumnya ditolak. Anda bisa mengirim permintaan baru."
                   : "Anda belum mengikuti member ini dan belum ada izin chat. Kirim permintaan — lawan bicara harus menyetujui terlebih dahulu."}
               </p>
               <form onSubmit={sendDmRequest} className="mt-3 space-y-2">
-                <label className={`block text-xs ${isMessenger ? "text-gray-500" : "text-broker-muted"}`}>
+                <label className={`block text-xs ${isMessenger ? "text-broker-muted" : "text-broker-muted"}`}>
                   Pesan pengantar (opsional)
                 </label>
                 <textarea
@@ -479,7 +479,7 @@ export function ProfilChatBox({
                   disabled={requestingDm}
                   className={
                     isMessenger
-                      ? "rounded-full bg-[#0084FF] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                      ? "rounded-full bg-broker-accent px-4 py-2 text-sm font-semibold text-broker-bg disabled:opacity-50"
                       : "rounded-lg bg-broker-accent px-4 py-2 text-sm font-semibold text-broker-bg disabled:opacity-50"
                   }
                 >
@@ -493,7 +493,7 @@ export function ProfilChatBox({
           <p
             className={
               isMessenger
-                ? "rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+                ? "rounded-xl border border-broker-gold/35 bg-broker-gold/10 px-3 py-2 text-sm text-broker-gold"
                 : "rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-100/90"
             }
           >
@@ -505,16 +505,16 @@ export function ProfilChatBox({
           <div
             className={
               isMessenger
-                ? "rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-800 shadow-sm"
+                ? "rounded-xl border border-broker-border bg-broker-surface/80 p-3 text-sm text-broker-muted shadow-sm"
                 : "rounded-lg border border-broker-accent/40 bg-broker-surface/60 p-4 text-sm"
             }
           >
-            <p className={isMessenger ? "font-medium text-gray-900" : "font-medium text-white"}>
+            <p className={isMessenger ? "font-medium text-white" : "font-medium text-white"}>
               {(dmAccess.requesterName ?? peers.find((p) => p.id === peerId)?.name ?? "Member ini")} ingin mengobrol
               dengan Anda.
             </p>
             {dmAccess.introMessage ? (
-              <p className={`mt-2 whitespace-pre-wrap ${isMessenger ? "text-gray-600" : "text-broker-muted"}`}>
+              <p className={`mt-2 whitespace-pre-wrap ${isMessenger ? "text-broker-muted" : "text-broker-muted"}`}>
                 {dmAccess.introMessage}
               </p>
             ) : null}
@@ -525,7 +525,7 @@ export function ProfilChatBox({
                 onClick={() => void respondDm(true)}
                 className={
                   isMessenger
-                    ? "rounded-full bg-[#0084FF] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                    ? "rounded-full bg-broker-accent px-4 py-2 text-sm font-semibold text-broker-bg disabled:opacity-50"
                     : "rounded-lg bg-broker-accent px-4 py-2 text-sm font-semibold text-broker-bg disabled:opacity-50"
                 }
               >
@@ -537,7 +537,7 @@ export function ProfilChatBox({
                 onClick={() => void respondDm(false)}
                 className={
                   isMessenger
-                    ? "rounded-full border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-800 disabled:opacity-50"
+                    ? "rounded-full border border-broker-border bg-broker-bg px-4 py-2 text-sm font-semibold text-broker-muted hover:text-white disabled:opacity-50"
                     : "rounded-lg border border-broker-border bg-broker-bg px-4 py-2 text-sm font-semibold text-broker-muted hover:text-white disabled:opacity-50"
                 }
               >
@@ -562,16 +562,16 @@ export function ProfilChatBox({
                   <div
                     className={
                       mine
-                        ? "max-w-[85%] rounded-2xl rounded-br-md bg-[#0084FF] px-3 py-2 text-left text-sm text-white shadow-sm"
-                        : "max-w-[85%] rounded-2xl rounded-bl-md bg-[#E4E6EB] px-3 py-2 text-left text-sm text-[#050505] shadow-sm"
+                        ? "max-w-[85%] rounded-2xl rounded-br-md bg-broker-accent px-3 py-2 text-left text-sm text-broker-bg shadow-sm"
+                        : "max-w-[85%] rounded-2xl rounded-bl-md border border-broker-border bg-broker-surface px-3 py-2 text-left text-sm text-white shadow-sm"
                     }
                   >
                     {m.senderName && mode === "public" && (
-                      <span className="mb-1 block text-[10px] font-semibold text-gray-600">{m.senderName}</span>
+                      <span className="mb-1 block text-[10px] font-semibold text-broker-muted">{m.senderName}</span>
                     )}
                     <span className="whitespace-pre-wrap break-words">{m.body}</span>
                     <span
-                      className={`mt-1 block text-[10px] ${mine ? "text-white/80" : "text-gray-500"}`}
+                      className={`mt-1 block text-[10px] ${mine ? "text-broker-bg/80" : "text-broker-muted"}`}
                     >
                       {formatJakarta(m.createdAt, { dateStyle: "short", timeStyle: "short" })}
                     </span>
@@ -599,22 +599,26 @@ export function ProfilChatBox({
           <div ref={endRef} />
         </div>
         {mode === "private" && !peerId ? (
-          <p className={`text-xs ${isMessenger ? "text-gray-500" : "text-broker-muted"}`}>
+          <p className={`text-xs ${isMessenger ? "text-broker-muted" : "text-broker-muted"}`}>
             Pilih member untuk chat privat.
           </p>
         ) : mode === "private" && !dmAccess ? (
-          <p className={`text-xs ${isMessenger ? "text-gray-500" : "text-broker-muted"}`}>Memuat status chat…</p>
+          <p className={`text-xs ${isMessenger ? "text-broker-muted" : "text-broker-muted"}`}>Memuat status chat…</p>
         ) : mode === "private" && dmAccess && !dmAccess.allowed ? null : (
           <form
             onSubmit={send}
             className={
               isMessenger
-                ? "flex shrink-0 items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1.5 shadow-md"
+                ? "flex shrink-0 items-center gap-2 rounded-full border border-broker-border bg-broker-surface px-2 py-1.5 shadow-md"
                 : "flex gap-2"
             }
           >
             <input
-              className={isMessenger ? "min-w-0 flex-1 border-0 bg-transparent px-2 py-1 text-sm text-gray-900 outline-none" : input}
+              className={
+                isMessenger
+                  ? "min-w-0 flex-1 border-0 bg-transparent px-2 py-1 text-sm text-white outline-none placeholder:text-broker-muted"
+                  : input
+              }
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder={mode === "public" ? "Pesan untuk chat umum…" : "Aa"}
@@ -624,7 +628,7 @@ export function ProfilChatBox({
               disabled={loading}
               className={
                 isMessenger
-                  ? "shrink-0 rounded-full bg-[#0084FF] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                  ? "shrink-0 rounded-full bg-broker-accent px-4 py-2 text-sm font-semibold text-broker-bg disabled:opacity-50"
                   : "shrink-0 rounded-lg bg-broker-accent px-4 py-2 text-sm font-semibold text-broker-bg disabled:opacity-50"
               }
             >
@@ -637,7 +641,7 @@ export function ProfilChatBox({
   );
 
   if (isMessenger) {
-    return <div className="flex h-full min-h-0 flex-col bg-[#f0f2f5]">{chatBody}</div>;
+    return <div className="flex h-full min-h-0 flex-col bg-broker-bg">{chatBody}</div>;
   }
 
   return <section className="mt-12 border-t border-broker-border pt-10">{chatBody}</section>;
