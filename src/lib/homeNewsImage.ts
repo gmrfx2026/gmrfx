@@ -17,6 +17,34 @@ function isHttpsUrl(s: string): boolean {
   return /^https:\/\//i.test(s);
 }
 
+/** Samakan `src` untuk bandingkan hero vs isi artikel (entity HTML, dll.). */
+function normalizeImgSrcForCompare(s: string): string {
+  return s
+    .trim()
+    .replace(/&amp;/g, "&")
+    .replace(/&#0*38;/g, "&")
+    .replace(/&#x0*26;/gi, "&");
+}
+
+const FIRST_IMG_OPEN_TAG = /<img\b[^>]*>/i;
+
+/**
+ * Hindari gambar ganda di halaman detail: hero sudah menampilkan gambar yang sama
+ * dengan `<img>` pertama di HTML artikel.
+ */
+export function stripFirstBodyImgIfSameAsHero(html: string, heroSrc: string | null): string {
+  if (!heroSrc?.trim()) return html;
+  const normHero = normalizeImgSrcForCompare(heroSrc);
+  const m = FIRST_IMG_OPEN_TAG.exec(html);
+  if (!m) return html;
+  const tag = m[0];
+  const srcM = tag.match(/\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i);
+  const rawSrc = (srcM?.[1] ?? srcM?.[2] ?? srcM?.[3] ?? "").trim();
+  if (!rawSrc || normalizeImgSrcForCompare(rawSrc) !== normHero) return html;
+  const idx = m.index;
+  return html.slice(0, idx) + html.slice(idx + tag.length);
+}
+
 /**
  * URL gambar untuk kartu berita (beranda / daftar).
  *

@@ -7,7 +7,7 @@ import { articleProseTypographyClass } from "@/lib/articleProseClassName";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { formatJakarta } from "@/lib/jakartaDateFormat";
 import { homeNewsAuthorForDisplay } from "@/lib/homeNewsAuthor";
-import { resolveHomeNewsCardImageSrc } from "@/lib/homeNewsImage";
+import { resolveHomeNewsCardImageSrc, stripFirstBodyImgIfSameAsHero } from "@/lib/homeNewsImage";
 import { BeritaHeroImage } from "@/components/berita/BeritaHeroImage";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +33,7 @@ export default async function BeritaDetailPage({ params }: { params: { slug: str
   const label = row.scope === "DOMESTIC" ? "Berita dalam negeri" : "Berita internasional";
   const penulis = homeNewsAuthorForDisplay(row.author);
   const heroSrc = resolveHomeNewsCardImageSrc(row);
+  const bodyHtml = stripFirstBodyImgIfSameAsHero(safeHtml, heroSrc);
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12">
@@ -65,7 +66,7 @@ export default async function BeritaDetailPage({ params }: { params: { slug: str
       {heroSrc ? <BeritaHeroImage src={heroSrc} title={row.title} /> : null}
       <div
         className={`${articleProseTypographyClass} mt-8`}
-        dangerouslySetInnerHTML={{ __html: safeHtml }}
+        dangerouslySetInnerHTML={{ __html: bodyHtml }}
       />
       <p className="mt-10 flex flex-wrap justify-center gap-x-4 gap-y-2 text-center text-sm text-broker-muted">
         <Link href="/berita" className="text-broker-accent hover:underline">
