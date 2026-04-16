@@ -371,12 +371,12 @@ export function ProfilChatBox({
   const messengerPeerSidebar =
     mode === "private" && peers.length > 0 ? (
       <aside
-        className="flex w-[4.75rem] shrink-0 flex-col items-stretch gap-1 overflow-y-auto border-r border-broker-border bg-broker-surface py-2 pl-1 pr-1 [-ms-overflow-style:none] [scrollbar-width:thin] [scrollbar-color:rgba(0,211,149,0.35)_transparent]"
+        className="flex w-[6.25rem] shrink-0 flex-col items-stretch gap-1.5 overflow-y-auto border-r border-broker-border bg-broker-surface px-1.5 py-2.5 sm:w-28 sm:px-2 [-ms-overflow-style:none] [scrollbar-width:thin] [scrollbar-color:rgba(0,211,149,0.35)_transparent]"
         aria-label="Daftar member"
       >
         {peers.map((p) => {
           const raw = (p.name ?? p.email ?? "?").trim();
-          const short = raw.split(/\s+/)[0]?.slice(0, 11) ?? "?";
+          const short = raw.split(/\s+/)[0]?.slice(0, 14) ?? "?";
           return (
             <button
               key={p.id}
@@ -386,7 +386,7 @@ export function ProfilChatBox({
                 onMessengerPeerSelect?.(p.id);
               }}
               title={raw + (p.online ? " · Online" : "")}
-              className={`flex flex-col items-center gap-0.5 rounded-lg py-1.5 px-0.5 transition ${
+              className={`flex flex-col items-center gap-1 rounded-xl py-2 px-1 transition ${
                 peerId === p.id ? "bg-broker-accent/15 ring-1 ring-broker-accent/45" : "hover:bg-broker-bg/35"
               }`}
             >
@@ -397,7 +397,7 @@ export function ProfilChatBox({
               >
                 <SmallUserAvatar name={p.name} image={p.image ?? null} size="md" />
               </span>
-              <span className="max-w-full truncate text-center text-[9px] font-medium leading-tight text-broker-muted">
+              <span className="max-w-full truncate text-center text-[10px] font-medium leading-snug text-broker-muted sm:text-xs">
                 {short}
               </span>
             </button>

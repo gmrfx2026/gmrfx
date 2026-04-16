@@ -1,6 +1,6 @@
 import { ARTICLE_IMAGE_SRC_RE, NEWS_IMAGE_LOOSE_SRC_RE, NEWS_IMAGE_SRC_RE } from "@/lib/articleImagePolicy";
 
-const AVATAR_REL_RE = /^avatars\/[a-z0-9]+\.(jpg|jpeg|png|webp)$/i;
+const AVATAR_REL_RE = /^avatars\/[a-z0-9][a-z0-9._-]{0,200}\.(jpg|jpeg|png|webp)$/i;
 
 const INDICATOR_COVER_REL_RE = /^indicator-covers\/[a-z0-9]+\.(jpg|jpeg|png|webp)$/i;
 

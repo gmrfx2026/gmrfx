@@ -4,7 +4,9 @@ import { ARTICLE_IMAGE_SRC_RE, NEWS_IMAGE_LOOSE_SRC_RE, NEWS_IMAGE_SRC_RE } from
 const UPLOADS_INDICATOR_COVER_RE =
   /^\/uploads\/indicator-covers\/[a-z0-9]+\.(jpg|jpeg|png|webp)$/i;
 
-const UPLOADS_AVATAR_RE = /^\/uploads\/avatars\/[a-z0-9]+\.(jpg|jpeg|png|webp)$/i;
+/** Nama file = userId + ekstensi (cuid, uuid, dll. — boleh mengandung tanda hubung). */
+const UPLOADS_AVATAR_RE =
+  /^\/uploads\/avatars\/[a-z0-9][a-z0-9._-]{0,200}\.(jpg|jpeg|png|webp)$/i;
 
 const PUBLIC_FILE_PREFIX = /^\/api\/public-file\//i;
 
