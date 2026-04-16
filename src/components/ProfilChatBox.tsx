@@ -330,102 +330,121 @@ export function ProfilChatBox({
         ? "rounded-lg bg-broker-accent px-3 py-2 text-sm font-semibold text-broker-bg"
         : "rounded-lg bg-broker-surface text-sm font-semibold text-broker-muted hover:text-white";
 
-  const chatBody = (
-    <>
-      {!isMessenger ? (
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold text-white">
-              {mode === "public" ? "Live Chat Umum" : "Chat antar member"}
-            </h2>
-            <p className="mt-1 text-xs text-broker-muted">
-              {mode === "public"
-                ? "Semua member yang login bisa membaca & mengirim pesan."
-                : "Pilih lawan bicara — pesan tersimpan di server."}
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center">
-            <label className="flex cursor-pointer items-center gap-2 text-xs text-broker-muted">
-              <input
-                type="checkbox"
-                checked={beepEnabled}
-                onChange={(e) => {
-                  const on = e.target.checked;
-                  setBeepEnabled(on);
-                  beepEnabledRef.current = on;
-                  try {
-                    window.localStorage.setItem(CHAT_BEEP_STORAGE_KEY, on ? "1" : "0");
-                  } catch {
-                    /* private mode */
-                  }
-                  if (on) playChatIncomingBeep();
-                }}
-                className="h-4 w-4 rounded border-broker-border bg-broker-bg text-broker-accent focus:ring-broker-accent"
-              />
-              Beep pesan masuk
-            </label>
-            <div className="flex gap-2">
-              <button type="button" onClick={() => setMode("private")} className={modeBtn(mode === "private", false)}>
-                Privat
-              </button>
-              <button type="button" onClick={() => setMode("public")} className={modeBtn(mode === "public", false)}>
-                Umum
-              </button>
-            </div>
-          </div>
+  const messengerToolbar = (
+    <div className="shrink-0 border-b border-broker-border bg-broker-surface px-2 py-2 shadow-sm sm:px-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-white">Chat</p>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <label className="hidden items-center gap-1.5 text-[10px] text-broker-muted sm:flex">
+            <input
+              type="checkbox"
+              checked={beepEnabled}
+              onChange={(e) => {
+                const on = e.target.checked;
+                setBeepEnabled(on);
+                beepEnabledRef.current = on;
+                try {
+                  window.localStorage.setItem(CHAT_BEEP_STORAGE_KEY, on ? "1" : "0");
+                } catch {
+                  /* private mode */
+                }
+                if (on) playChatIncomingBeep();
+              }}
+              className="h-3.5 w-3.5 rounded border-broker-border bg-broker-bg text-broker-accent focus:ring-broker-accent"
+            />
+            Beep
+          </label>
+          <button type="button" onClick={() => setMode("private")} className={modeBtn(mode === "private", true)}>
+            Privat
+          </button>
+          <button type="button" onClick={() => setMode("public")} className={modeBtn(mode === "public", true)}>
+            Umum
+          </button>
         </div>
-      ) : (
-        <div className="shrink-0 border-b border-broker-border bg-broker-surface px-3 py-2 shadow-sm">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-white">Chat</p>
-            <div className="flex items-center gap-2">
-              <label className="hidden items-center gap-1.5 text-[10px] text-broker-muted sm:flex">
-                <input
-                  type="checkbox"
-                  checked={beepEnabled}
-                  onChange={(e) => {
-                    const on = e.target.checked;
-                    setBeepEnabled(on);
-                    beepEnabledRef.current = on;
-                    try {
-                      window.localStorage.setItem(CHAT_BEEP_STORAGE_KEY, on ? "1" : "0");
-                    } catch {
-                      /* private mode */
-                    }
-                    if (on) playChatIncomingBeep();
-                  }}
-                  className="h-3.5 w-3.5 rounded border-broker-border bg-broker-bg text-broker-accent focus:ring-broker-accent"
-                />
-                Beep
-              </label>
-              <button type="button" onClick={() => setMode("private")} className={modeBtn(mode === "private", true)}>
-                Privat
-              </button>
-              <button type="button" onClick={() => setMode("public")} className={modeBtn(mode === "public", true)}>
-                Umum
-              </button>
-            </div>
-          </div>
-          {mode === "private" ? (
-            <div className="mt-2 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {peers.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setPeerId(p.id)}
-                  title={(p.name ?? p.email ?? p.id) + (p.online ? " · Online" : "")}
-                  className={`shrink-0 rounded-full p-0.5 ring-2 ring-offset-2 ring-offset-broker-bg transition ${
-                    peerId === p.id ? "ring-broker-accent" : "ring-transparent hover:ring-broker-border"
-                  }`}
-                >
-                  <SmallUserAvatar name={p.name} image={p.image ?? null} size="md" />
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      )}
+      </div>
+    </div>
+  );
 
+  const messengerPeerSidebar =
+    mode === "private" && peers.length > 0 ? (
+      <aside
+        className="flex w-[4.75rem] shrink-0 flex-col items-stretch gap-1 overflow-y-auto border-r border-broker-border bg-broker-surface py-2 pl-1 pr-1 [-ms-overflow-style:none] [scrollbar-width:thin] [scrollbar-color:rgba(0,211,149,0.35)_transparent]"
+        aria-label="Daftar member"
+      >
+        {peers.map((p) => {
+          const raw = (p.name ?? p.email ?? "?").trim();
+          const short = raw.split(/\s+/)[0]?.slice(0, 11) ?? "?";
+          return (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setPeerId(p.id)}
+              title={raw + (p.online ? " · Online" : "")}
+              className={`flex flex-col items-center gap-0.5 rounded-lg py-1.5 px-0.5 transition ${
+                peerId === p.id ? "bg-broker-accent/15 ring-1 ring-broker-accent/45" : "hover:bg-broker-bg/35"
+              }`}
+            >
+              <span
+                className={`rounded-full p-0.5 ring-2 ring-offset-2 ring-offset-broker-surface ${
+                  peerId === p.id ? "ring-broker-accent" : "ring-transparent"
+                }`}
+              >
+                <SmallUserAvatar name={p.name} image={p.image ?? null} size="md" />
+              </span>
+              <span className="max-w-full truncate text-center text-[9px] font-medium leading-tight text-broker-muted">
+                {short}
+              </span>
+            </button>
+          );
+        })}
+      </aside>
+    ) : null;
+
+  const pageChatHeader = (
+    <div className="flex items-center justify-between gap-3">
+      <div>
+        <h2 className="text-lg font-semibold text-white">
+          {mode === "public" ? "Live Chat Umum" : "Chat antar member"}
+        </h2>
+        <p className="mt-1 text-xs text-broker-muted">
+          {mode === "public"
+            ? "Semua member yang login bisa membaca & mengirim pesan."
+            : "Pilih lawan bicara — pesan tersimpan di server."}
+        </p>
+      </div>
+      <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center">
+        <label className="flex cursor-pointer items-center gap-2 text-xs text-broker-muted">
+          <input
+            type="checkbox"
+            checked={beepEnabled}
+            onChange={(e) => {
+              const on = e.target.checked;
+              setBeepEnabled(on);
+              beepEnabledRef.current = on;
+              try {
+                window.localStorage.setItem(CHAT_BEEP_STORAGE_KEY, on ? "1" : "0");
+              } catch {
+                /* private mode */
+              }
+              if (on) playChatIncomingBeep();
+            }}
+            className="h-4 w-4 rounded border-broker-border bg-broker-bg text-broker-accent focus:ring-broker-accent"
+          />
+          Beep pesan masuk
+        </label>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => setMode("private")} className={modeBtn(mode === "private", false)}>
+            Privat
+          </button>
+          <button type="button" onClick={() => setMode("public")} className={modeBtn(mode === "public", false)}>
+            Umum
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const mainContent = (
       <div
         className={
           isMessenger
@@ -637,11 +656,33 @@ export function ProfilChatBox({
           </form>
         )}
       </div>
+  );
+
+  const chatBody = (
+    <>
+      {!isMessenger ? (
+        <>
+          {pageChatHeader}
+          {mainContent}
+        </>
+      ) : (
+        <div className="flex h-full min-h-0 w-full flex-row">
+          {messengerPeerSidebar}
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            {messengerToolbar}
+            {mainContent}
+          </div>
+        </div>
+      )}
     </>
   );
 
   if (isMessenger) {
-    return <div className="flex h-full min-h-0 flex-col bg-broker-bg">{chatBody}</div>;
+    return (
+      <div className="flex h-full min-h-0 w-full flex-col bg-broker-bg">
+        <div className="min-h-0 flex-1">{chatBody}</div>
+      </div>
+    );
   }
 
   return <section className="mt-12 border-t border-broker-border pt-10">{chatBody}</section>;
