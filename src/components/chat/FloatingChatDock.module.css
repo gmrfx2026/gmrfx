@@ -1,0 +1,66 @@
+/**
+ * Posisi FAB + panel: pakai properti fisik + !important agar tidak tertimpa
+ * layout/RTL atau utilitas lain. Jarak mengikuti safe-area.
+ */
+
+.anchor {
+  direction: ltr;
+  pointer-events: none;
+}
+
+.anchor > * {
+  pointer-events: auto;
+}
+
+.fab {
+  position: fixed !important;
+  left: auto !important;
+  right: max(1rem, env(safe-area-inset-right, 0px)) !important;
+  bottom: max(1rem, env(safe-area-inset-bottom, 0px)) !important;
+  z-index: 160;
+}
+
+@media (min-width: 768px) {
+  .fab {
+    right: max(1.5rem, env(safe-area-inset-right, 0px)) !important;
+    bottom: max(1.5rem, env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/** Di /profil mobile: naik di atas dock navigasi bawah (~5rem). */
+.fabProfilOffset {
+  bottom: max(5.5rem, calc(5rem + env(safe-area-inset-bottom, 0px))) !important;
+}
+
+@media (min-width: 768px) {
+  .fabProfilOffset {
+    right: max(1.5rem, env(safe-area-inset-right, 0px)) !important;
+    bottom: max(1.5rem, env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+.panel {
+  position: fixed !important;
+  left: auto !important;
+  right: max(1rem, env(safe-area-inset-right, 0px)) !important;
+  bottom: max(1rem, env(safe-area-inset-bottom, 0px)) !important;
+  z-index: 160;
+}
+
+@media (min-width: 768px) {
+  .panel {
+    right: max(1.5rem, env(safe-area-inset-right, 0px)) !important;
+    bottom: max(1.5rem, env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+.panelProfilOffset {
+  bottom: max(5.5rem, calc(5rem + env(safe-area-inset-bottom, 0px))) !important;
+}
+
+@media (min-width: 768px) {
+  .panelProfilOffset {
+    right: max(1.5rem, env(safe-area-inset-right, 0px)) !important;
+    bottom: max(1.5rem, env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
