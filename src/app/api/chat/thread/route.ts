@@ -66,6 +66,7 @@ export async function GET(req: Request) {
         senderImage: m.sender.image,
         senderMemberSlug: m.sender.memberSlug,
         createdAt: m.createdAt.toISOString(),
+        readAt: m.readAt ? m.readAt.toISOString() : null,
       }));
 
     return NextResponse.json({ messages, dmAccess });

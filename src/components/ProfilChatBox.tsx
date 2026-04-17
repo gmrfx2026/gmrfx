@@ -31,6 +31,7 @@ type Msg = {
   senderId: string;
   senderName?: string | null;
   createdAt: string;
+  readAt?: string | null;
 };
 
 type DmAccess = {
@@ -820,6 +821,7 @@ export function ProfilChatBox({
         >
           {messages.map((m) => {
             const mine = m.senderId === selfId;
+            const isRead = Boolean(m.readAt);
             if (isMessenger) {
               return (
                 <div key={m.id} className={`flex w-full ${mine ? "justify-end" : "justify-start"}`}>
@@ -835,9 +837,27 @@ export function ProfilChatBox({
                     )}
                     <span className="whitespace-pre-wrap break-words">{m.body}</span>
                     <span
-                      className={`mt-1 block text-[10px] ${mine ? "text-broker-bg/80" : "text-broker-muted"}`}
+                      className={`mt-1 flex items-center gap-1 text-[10px] ${mine ? "justify-end text-broker-bg/80" : "text-broker-muted"}`}
                     >
-                      {formatJakarta(m.createdAt, { dateStyle: "short", timeStyle: "short" })}
+                      <span>{formatJakarta(m.createdAt, { dateStyle: "short", timeStyle: "short" })}</span>
+                      {mine && mode === "private" ? (
+                        <span
+                          title={isRead ? `Dibaca ${formatJakarta(m.readAt!, { timeStyle: "short" })}` : "Terkirim"}
+                          aria-label={isRead ? "Dibaca" : "Terkirim"}
+                          className={isRead ? "text-sky-700" : "text-broker-bg/70"}
+                        >
+                          {isRead ? (
+                            <svg width="14" height="10" viewBox="0 0 18 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                              <polyline points="1 6 5 10 11 2" />
+                              <polyline points="7 10 17 2" />
+                            </svg>
+                          ) : (
+                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                              <polyline points="1 6 5 10 11 2" />
+                            </svg>
+                          )}
+                        </span>
+                      ) : null}
                     </span>
                   </div>
                 </div>

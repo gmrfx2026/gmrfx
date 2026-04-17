@@ -21,6 +21,7 @@ export async function GET(req: Request) {
   }
 
   const userId = session.user.id;
+  const onlineCutoff = new Date(Date.now() - 3 * 60 * 1000);
 
   const users = await prisma.user.findMany({
     where: {
@@ -38,7 +39,14 @@ export async function GET(req: Request) {
     },
     orderBy: { name: "asc" },
     take: 20,
-    select: { id: true, name: true, email: true, image: true, memberSlug: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      memberSlug: true,
+      memberLastSeenAt: true,
+    },
   });
 
   const peers = users.map((u) => ({
@@ -47,7 +55,7 @@ export async function GET(req: Request) {
     email: u.email ? maskEmail(u.email) : null,
     image: u.image ? resolvePublicDisplayUrl(u.image) ?? u.image : null,
     memberSlug: u.memberSlug,
-    online: false,
+    online: u.memberLastSeenAt != null && u.memberLastSeenAt >= onlineCutoff,
   }));
 
   return NextResponse.json({ peers });

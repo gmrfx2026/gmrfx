@@ -102,12 +102,15 @@ export async function POST(req: Request) {
       }
     }
 
+    /** Cache-buster: nama file selalu sama (userId.ext) sehingga browser cache foto lama — tambahkan ?v=<ts>. */
+    const versionedUrl = `${publicUrl}${publicUrl.includes("?") ? "&" : "?"}v=${Date.now()}`;
+
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { image: publicUrl },
+      data: { image: versionedUrl },
     });
 
-    return NextResponse.json({ ok: true, url: publicUrl });
+    return NextResponse.json({ ok: true, url: versionedUrl });
   } catch (e) {
     console.error("avatar POST", e);
     return NextResponse.json({ error: "Terjadi kesalahan saat memproses upload." }, { status: 500 });

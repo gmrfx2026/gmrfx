@@ -7,6 +7,7 @@ import { toMemberSlug } from "@/lib/memberSlug";
 import { resolveWilayahByDistrictId } from "@/lib/wilayahIndonesia";
 import { createOtp } from "@/lib/otp";
 import { OAUTH_PHONE_VERIFY_KEY, isOauthPhoneVerifyRequired } from "@/lib/oauthPhoneVerifySettings";
+import { normalizePhoneE164, phoneVariants } from "@/lib/phoneNormalize";
 
 const schema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -46,11 +47,35 @@ export async function POST(req: Request) {
   }
 
   const d = parsed.data;
+
+  const normalizedPhone = normalizePhoneE164(d.phoneWhatsApp);
+  if (!normalizedPhone) {
+    return NextResponse.json(
+      { error: "Nomor WhatsApp tidak valid. Contoh: 0812xxxxxxxx atau +62812xxxxxxxx." },
+      { status: 400 }
+    );
+  }
+
   const wilayah = await resolveWilayahByDistrictId(d.districtCode);
   if (!wilayah) {
     return NextResponse.json(
       { error: "Kecamatan tidak valid atau data wilayah belum diisi di server." },
       { status: 400 }
+    );
+  }
+
+  /** Cek duplikat nomor WA pada user lain (exclude diri sendiri); cover variasi format lama. */
+  const phoneDup = await prisma.user.findFirst({
+    where: {
+      id: { not: user.id },
+      phoneWhatsApp: { in: phoneVariants(normalizedPhone) },
+    },
+    select: { id: true },
+  });
+  if (phoneDup) {
+    return NextResponse.json(
+      { error: "Nomor WhatsApp sudah dipakai akun lain" },
+      { status: 409 }
     );
   }
 
@@ -62,7 +87,7 @@ export async function POST(req: Request) {
 
   const updateData = {
     name: d.name,
-    phoneWhatsApp: d.phoneWhatsApp,
+    phoneWhatsApp: normalizedPhone,
     addressLine: d.addressLine,
     kecamatan: wilayah.kecamatan,
     kabupaten: wilayah.kabupaten,
@@ -95,7 +120,7 @@ export async function POST(req: Request) {
 
   // Kirim OTP WhatsApp jika setting aktif
   if (requirePhoneVerify) {
-    await createOtp(session.user.id, "PHONE_VERIFY", d.phoneWhatsApp);
+    await createOtp(session.user.id, "PHONE_VERIFY", normalizedPhone);
     return NextResponse.json({ ok: true, pendingPhoneVerify: true });
   }
 

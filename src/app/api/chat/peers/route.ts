@@ -17,33 +17,12 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const requestedPeerId = url.searchParams.get("peerId");
 
-  const onlineWindowMinutes = 5;
-  const onlineCutoff = new Date(Date.now() - onlineWindowMinutes * 60 * 1000);
+  /**
+   * Online = ping aktivitas (`memberLastSeenAt`) dalam 3 menit terakhir. Ping client tiap 90 detik +
+   * saat tab visible; buffer 3 menit aman terhadap jitter jaringan.
+   */
+  const onlineCutoff = new Date(Date.now() - 3 * 60 * 1000);
   const userId = session.user.id;
-
-  const [privateOnlineRows, publicOnlineRows] = await Promise.all([
-    prisma.chatMessage.findMany({
-      where: {
-        createdAt: { gte: onlineCutoff },
-        senderId: { not: userId },
-      },
-      select: { senderId: true },
-      distinct: ["senderId"],
-      take: 100,
-    }),
-    prisma.publicChatMessage.findMany({
-      where: {
-        createdAt: { gte: onlineCutoff },
-        senderId: { not: userId },
-      },
-      select: { senderId: true },
-      distinct: ["senderId"],
-      take: 100,
-    }),
-  ]);
-
-  const onlinePeerIds = [...privateOnlineRows, ...publicOnlineRows].map((r) => r.senderId);
-  const onlinePeerIdSet = new Set(onlinePeerIds);
 
   /** Hanya member yang terhubung follow ACCEPTED (saya mengikuti atau mengikuti saya). */
   const followRows = await prisma.memberFollow.findMany({
@@ -77,7 +56,14 @@ export async function GET(req: Request) {
           where: { ...baseWhere, id: { in: candidateArr } },
           orderBy: { name: "asc" },
           take: 80,
-          select: { id: true, name: true, email: true, image: true, memberSlug: true },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            memberSlug: true,
+            memberLastSeenAt: true,
+          },
         })
       : [];
 
@@ -87,7 +73,7 @@ export async function GET(req: Request) {
     email: u.email ? maskEmail(u.email) : null,
     image: u.image ? resolvePublicDisplayUrl(u.image) ?? u.image : null,
     memberSlug: u.memberSlug,
-    online: onlinePeerIdSet.has(u.id),
+    online: u.memberLastSeenAt != null && u.memberLastSeenAt >= onlineCutoff,
   }));
 
   return NextResponse.json({ peers });

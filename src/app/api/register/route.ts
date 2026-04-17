@@ -9,6 +9,7 @@ import { toMemberSlug } from "@/lib/memberSlug";
 import { resolveWilayahByDistrictId } from "@/lib/wilayahIndonesia";
 import { createOtp } from "@/lib/otp";
 import { MANUAL_PHONE_VERIFY_KEY, isManualPhoneVerifyRequired } from "@/lib/oauthPhoneVerifySettings";
+import { normalizePhoneE164, phoneVariants } from "@/lib/phoneNormalize";
 
 export const maxDuration = 60;
 
@@ -33,6 +34,14 @@ export async function POST(req: Request) {
     const d = parsed.data;
     const email = d.email.toLowerCase().trim();
 
+    const normalizedPhone = normalizePhoneE164(d.phoneWhatsApp);
+    if (!normalizedPhone) {
+      return NextResponse.json(
+        { error: "Nomor WhatsApp tidak valid. Contoh: 0812xxxxxxxx atau +62812xxxxxxxx." },
+        { status: 400 }
+      );
+    }
+
     const wilayah = await resolveWilayahByDistrictId(d.districtCode);
     if (!wilayah) {
       return NextResponse.json(
@@ -43,12 +52,22 @@ export async function POST(req: Request) {
 
     const dup = await prisma.user.findUnique({ where: { email } });
     if (dup) {
-      // Jika akun PENDING dan nomor sama, izinkan kirim ulang OTP
-      if (dup.memberStatus === MemberStatus.PENDING && dup.phoneWhatsApp === d.phoneWhatsApp) {
-        await createOtp(dup.id, "PHONE_VERIFY", dup.phoneWhatsApp);
+      // Jika akun PENDING dan nomor (normalized) sama, izinkan kirim ulang OTP.
+      const dupNorm = normalizePhoneE164(dup.phoneWhatsApp);
+      if (dup.memberStatus === MemberStatus.PENDING && dupNorm === normalizedPhone) {
+        await createOtp(dup.id, "PHONE_VERIFY", normalizedPhone);
         return NextResponse.json({ ok: true, pending: true, email });
       }
       return NextResponse.json({ error: "Email sudah terdaftar" }, { status: 409 });
+    }
+
+    /** Cek duplikat nomor WA (cover variasi format lama: `+62…`, `0…`, `62…`). */
+    const phoneDup = await prisma.user.findFirst({
+      where: { phoneWhatsApp: { in: phoneVariants(normalizedPhone) } },
+      select: { id: true },
+    });
+    if (phoneDup) {
+      return NextResponse.json({ error: "Nomor WhatsApp sudah terdaftar" }, { status: 409 });
     }
 
     const passwordHash = await bcrypt.hash(d.password, 10);
@@ -66,7 +85,7 @@ export async function POST(req: Request) {
         email,
         name: d.name,
         passwordHash,
-        phoneWhatsApp: d.phoneWhatsApp,
+        phoneWhatsApp: normalizedPhone,
         addressLine: d.addressLine,
         kecamatan: wilayah.kecamatan,
         kabupaten: wilayah.kabupaten,
@@ -82,7 +101,7 @@ export async function POST(req: Request) {
 
     if (requireVerify) {
       // Kirim OTP verifikasi nomor WA
-      await createOtp(id, "PHONE_VERIFY", d.phoneWhatsApp);
+      await createOtp(id, "PHONE_VERIFY", normalizedPhone);
       return NextResponse.json({ ok: true, pending: true, email });
     }
 

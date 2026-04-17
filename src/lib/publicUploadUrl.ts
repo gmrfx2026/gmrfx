@@ -21,18 +21,27 @@ export function resolvePublicDisplayUrl(src: string | null | undefined): string 
   if (!s) return null;
 
   let pathOnly: string;
+  let queryAndHash = "";
   if (/^https?:\/\//i.test(s)) {
     try {
-      pathOnly = new URL(s).pathname;
+      const u = new URL(s);
+      pathOnly = u.pathname;
+      queryAndHash = `${u.search}${u.hash}`;
     } catch {
       return s;
     }
   } else {
-    pathOnly = (s.split(/[?#]/)[0] ?? s).trim();
+    const idx = s.search(/[?#]/);
+    if (idx >= 0) {
+      pathOnly = s.slice(0, idx).trim();
+      queryAndHash = s.slice(idx);
+    } else {
+      pathOnly = s.trim();
+    }
   }
 
   if (PUBLIC_FILE_PREFIX.test(pathOnly)) {
-    return pathOnly;
+    return `${pathOnly}${queryAndHash}`;
   }
 
   if (
@@ -43,7 +52,7 @@ export function resolvePublicDisplayUrl(src: string | null | undefined): string 
     UPLOADS_INDICATOR_COVER_RE.test(pathOnly)
   ) {
     const tail = pathOnly.replace(/^\/uploads\//i, "");
-    return `/api/public-file/${tail}`;
+    return `/api/public-file/${tail}${queryAndHash}`;
   }
 
   if (/^https?:\/\//i.test(s)) {
