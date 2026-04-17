@@ -33,6 +33,7 @@ export async function HomePageContent() {
       key: {
         in: [
           HOME_MEMBER_TICKER_VISIBLE_KEY,
+          HOME_INDICATORS_VISIBLE_KEY,
           HOME_NEWS_DOMESTIC_VISIBLE_KEY,
           HOME_NEWS_INTERNATIONAL_VISIBLE_KEY,
           HOME_NEWS_PER_BLOCK_HOMEPAGE_KEY,

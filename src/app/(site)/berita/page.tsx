@@ -18,8 +18,19 @@ type ScopeFilter = "all" | "domestic" | "international";
 
 function parseScope(raw: string | string[] | undefined): ScopeFilter {
   const v = Array.isArray(raw) ? raw[0] : raw;
-  if (v === "domestic") return "domestic";
-  if (v === "international") return "international";
+  const norm = String(v ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, "-");
+  if (norm === "domestic" || norm === "dalam-negeri" || norm === "dn") return "domestic";
+  if (
+    norm === "international" ||
+    norm === "internasional" ||
+    norm === "intl" ||
+    norm === "global"
+  ) {
+    return "international";
+  }
   return "all";
 }
 
